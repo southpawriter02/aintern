@@ -1,0 +1,75 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Background Colors -->
+    <SolidColorBrush x:Key="WindowBackground" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="SidebarBackground" Color="#252526" />
+    <SolidColorBrush x:Key="StatusBarBackground" Color="#007ACC" />
+    <SolidColorBrush x:Key="ControlBackground" Color="#2D2D30" />
+    <SolidColorBrush x:Key="InputBackground" Color="#3C3C3C" />
+
+    <!-- Border Colors -->
+    <SolidColorBrush x:Key="BorderBrush" Color="#3C3C3C" />
+
+    <!-- Text Colors -->
+    <SolidColorBrush x:Key="TextPrimary" Color="#CCCCCC" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TextMuted" Color="#808080" />
+
+    <!-- Message Colors -->
+    <SolidColorBrush x:Key="UserMessageBackground" Color="#0E639C" />
+    <SolidColorBrush x:Key="AssistantMessageBackground" Color="#2D2D30" />
+
+    <!-- Accent Colors -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#007ACC" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#1C97EA" />
+
+    <!-- Status Colors -->
+    <SolidColorBrush x:Key="ErrorBackground" Color="#5A1D1D" />
+    <SolidColorBrush x:Key="ErrorForeground" Color="#F48771" />
+    <SolidColorBrush x:Key="SuccessBackground" Color="#1D3D1D" />
+    <SolidColorBrush x:Key="SuccessForeground" Color="#89D185" />
+
+    <!-- Button Styles -->
+    <ControlTheme x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="CornerRadius" Value="4" />
+
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+        </Style>
+
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="DangerButton" TargetType="Button">
+        <Setter Property="Background" Value="#C42B1C" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="CornerRadius" Value="4" />
+
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="#E81123" />
+        </Style>
+
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="SubtleButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="CornerRadius" Value="4" />
+
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        </Style>
+    </ControlTheme>
+
+</ResourceDictionary>

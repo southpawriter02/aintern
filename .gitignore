@@ -1,0 +1,31 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# macOS
+.DS_Store
+
+# Rider
+*.sln.iml
+
+# Test results
+TestResults/
+
+# NuGet
+packages/
+*.nupkg
+
+# Build
+*.log
+
+# Documentation
+ROADMAP.md
