@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IInferenceSettingsService, InferenceSettingsService>();
         services.AddSingleton<ISystemPromptService, SystemPromptService>();
         services.AddSingleton<ISearchService, SearchService>();
+        services.AddSingleton<IExportService, ExportService>();
 
         // ViewModels (transient - created as needed)
         services.AddTransient<MainWindowViewModel>();
