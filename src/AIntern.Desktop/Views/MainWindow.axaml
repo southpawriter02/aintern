@@ -11,6 +11,7 @@
 
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+K" Command="{Binding OpenSearchCommand}" />
+        <KeyBinding Gesture="Ctrl+E" Command="{Binding OpenExportCommand}" />
     </Window.KeyBindings>
 
     <Grid RowDefinitions="*, Auto">

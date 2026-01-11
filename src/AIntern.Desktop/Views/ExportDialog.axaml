@@ -1,0 +1,106 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AIntern.Desktop.ViewModels"
+        xmlns:conv="using:AIntern.Desktop.Converters"
+        x:Class="AIntern.Desktop.Views.ExportDialog"
+        x:DataType="vm:ExportViewModel"
+        Title="Export Conversation"
+        Width="550" Height="500"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{DynamicResource WindowBackground}">
+
+    <Window.Resources>
+        <conv:EnumBoolConverter x:Key="EnumBoolConverter" />
+    </Window.Resources>
+
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+    </Window.KeyBindings>
+
+    <Grid RowDefinitions="*,Auto" Margin="20">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Spacing="20">
+                <!-- Format Selection -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Format"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}" />
+                    <StackPanel Spacing="4">
+                        <RadioButton Content="Markdown (.md)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat, Converter={StaticResource EnumBoolConverter}, ConverterParameter=Markdown}" />
+                        <RadioButton Content="JSON (.json)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat, Converter={StaticResource EnumBoolConverter}, ConverterParameter=Json}" />
+                        <RadioButton Content="Plain Text (.txt)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat, Converter={StaticResource EnumBoolConverter}, ConverterParameter=PlainText}" />
+                        <RadioButton Content="HTML (.html)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat, Converter={StaticResource EnumBoolConverter}, ConverterParameter=Html}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Options -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Options"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}" />
+                    <CheckBox Content="Include timestamps"
+                              IsChecked="{Binding IncludeTimestamps}" />
+                    <CheckBox Content="Include system prompt"
+                              IsChecked="{Binding IncludeSystemPrompt}" />
+                    <CheckBox Content="Include metadata"
+                              IsChecked="{Binding IncludeMetadata}" />
+                    <CheckBox Content="Include token counts"
+                              IsChecked="{Binding IncludeTokenCounts}" />
+                </StackPanel>
+
+                <!-- Preview -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Preview"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimary}" />
+                    <Border Background="{DynamicResource SidebarBackground}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="12"
+                            MinHeight="150"
+                            MaxHeight="200">
+                        <ScrollViewer>
+                            <TextBlock Text="{Binding Preview}"
+                                       FontFamily="Consolas, Menlo, monospace"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextPrimary}" />
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
+
+                <!-- Error Message -->
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="{DynamicResource ErrorForeground}"
+                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="12"
+                    Margin="0,20,0,0">
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    MinWidth="80" />
+            <Button Content="Export"
+                    Command="{Binding ExportCommand}"
+                    IsEnabled="{Binding !IsExporting}"
+                    Theme="{StaticResource PrimaryButton}"
+                    MinWidth="80" />
+        </StackPanel>
+    </Grid>
+</Window>

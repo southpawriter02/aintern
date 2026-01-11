@@ -13,6 +13,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly ISettingsService _settingsService;
     private readonly IConversationService _conversationService;
     private readonly ISearchService _searchService;
+    private readonly IExportService _exportService;
     private bool _disposed;
 
     public ChatViewModel ChatViewModel { get; }
@@ -34,7 +35,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         ILlmService llmService,
         ISettingsService settingsService,
         IConversationService conversationService,
-        ISearchService searchService)
+        ISearchService searchService,
+        IExportService exportService)
     {
         ChatViewModel = chatViewModel;
         ModelSelectorViewModel = modelSelectorViewModel;
@@ -44,6 +46,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _settingsService = settingsService;
         _conversationService = conversationService;
         _searchService = searchService;
+        _exportService = exportService;
 
         // Subscribe to service events
         _llmService.ModelStateChanged += OnModelStateChanged;
@@ -85,6 +88,27 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow is not null)
         {
+            await dialog.ShowDialog(desktop.MainWindow);
+        }
+    }
+
+    private bool HasActiveConversation => ConversationListViewModel.SelectedConversation is not null;
+
+    [RelayCommand(CanExecute = nameof(HasActiveConversation))]
+    private async Task OpenExportAsync()
+    {
+        var selectedConversation = ConversationListViewModel.SelectedConversation;
+        if (selectedConversation is null) return;
+
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is not null)
+        {
+            var viewModel = new ExportViewModel(
+                _exportService,
+                desktop.MainWindow.StorageProvider,
+                selectedConversation.Id);
+
+            var dialog = new ExportDialog(viewModel);
             await dialog.ShowDialog(desktop.MainWindow);
         }
     }
