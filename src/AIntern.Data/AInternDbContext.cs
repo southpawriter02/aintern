@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using AIntern.Core.Entities;
 
@@ -22,4 +23,15 @@ public class AInternDbContext : DbContext
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AInternDbContext).Assembly);
     }
+
+    /// <summary>Gets the database connection for raw SQL queries.</summary>
+    public DbConnection GetConnection() => Database.GetDbConnection();
+
+    /// <summary>Opens the database connection if not already open.</summary>
+    public async Task OpenConnectionAsync(CancellationToken ct = default)
+        => await Database.OpenConnectionAsync(ct);
+
+    /// <summary>Closes the database connection.</summary>
+    public async Task CloseConnectionAsync()
+        => await Database.CloseConnectionAsync();
 }

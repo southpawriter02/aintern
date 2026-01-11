@@ -26,6 +26,9 @@ public sealed class DatabaseInitializer
         // Ensure database and tables are created
         await context.Database.EnsureCreatedAsync(ct);
 
+        // Initialize FTS5 tables and triggers for full-text search
+        await Fts5Initializer.InitializeAsync(context, ct);
+
         // Seed default data if not already present
         await SeedDefaultsAsync(context, ct);
     }
