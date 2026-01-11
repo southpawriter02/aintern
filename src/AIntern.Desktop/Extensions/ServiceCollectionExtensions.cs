@@ -36,6 +36,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ModelSelectorViewModel>();
         services.AddTransient<ConversationListViewModel>();
         services.AddTransient<InferenceSettingsViewModel>();
+        services.AddTransient<SystemPromptEditorViewModel>();
+        services.AddTransient<SystemPromptSelectorViewModel>();
 
         return services;
     }
