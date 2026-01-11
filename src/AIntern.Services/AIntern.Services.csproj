@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>SeniorIntern.Services</RootNamespace>
+    <RootNamespace>AIntern.Services</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SeniorIntern.Core\SeniorIntern.Core.csproj" />
+    <ProjectReference Include="..\AIntern.Core\AIntern.Core.csproj" />
+    <ProjectReference Include="..\AIntern.Data\AIntern.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

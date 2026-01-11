@@ -2,17 +2,17 @@ using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SeniorIntern.Core.Exceptions;
-using SeniorIntern.Core.Interfaces;
-using SeniorIntern.Core.Models;
+using AIntern.Core.Exceptions;
+using AIntern.Core.Interfaces;
+using AIntern.Core.Models;
 
-namespace SeniorIntern.Desktop.ViewModels;
+namespace AIntern.Desktop.ViewModels;
 
 public partial class ChatViewModel : ViewModelBase
 {
     private readonly ILlmService _llmService;
     private readonly IConversationService _conversationService;
-    private readonly ISettingsService _settingsService;
+    private readonly IInferenceSettingsService _inferenceSettingsService;
     private CancellationTokenSource? _generationCts;
 
     [ObservableProperty]
@@ -33,11 +33,11 @@ public partial class ChatViewModel : ViewModelBase
     public ChatViewModel(
         ILlmService llmService,
         IConversationService conversationService,
-        ISettingsService settingsService)
+        IInferenceSettingsService inferenceSettingsService)
     {
         _llmService = llmService;
         _conversationService = conversationService;
-        _settingsService = settingsService;
+        _inferenceSettingsService = inferenceSettingsService;
 
         // Update CanSend when dependencies change
         PropertyChanged += (_, e) =>
@@ -49,6 +49,22 @@ public partial class ChatViewModel : ViewModelBase
         };
 
         _llmService.ModelStateChanged += (_, _) => UpdateCanSend();
+
+        // Subscribe to conversation changes to reload messages when switching conversations
+        _conversationService.ConversationChanged += OnConversationChanged;
+    }
+
+    private void OnConversationChanged(object? sender, EventArgs e)
+    {
+        // Reload messages from current conversation
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            Messages.Clear();
+            foreach (var message in _conversationService.GetMessages())
+            {
+                Messages.Add(ChatMessageViewModel.FromChatMessage(message));
+            }
+        });
     }
 
     private void UpdateCanSend()
@@ -95,7 +111,8 @@ public partial class ChatViewModel : ViewModelBase
 
         try
         {
-            var settings = _settingsService.CurrentSettings;
+            // Get current inference settings from the settings service
+            var settings = _inferenceSettingsService.CurrentSettings;
             var options = new InferenceOptions(
                 MaxTokens: settings.MaxTokens,
                 Temperature: settings.Temperature,

@@ -1,9 +1,9 @@
 using System.Text.Json;
-using SeniorIntern.Core.Events;
-using SeniorIntern.Core.Interfaces;
-using SeniorIntern.Core.Models;
+using AIntern.Core.Events;
+using AIntern.Core.Interfaces;
+using AIntern.Core.Models;
 
-namespace SeniorIntern.Services;
+namespace AIntern.Services;
 
 public sealed class SettingsService : ISettingsService
 {

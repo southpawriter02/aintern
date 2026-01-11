@@ -1,4 +1,4 @@
-namespace SeniorIntern.Core.Exceptions;
+namespace AIntern.Core.Exceptions;
 
 public class LlmException : Exception
 {

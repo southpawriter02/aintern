@@ -1,10 +1,10 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:SeniorIntern.Desktop.ViewModels"
-        xmlns:views="using:SeniorIntern.Desktop.Views"
-        x:Class="SeniorIntern.Desktop.Views.MainWindow"
+        xmlns:vm="using:AIntern.Desktop.ViewModels"
+        xmlns:views="using:AIntern.Desktop.Views"
+        x:Class="AIntern.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="The Senior Intern"
+        Title="AIntern"
         Width="1200" Height="800"
         MinWidth="800" MinHeight="600"
         Background="{DynamicResource WindowBackground}">
@@ -22,18 +22,12 @@
                     <views:ModelSelectorView DockPanel.Dock="Top"
                                              DataContext="{Binding ModelSelectorViewModel}" />
 
-                    <!-- Future: Chat History List -->
-                    <Border DockPanel.Dock="Bottom" Padding="16">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Chat History"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextMuted}" />
-                            <TextBlock Text="Coming in v0.2.0"
-                                       Foreground="{DynamicResource TextMuted}"
-                                       FontStyle="Italic"
-                                       FontSize="12" />
-                        </StackPanel>
-                    </Border>
+                    <!-- Inference Settings at Bottom -->
+                    <views:InferenceSettingsPanel DockPanel.Dock="Bottom"
+                                                  DataContext="{Binding InferenceSettingsViewModel}" />
+
+                    <!-- Conversation List -->
+                    <views:ConversationListView DataContext="{Binding ConversationListViewModel}" />
                 </DockPanel>
             </Border>
 

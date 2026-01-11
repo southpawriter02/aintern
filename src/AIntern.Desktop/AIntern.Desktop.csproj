@@ -2,15 +2,16 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>SeniorIntern.Desktop</RootNamespace>
+    <RootNamespace>AIntern.Desktop</RootNamespace>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SeniorIntern.Core\SeniorIntern.Core.csproj" />
-    <ProjectReference Include="..\SeniorIntern.Services\SeniorIntern.Services.csproj" />
+    <ProjectReference Include="..\AIntern.Core\AIntern.Core.csproj" />
+    <ProjectReference Include="..\AIntern.Services\AIntern.Services.csproj" />
+    <ProjectReference Include="..\AIntern.Data\AIntern.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

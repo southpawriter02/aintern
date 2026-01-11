@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:AIntern.Desktop.Controls"
+             x:Class="AIntern.Desktop.Controls.ParameterSlider"
+             x:DataType="controls:ParameterSlider">
+
+    <Grid RowDefinitions="Auto, Auto, Auto">
+        <!-- Label and Value -->
+        <Grid ColumnDefinitions="*, Auto">
+            <TextBlock Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}}"
+                       FontWeight="Medium"
+                       FontSize="13"
+                       Foreground="{DynamicResource TextPrimary}" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}, StringFormat={}{0:F2}}"
+                           FontWeight="SemiBold"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextPrimary}" />
+                <TextBlock Text="{Binding Unit, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}}"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextMuted}"
+                           IsVisible="{Binding Unit, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Slider -->
+        <Slider Grid.Row="1"
+                Value="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}, Mode=TwoWay}"
+                Minimum="{Binding Minimum, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}}"
+                Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}}"
+                TickFrequency="{Binding Step, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}}"
+                IsSnapToTickEnabled="True"
+                Margin="0,8,0,0" />
+
+        <!-- Description -->
+        <TextBlock Grid.Row="2"
+                   Text="{Binding Description, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}}"
+                   FontSize="11"
+                   Foreground="{DynamicResource TextMuted}"
+                   TextWrapping="Wrap"
+                   Margin="0,4,0,0"
+                   IsVisible="{Binding Description, RelativeSource={RelativeSource AncestorType=controls:ParameterSlider}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </Grid>
+
+</UserControl>

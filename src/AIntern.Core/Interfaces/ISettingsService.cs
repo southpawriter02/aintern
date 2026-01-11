@@ -1,7 +1,7 @@
-using SeniorIntern.Core.Events;
-using SeniorIntern.Core.Models;
+using AIntern.Core.Events;
+using AIntern.Core.Models;
 
-namespace SeniorIntern.Core.Interfaces;
+namespace AIntern.Core.Interfaces;
 
 public interface ISettingsService
 {

@@ -1,0 +1,126 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             x:Class="AIntern.Desktop.Views.ConversationListView"
+             x:DataType="vm:ConversationListViewModel">
+
+    <DockPanel>
+        <!-- Header with title and new button -->
+        <Border DockPanel.Dock="Top" Padding="16,12">
+            <Grid ColumnDefinitions="*, Auto">
+                <TextBlock Text="Conversations"
+                           FontWeight="SemiBold"
+                           FontSize="14"
+                           VerticalAlignment="Center" />
+
+                <Button Grid.Column="1"
+                        Command="{Binding CreateNewConversationCommand}"
+                        ToolTip.Tip="New Conversation"
+                        Padding="8,4"
+                        Background="Transparent">
+                    <PathIcon Data="M12,2 L12,22 M2,12 L22,12"
+                              Width="12" Height="12"
+                              Foreground="{DynamicResource TextPrimary}" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Search box -->
+        <Border DockPanel.Dock="Top" Padding="16,0,16,12">
+            <TextBox Text="{Binding SearchQuery, Mode=TwoWay}"
+                     Watermark="Search conversations..."
+                     Classes="search" />
+        </Border>
+
+        <!-- Loading indicator -->
+        <Border DockPanel.Dock="Top"
+                IsVisible="{Binding IsLoading}"
+                Padding="16,8">
+            <ProgressBar IsIndeterminate="True" Height="2" />
+        </Border>
+
+        <!-- Empty state -->
+        <Border DockPanel.Dock="Top"
+                IsVisible="{Binding IsEmpty}"
+                Padding="16">
+            <StackPanel Spacing="8" HorizontalAlignment="Center">
+                <TextBlock Text="No conversations yet"
+                           Foreground="{DynamicResource TextMuted}"
+                           HorizontalAlignment="Center" />
+                <Button Content="Start a new conversation"
+                        Command="{Binding CreateNewConversationCommand}"
+                        HorizontalAlignment="Center"
+                        Classes="link" />
+            </StackPanel>
+        </Border>
+
+        <!-- Conversation list -->
+        <ScrollViewer>
+            <ItemsControl ItemsSource="{Binding Conversations}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:ConversationSummaryViewModel">
+                        <Button Command="{Binding $parent[ItemsControl].((vm:ConversationListViewModel)DataContext).SelectConversationCommand}"
+                                CommandParameter="{Binding}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                Background="Transparent"
+                                Padding="16,12"
+                                CornerRadius="0">
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover">
+                                    <Setter Property="Background" Value="{DynamicResource HoverBackground}" />
+                                </Style>
+                                <Style Selector="Button[Tag=selected]">
+                                    <Setter Property="Background" Value="{DynamicResource SelectedBackground}" />
+                                </Style>
+                            </Button.Styles>
+                            <Button.Tag>
+                                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                    <Binding Path="IsSelected" />
+                                </MultiBinding>
+                            </Button.Tag>
+
+                            <Button.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Rename"
+                                              Command="{Binding $parent[ItemsControl].((vm:ConversationListViewModel)DataContext).RenameConversationCommand}"
+                                              CommandParameter="{Binding}" />
+                                    <Separator />
+                                    <MenuItem Header="Delete"
+                                              Command="{Binding $parent[ItemsControl].((vm:ConversationListViewModel)DataContext).DeleteConversationCommand}"
+                                              CommandParameter="{Binding}" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+
+                            <Grid RowDefinitions="Auto, Auto">
+                                <!-- Title and time -->
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <TextBlock Text="{Binding Title}"
+                                               TextTrimming="CharacterEllipsis"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimary}" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding RelativeTime}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextMuted}"
+                                               Margin="8,0,0,0" />
+                                </Grid>
+
+                                <!-- Preview -->
+                                <TextBlock Grid.Row="1"
+                                           Text="{Binding Preview}"
+                                           TextTrimming="CharacterEllipsis"
+                                           MaxLines="1"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           Margin="0,4,0,0"
+                                           IsVisible="{Binding Preview, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+
+</UserControl>

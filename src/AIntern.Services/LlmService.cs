@@ -4,12 +4,12 @@ using System.Text;
 using LLama;
 using LLama.Common;
 using LLama.Sampling;
-using SeniorIntern.Core.Events;
-using SeniorIntern.Core.Exceptions;
-using SeniorIntern.Core.Interfaces;
-using SeniorIntern.Core.Models;
+using AIntern.Core.Events;
+using AIntern.Core.Exceptions;
+using AIntern.Core.Interfaces;
+using AIntern.Core.Models;
 
-namespace SeniorIntern.Services;
+namespace AIntern.Services;
 
 public sealed class LlmService : ILlmService
 {

@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using SeniorIntern.Core.Models;
+using AIntern.Core.Models;
 
-namespace SeniorIntern.Desktop.ViewModels;
+namespace AIntern.Desktop.ViewModels;
 
 public partial class ChatMessageViewModel : ViewModelBase
 {
@@ -25,7 +25,7 @@ public partial class ChatMessageViewModel : ViewModelBase
     public string RoleLabel => Role switch
     {
         MessageRole.User => "You",
-        MessageRole.Assistant => "Senior Intern",
+        MessageRole.Assistant => "AIntern",
         MessageRole.System => "System",
         _ => "Unknown"
     };
@@ -81,4 +81,9 @@ public partial class ChatMessageViewModel : ViewModelBase
         Timestamp = Timestamp,
         IsComplete = !IsStreaming
     };
+
+    /// <summary>
+    /// Creates a view model from a ChatMessage.
+    /// </summary>
+    public static ChatMessageViewModel FromChatMessage(ChatMessage message) => new(message);
 }

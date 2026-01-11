@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:SeniorIntern.Desktop.ViewModels"
-             xmlns:views="using:SeniorIntern.Desktop.Views"
-             x:Class="SeniorIntern.Desktop.Views.ChatView"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:views="using:AIntern.Desktop.Views"
+             x:Class="AIntern.Desktop.Views.ChatView"
              x:DataType="vm:ChatViewModel"
              Background="{DynamicResource WindowBackground}">
 
@@ -18,7 +18,7 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="16">
-                    <TextBlock Text="Welcome to The Senior Intern"
+                    <TextBlock Text="Welcome to AIntern"
                                FontSize="24"
                                FontWeight="SemiBold"
                                HorizontalAlignment="Center"

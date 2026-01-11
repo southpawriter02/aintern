@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:controls="using:AIntern.Desktop.Controls"
+             x:Class="AIntern.Desktop.Views.InferenceSettingsPanel"
+             x:DataType="vm:InferenceSettingsViewModel">
+
+    <Border BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,1,0,0">
+        <DockPanel>
+            <!-- Header with toggle -->
+            <Button DockPanel.Dock="Top"
+                    Command="{Binding TogglePanelCommand}"
+                    Background="Transparent"
+                    Padding="16,12"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    CornerRadius="0">
+                <Grid ColumnDefinitions="Auto, *, Auto">
+                    <PathIcon Data="M4,2 L4,22 M12,2 L12,16 M20,2 L20,10 M2,6 L6,6 M10,10 L14,10 M18,6 L22,6"
+                              Width="14" Height="14"
+                              Foreground="{DynamicResource TextSecondary}" />
+
+                    <TextBlock Grid.Column="1"
+                               Text="Inference Settings"
+                               FontWeight="SemiBold"
+                               FontSize="13"
+                               Margin="12,0,0,0"
+                               VerticalAlignment="Center" />
+
+                    <!-- Chevron indicators -->
+                    <TextBlock Grid.Column="2"
+                               Text="▲"
+                               FontSize="8"
+                               Foreground="{DynamicResource TextMuted}"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding IsPanelExpanded}" />
+                    <TextBlock Grid.Column="2"
+                               Text="▼"
+                               FontSize="8"
+                               Foreground="{DynamicResource TextMuted}"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding !IsPanelExpanded}" />
+                </Grid>
+            </Button>
+
+            <!-- Collapsible content -->
+            <Border IsVisible="{Binding IsPanelExpanded}"
+                    Padding="16,0,16,16">
+                <StackPanel Spacing="16">
+                    <!-- Preset selector -->
+                    <Grid ColumnDefinitions="*, Auto, Auto">
+                        <ComboBox ItemsSource="{Binding Presets}"
+                                  SelectedItem="{Binding SelectedPreset}"
+                                  HorizontalAlignment="Stretch"
+                                  DisplayMemberBinding="{Binding Name}" />
+
+                        <Button Grid.Column="1"
+                                Command="{Binding ResetToDefaultsCommand}"
+                                ToolTip.Tip="Reset to defaults"
+                                Padding="8"
+                                Margin="8,0,0,0"
+                                Background="Transparent">
+                            <PathIcon Data="M12,4 A8,8,0,1,1,4,12 M4,4 L4,10 L10,10"
+                                      Width="14" Height="14"
+                                      Foreground="{DynamicResource TextSecondary}" />
+                        </Button>
+                    </Grid>
+
+                    <!-- Temperature slider -->
+                    <controls:ParameterSlider
+                        Label="Temperature"
+                        Value="{Binding Temperature}"
+                        Minimum="0"
+                        Maximum="2"
+                        Step="0.1"
+                        Description="Controls randomness. Lower values are more focused and deterministic." />
+
+                    <!-- Top-P slider -->
+                    <controls:ParameterSlider
+                        Label="Top-P (Nucleus Sampling)"
+                        Value="{Binding TopP}"
+                        Minimum="0"
+                        Maximum="1"
+                        Step="0.05"
+                        Description="Limits vocabulary to top probability tokens. Lower values are more focused." />
+
+                    <!-- Max Tokens slider -->
+                    <controls:ParameterSlider
+                        Label="Max Tokens"
+                        Value="{Binding MaxTokens}"
+                        Minimum="64"
+                        Maximum="8192"
+                        Step="64"
+                        Unit="tokens"
+                        Description="Maximum length of the generated response." />
+
+                    <!-- Context Size slider -->
+                    <controls:ParameterSlider
+                        Label="Context Size"
+                        Value="{Binding ContextSize}"
+                        Minimum="512"
+                        Maximum="32768"
+                        Step="512"
+                        Unit="tokens"
+                        Description="Maximum conversation history to consider. Larger uses more memory." />
+                </StackPanel>
+            </Border>
+        </DockPanel>
+    </Border>
+
+</UserControl>

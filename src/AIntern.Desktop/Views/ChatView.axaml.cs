@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using SeniorIntern.Desktop.ViewModels;
+using AIntern.Desktop.ViewModels;
 
-namespace SeniorIntern.Desktop.Views;
+namespace AIntern.Desktop.Views;
 
 public partial class ChatView : UserControl
 {

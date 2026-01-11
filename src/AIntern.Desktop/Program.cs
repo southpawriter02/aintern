@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace SeniorIntern.Desktop;
+namespace AIntern.Desktop;
 
 internal sealed class Program
 {

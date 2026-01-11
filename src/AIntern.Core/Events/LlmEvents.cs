@@ -1,4 +1,4 @@
-namespace SeniorIntern.Core.Events;
+namespace AIntern.Core.Events;
 
 public sealed class ModelStateChangedEventArgs : EventArgs
 {

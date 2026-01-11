@@ -5,12 +5,12 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SeniorIntern.Core.Events;
-using SeniorIntern.Core.Exceptions;
-using SeniorIntern.Core.Interfaces;
-using SeniorIntern.Core.Models;
+using AIntern.Core.Events;
+using AIntern.Core.Exceptions;
+using AIntern.Core.Interfaces;
+using AIntern.Core.Models;
 
-namespace SeniorIntern.Desktop.ViewModels;
+namespace AIntern.Desktop.ViewModels;
 
 public partial class ModelSelectorViewModel : ViewModelBase
 {

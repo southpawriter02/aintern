@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:SeniorIntern.Desktop.ViewModels"
-             x:Class="SeniorIntern.Desktop.Views.ModelSelectorView"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             x:Class="AIntern.Desktop.Views.ModelSelectorView"
              x:DataType="vm:ModelSelectorViewModel">
 
     <Border Padding="16"

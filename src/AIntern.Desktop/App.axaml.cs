@@ -3,12 +3,12 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
-using SeniorIntern.Core.Interfaces;
-using SeniorIntern.Desktop.Extensions;
-using SeniorIntern.Desktop.ViewModels;
-using SeniorIntern.Desktop.Views;
+using AIntern.Core.Interfaces;
+using AIntern.Desktop.Extensions;
+using AIntern.Desktop.ViewModels;
+using AIntern.Desktop.Views;
 
-namespace SeniorIntern.Desktop;
+namespace AIntern.Desktop;
 
 public partial class App : Application
 {
@@ -34,8 +34,11 @@ public partial class App : Application
 
         // Build DI container
         var services = new ServiceCollection();
-        services.AddSeniorInternServices();
+        services.AddAInternServices();
         Services = services.BuildServiceProvider();
+
+        // Initialize database (create tables, seed defaults)
+        Services.InitializeDatabaseAsync().GetAwaiter().GetResult();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

@@ -1,4 +1,4 @@
-namespace SeniorIntern.Core.Models;
+namespace AIntern.Core.Models;
 
 public enum MessageRole
 {
