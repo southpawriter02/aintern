@@ -171,6 +171,28 @@ public sealed partial class ConversationListViewModel : ObservableObject, IDispo
         }
     }
 
+    /// <summary>
+    /// Selects a conversation by ID. Used for search result navigation.
+    /// </summary>
+    public async Task SelectConversationByIdAsync(Guid conversationId)
+    {
+        // First check if we already have it in the list
+        var conversation = Conversations.FirstOrDefault(c => c.Id == conversationId);
+
+        if (conversation is null)
+        {
+            // Load the conversation and refresh the list
+            await _conversationService.LoadConversationAsync(conversationId);
+            await LoadConversationsAsync();
+            conversation = Conversations.FirstOrDefault(c => c.Id == conversationId);
+        }
+
+        if (conversation is not null)
+        {
+            await SelectConversationAsync(conversation);
+        }
+    }
+
     private async Task ExecuteSearchAsync()
     {
         var query = _pendingSearchQuery;

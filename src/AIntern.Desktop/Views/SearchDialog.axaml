@@ -1,0 +1,274 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AIntern.Desktop.ViewModels"
+        xmlns:models="using:AIntern.Core.Models"
+        x:Class="AIntern.Desktop.Views.SearchDialog"
+        x:DataType="vm:SearchViewModel"
+        Title="Search"
+        Width="600" Height="500"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ShowInTaskbar="False"
+        SystemDecorations="BorderOnly"
+        Background="{DynamicResource WindowBackground}">
+
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}" />
+        <KeyBinding Gesture="Up" Command="{Binding NavigateUpCommand}" />
+        <KeyBinding Gesture="Down" Command="{Binding NavigateDownCommand}" />
+        <KeyBinding Gesture="Enter" Command="{Binding SelectResultCommand}"
+                    CommandParameter="{Binding SelectedResult}" />
+    </Window.KeyBindings>
+
+    <Border BorderBrush="{DynamicResource AccentBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Background="{DynamicResource WindowBackground}">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+            <!-- Search Input -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SidebarBackground}"
+                    Padding="16"
+                    CornerRadius="8,8,0,0">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Search Icon -->
+                    <PathIcon Grid.Column="0"
+                              Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                              Foreground="{DynamicResource AccentBrush}"
+                              Width="20" Height="20"
+                              Margin="0,0,12,0" />
+
+                    <TextBox Grid.Column="1"
+                             x:Name="SearchInput"
+                             Text="{Binding Query, Mode=TwoWay}"
+                             Watermark="Search conversations and messages..."
+                             FontSize="16"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             Foreground="{DynamicResource TextPrimary}" />
+
+                    <!-- Loading indicator -->
+                    <ProgressBar Grid.Column="2"
+                                 IsVisible="{Binding IsSearching}"
+                                 IsIndeterminate="True"
+                                 Width="20" Height="20"
+                                 Margin="12,0,0,0" />
+                </Grid>
+            </Border>
+
+            <!-- Filter Tabs -->
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        Margin="16,8"
+                        Spacing="16">
+                <RadioButton Content="All"
+                             GroupName="SearchFilter"
+                             IsChecked="{Binding FilterType, Converter={x:Static ObjectConverters.IsNull}}"
+                             Command="{Binding SetFilterCommand}"
+                             CommandParameter="{x:Null}" />
+                <RadioButton Content="Conversations"
+                             GroupName="SearchFilter"
+                             Command="{Binding SetFilterCommand}">
+                    <RadioButton.IsChecked>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="FilterType" Converter="{x:Static ObjectConverters.IsNotNull}" />
+                            <Binding Path="FilterType" Converter="{x:Static ObjectConverters.Equal}">
+                                <Binding.ConverterParameter>
+                                    <models:SearchResultType>Conversation</models:SearchResultType>
+                                </Binding.ConverterParameter>
+                            </Binding>
+                        </MultiBinding>
+                    </RadioButton.IsChecked>
+                    <RadioButton.CommandParameter>
+                        <models:SearchResultType>Conversation</models:SearchResultType>
+                    </RadioButton.CommandParameter>
+                </RadioButton>
+                <RadioButton Content="Messages"
+                             GroupName="SearchFilter"
+                             Command="{Binding SetFilterCommand}">
+                    <RadioButton.IsChecked>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="FilterType" Converter="{x:Static ObjectConverters.IsNotNull}" />
+                            <Binding Path="FilterType" Converter="{x:Static ObjectConverters.Equal}">
+                                <Binding.ConverterParameter>
+                                    <models:SearchResultType>Message</models:SearchResultType>
+                                </Binding.ConverterParameter>
+                            </Binding>
+                        </MultiBinding>
+                    </RadioButton.IsChecked>
+                    <RadioButton.CommandParameter>
+                        <models:SearchResultType>Message</models:SearchResultType>
+                    </RadioButton.CommandParameter>
+                </RadioButton>
+            </StackPanel>
+
+            <!-- Results -->
+            <ScrollViewer Grid.Row="2" Padding="8">
+                <StackPanel Spacing="16">
+                    <!-- Conversation Results -->
+                    <StackPanel IsVisible="{Binding ConversationResults.Count}">
+                        <TextBlock Text="Conversations"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Margin="8,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding ConversationResults}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:SearchResult">
+                                    <Button Command="{Binding $parent[Window].((vm:SearchViewModel)DataContext).SelectResultCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Background="Transparent"
+                                            Padding="12,10"
+                                            Margin="0,2"
+                                            CornerRadius="4">
+                                        <Button.Styles>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Background" Value="{DynamicResource HoverBackground}" />
+                                            </Style>
+                                        </Button.Styles>
+
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <!-- Icon -->
+                                            <TextBlock Grid.Column="0"
+                                                       Text="&#x1F4DD;"
+                                                       FontSize="16"
+                                                       Margin="0,0,12,0"
+                                                       VerticalAlignment="Center" />
+
+                                            <!-- Title and Snippet -->
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontWeight="Medium"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextPrimary}" />
+                                                <TextBlock Text="{Binding Snippet}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxLines="1"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextMuted}" />
+                                            </StackPanel>
+
+                                            <!-- Timestamp -->
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding Timestamp, StringFormat='{}{0:MMM d}'}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextMuted}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="12,0,0,0" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Message Results -->
+                    <StackPanel IsVisible="{Binding MessageResults.Count}">
+                        <TextBlock Text="Messages"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Margin="8,0,0,8" />
+                        <ItemsControl ItemsSource="{Binding MessageResults}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:SearchResult">
+                                    <Button Command="{Binding $parent[Window].((vm:SearchViewModel)DataContext).SelectResultCommand}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Background="Transparent"
+                                            Padding="12,10"
+                                            Margin="0,2"
+                                            CornerRadius="4">
+                                        <Button.Styles>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Background" Value="{DynamicResource HoverBackground}" />
+                                            </Style>
+                                        </Button.Styles>
+
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <!-- Icon -->
+                                            <TextBlock Grid.Column="0"
+                                                       Text="&#x1F4AC;"
+                                                       FontSize="16"
+                                                       Margin="0,0,12,0"
+                                                       VerticalAlignment="Center" />
+
+                                            <!-- Snippet and Context -->
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <TextBlock Text="{Binding Snippet}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxLines="1"
+                                                           Foreground="{DynamicResource TextPrimary}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="in:"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextMuted}" />
+                                                    <TextBlock Text="{Binding ConversationTitle}"
+                                                               FontSize="11"
+                                                               FontStyle="Italic"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Foreground="{DynamicResource TextMuted}" />
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Timestamp -->
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding Timestamp, StringFormat='{}{0:MMM d}'}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextMuted}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="12,0,0,0" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Empty State -->
+                    <TextBlock Text="No results found"
+                               HorizontalAlignment="Center"
+                               Margin="0,40"
+                               Foreground="{DynamicResource TextMuted}">
+                        <TextBlock.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="!ConversationResults.Count" />
+                                <Binding Path="!MessageResults.Count" />
+                                <Binding Path="Query" Converter="{x:Static StringConverters.IsNotNullOrEmpty}" />
+                                <Binding Path="!IsSearching" />
+                            </MultiBinding>
+                        </TextBlock.IsVisible>
+                    </TextBlock>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Status Bar -->
+            <Border Grid.Row="3"
+                    Background="{DynamicResource SidebarBackground}"
+                    Padding="16,8"
+                    CornerRadius="0,0,8,8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding SearchStatus}"
+                               Foreground="{DynamicResource TextMuted}"
+                               VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="16">
+                        <TextBlock Text="&#x2191;&#x2193; Navigate"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Opacity="0.6" />
+                        <TextBlock Text="Enter Select"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Opacity="0.6" />
+                        <TextBlock Text="Esc Close"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   Opacity="0.6" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

@@ -1,6 +1,9 @@
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using AIntern.Core.Events;
 using AIntern.Core.Interfaces;
+using AIntern.Desktop.Views;
 
 namespace AIntern.Desktop.ViewModels;
 
@@ -9,6 +12,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly ILlmService _llmService;
     private readonly ISettingsService _settingsService;
     private readonly IConversationService _conversationService;
+    private readonly ISearchService _searchService;
     private bool _disposed;
 
     public ChatViewModel ChatViewModel { get; }
@@ -29,7 +33,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         InferenceSettingsViewModel inferenceSettingsViewModel,
         ILlmService llmService,
         ISettingsService settingsService,
-        IConversationService conversationService)
+        IConversationService conversationService,
+        ISearchService searchService)
     {
         ChatViewModel = chatViewModel;
         ModelSelectorViewModel = modelSelectorViewModel;
@@ -38,6 +43,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _llmService = llmService;
         _settingsService = settingsService;
         _conversationService = conversationService;
+        _searchService = searchService;
 
         // Subscribe to service events
         _llmService.ModelStateChanged += OnModelStateChanged;
@@ -63,6 +69,24 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private void OnInferenceProgress(object? sender, InferenceProgressEventArgs e)
     {
         TokenInfo = $"Tokens: {e.TokensGenerated} ({e.TokensPerSecond:F1} tok/s)";
+    }
+
+    [RelayCommand]
+    private async Task OpenSearchAsync()
+    {
+        var viewModel = new SearchViewModel(_searchService);
+        viewModel.NavigateToConversation += async (s, conversationId) =>
+        {
+            await ConversationListViewModel.SelectConversationByIdAsync(conversationId);
+        };
+
+        var dialog = new SearchDialog(viewModel);
+
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow is not null)
+        {
+            await dialog.ShowDialog(desktop.MainWindow);
+        }
     }
 
     public void Dispose()
