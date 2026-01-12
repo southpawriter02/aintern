@@ -26,6 +26,18 @@ public sealed class AppSettings
     public double? WindowX { get; set; }
     public double? WindowY { get; set; }
 
-    // Workspace Settings
+    // Workspace Settings (v0.3.0)
     public bool RestoreLastWorkspace { get; set; } = true;
+    public bool ShowHiddenFiles { get; set; } = false;
+    public bool UseGitIgnore { get; set; } = true;
+    public int MaxRecentWorkspaces { get; set; } = 10;
+    public IReadOnlyList<string> CustomIgnorePatterns { get; set; } = [];
+
+    // Editor Settings (v0.3.0)
+    public bool WordWrap { get; set; } = false;
+    public int TabSize { get; set; } = 4;
+    public bool ShowLineNumbers { get; set; } = true;
+    public bool HighlightCurrentLine { get; set; } = true;
+    public string EditorFontFamily { get; set; } = "Cascadia Code, Consolas, monospace";
+    public int EditorFontSize { get; set; } = 14;
 }
