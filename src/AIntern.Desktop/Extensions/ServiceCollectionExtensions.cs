@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AIntern.Core.Interfaces;
 using AIntern.Data;
 using AIntern.Data.Repositories;
+using AIntern.Desktop.Services;
 using AIntern.Desktop.ViewModels;
 using AIntern.Services;
 
@@ -39,6 +40,9 @@ public static class ServiceCollectionExtensions
 
         // Dialog service (v0.3.3g)
         services.AddSingleton<IDialogService, Services.DialogService>();
+
+        // Syntax highlighting service (v0.3.4e)
+        services.AddSingleton<SyntaxHighlightingService>();
 
         // ViewModels (transient - created as needed)
         services.AddTransient<MainWindowViewModel>();

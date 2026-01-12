@@ -129,6 +129,24 @@
                         VerticalAlignment="Bottom" />
             </Grid>
         </Border>
+
+        <!-- Context Preview Overlay (v0.3.4e) -->
+        <Panel Grid.Row="0" Grid.RowSpan="4"
+               IsVisible="{Binding IsPreviewOpen}"
+               ZIndex="100">
+            <!-- Backdrop -->
+            <Border Background="#80000000"
+                    PointerPressed="OnPreviewBackdropPressed" />
+            <!-- Preview Popup -->
+            <views:ContextPreviewPopup x:Name="PreviewPopup"
+                                       DataContext="{Binding SelectedPreviewContext}"
+                                       CloseCommand="{Binding $parent[views:ChatView].((vm:ChatViewModel)DataContext).HidePreviewCommand}"
+                                       OpenInEditorCommand="{Binding $parent[views:ChatView].((vm:ChatViewModel)DataContext).OpenContextFileCommand}"
+                                       RemoveCommand="{Binding $parent[views:ChatView].((vm:ChatViewModel)DataContext).RemoveSelectedContextCommand}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Margin="40" />
+        </Panel>
     </Grid>
 
 </UserControl>

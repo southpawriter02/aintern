@@ -177,5 +177,11 @@
     <SolidColorBrush x:Key="ErrorBrush" Color="#F14C4C" />
     <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#331111" />
 
+    <!-- Popup Colors (v0.3.4e) -->
+    <SolidColorBrush x:Key="PopupBackgroundBrush" Color="#252526" />
+    <SolidColorBrush x:Key="PopupBorderBrush" Color="#454545" />
+    <SolidColorBrush x:Key="PopupHeaderBrush" Color="#2D2D2D" />
+    <SolidColorBrush x:Key="PopupFooterBrush" Color="#2D2D2D" />
+
 </ResourceDictionary>
 

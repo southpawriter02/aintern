@@ -76,6 +76,13 @@ public partial class ChatViewModel : ViewModelBase
     /// </summary>
     public bool IsOverTokenLimit => TotalContextTokens >= MaxContextTokens;
 
+    // Preview state properties (v0.3.4e)
+    [ObservableProperty]
+    private bool _isPreviewOpen;
+
+    [ObservableProperty]
+    private FileContextViewModel? _selectedPreviewContext;
+
     public ChatViewModel(
         ILlmService llmService,
         IConversationService conversationService,
@@ -342,13 +349,47 @@ public partial class ChatViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Shows a preview of the selected context (placeholder for future implementation).
+    /// Shows a preview of the selected context.
     /// </summary>
     [RelayCommand]
     private void ShowPreview(FileContextViewModel? context)
     {
-        // TODO: Implement preview functionality in a future version
-        // This will open a preview panel or dialog showing the context content
+        if (context == null) return;
+        SelectedPreviewContext = context;
+        IsPreviewOpen = true;
+    }
+
+    /// <summary>
+    /// Hides the preview popup.
+    /// </summary>
+    [RelayCommand]
+    private void HidePreview()
+    {
+        IsPreviewOpen = false;
+        SelectedPreviewContext = null;
+    }
+
+    /// <summary>
+    /// Opens the context file in the editor (placeholder for future integration).
+    /// </summary>
+    [RelayCommand]
+    private void OpenContextFile()
+    {
+        // TODO: Integrate with EditorPanel in future version
+        HidePreview();
+    }
+
+    /// <summary>
+    /// Removes the currently selected preview context and closes the preview.
+    /// </summary>
+    [RelayCommand]
+    private void RemoveSelectedContext()
+    {
+        if (SelectedPreviewContext != null)
+        {
+            RemoveContext(SelectedPreviewContext);
+            HidePreview();
+        }
     }
 
     /// <summary>

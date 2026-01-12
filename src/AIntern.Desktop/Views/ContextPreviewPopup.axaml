@@ -1,0 +1,132 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ae="using:AvaloniaEdit"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:conv="using:AIntern.Desktop.Converters"
+             xmlns:local="using:AIntern.Desktop.Views"
+             x:Class="AIntern.Desktop.Views.ContextPreviewPopup"
+             x:DataType="vm:FileContextViewModel"
+             Focusable="True">
+
+    <UserControl.Resources>
+        <conv:FileIconConverter x:Key="FileIconConverter" />
+    </UserControl.Resources>
+
+    <Border Background="{DynamicResource PopupBackgroundBrush}"
+            BorderBrush="{DynamicResource PopupBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            MinWidth="400"
+            MaxWidth="700"
+            MaxHeight="500"
+            BoxShadow="0 4 16 0 #40000000">
+
+        <Grid RowDefinitions="Auto, *, Auto">
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource PopupHeaderBrush}"
+                    CornerRadius="8,8,0,0"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+                    <!-- File Icon -->
+                    <PathIcon Grid.Column="0"
+                              Data="{Binding IconKey, Converter={StaticResource FileIconConverter}}"
+                              Width="16" Height="16"
+                              Margin="0,0,8,0"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                    <!-- File Name and Path -->
+                    <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Text="{Binding DisplayLabel}"
+                                   FontWeight="SemiBold"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{Binding FilePath}"
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   IsVisible="{Binding FilePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <!-- Language Badge -->
+                    <Border Grid.Column="2"
+                            Background="{DynamicResource BadgeBackgroundBrush}"
+                            CornerRadius="4"
+                            Padding="6,2"
+                            Margin="8,0"
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding Language, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="{Binding Language}"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource BadgeForegroundBrush}" />
+                    </Border>
+
+                    <!-- Close Button -->
+                    <Button Grid.Column="3"
+                            Classes="icon-button"
+                            Command="{Binding $parent[local:ContextPreviewPopup].CloseCommand}"
+                            ToolTip.Tip="Close (Escape)">
+                        <PathIcon Data="{StaticResource CloseIcon}"
+                                  Width="12" Height="12" />
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content Area -->
+            <Border Grid.Row="1" Padding="1">
+                <ae:TextEditor x:Name="PreviewEditor"
+                               IsReadOnly="True"
+                               ShowLineNumbers="True"
+                               FontFamily="Cascadia Code, Consolas, monospace"
+                               FontSize="12"
+                               Background="{DynamicResource EditorBackgroundBrush}"
+                               Foreground="{DynamicResource EditorForegroundBrush}"
+                               HorizontalScrollBarVisibility="Auto"
+                               VerticalScrollBarVisibility="Auto" />
+            </Border>
+
+            <!-- Footer -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource PopupFooterBrush}"
+                    CornerRadius="0,0,8,8"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="*, Auto, Auto, Auto">
+                    <!-- Stats -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                        <TextBlock FontSize="11" Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="{Binding LineCount}" />
+                            <Run Text="lines" />
+                        </TextBlock>
+                        <TextBlock FontSize="11" Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="~" />
+                            <Run Text="{Binding EstimatedTokens}" />
+                            <Run Text="tokens" />
+                        </TextBlock>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <Button Grid.Column="1"
+                            Content="Open in Editor"
+                            Classes="link-button"
+                            FontSize="11"
+                            Command="{Binding $parent[local:ContextPreviewPopup].OpenInEditorCommand}"
+                            IsVisible="{Binding FilePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Margin="0,0,12,0" />
+
+                    <Button Grid.Column="2"
+                            Content="Copy"
+                            Classes="link-button"
+                            FontSize="11"
+                            Command="{Binding $parent[local:ContextPreviewPopup].CopyContentCommand}"
+                            Margin="0,0,12,0" />
+
+                    <Button Grid.Column="3"
+                            Content="Remove"
+                            Classes="link-button danger"
+                            FontSize="11"
+                            Command="{Binding $parent[local:ContextPreviewPopup].RemoveCommand}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
