@@ -43,6 +43,15 @@ public partial class FileExplorerView : UserControl
                 e.Handled = true;
                 break;
 
+            case Key.Escape:
+                // Clear filter if active
+                if (!string.IsNullOrEmpty(ViewModel.SearchFilter))
+                {
+                    ViewModel.ClearFilterCommand.Execute(null);
+                    e.Handled = true;
+                }
+                break;
+
             case Key.Right when item.IsDirectory && !item.IsExpanded:
                 item.IsExpanded = true;
                 e.Handled = true;
@@ -73,6 +82,16 @@ public partial class FileExplorerView : UserControl
                 ViewModel.RefreshCommand.Execute(null);
                 e.Handled = true;
                 break;
+        }
+    }
+
+    private void OnFilterKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && ViewModel != null)
+        {
+            ViewModel.ClearFilterCommand.Execute(null);
+            FileTree.Focus();
+            e.Handled = true;
         }
     }
 
