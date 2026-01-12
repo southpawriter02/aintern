@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using AvaloniaEdit;
-using AvaloniaEdit.Search;
 using AIntern.Core.Models;
 using AIntern.Desktop.Services;
 using AIntern.Desktop.ViewModels;
@@ -115,15 +114,12 @@ public partial class EditorPanel : UserControl
 
     private void OnFindRequested(object? sender, EventArgs e)
     {
-        var searchPanel = SearchPanel.Install(Editor);
-        searchPanel.Open();
+        EditorSearchManager.OpenFind(Editor);
     }
 
     private void OnReplaceRequested(object? sender, EventArgs e)
     {
-        var searchPanel = SearchPanel.Install(Editor);
-        searchPanel.Open();
-        searchPanel.IsReplaceMode = true;
+        EditorSearchManager.OpenReplace(Editor);
     }
 
     private void OnGoToLineRequested(object? sender, int lineNumber)
@@ -139,6 +135,17 @@ public partial class EditorPanel : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+
+        // F3 / Shift+F3 for find next/previous
+        if (e.Key == Key.F3)
+        {
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+                EditorSearchManager.FindPrevious(Editor);
+            else
+                EditorSearchManager.FindNext(Editor);
+            e.Handled = true;
+            return;
+        }
 
         if (e.KeyModifiers == KeyModifiers.Control)
         {
@@ -185,6 +192,7 @@ public partial class EditorPanel : UserControl
 
         _settingsBinding?.Dispose();
         _syntaxService?.RemoveHighlighting(Editor);
+        EditorSearchManager.Uninstall(Editor);
 
         if (_viewModel != null)
         {
