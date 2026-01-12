@@ -125,7 +125,14 @@
                         <PathIcon Grid.Column="0"
                                   Data="{Binding IconKey, Converter={StaticResource FileIconConverter}}"
                                   Width="16" Height="16" Margin="0,0,6,0"
-                                  IsVisible="{Binding !ShowExpander}" />
+                                  IsVisible="{Binding !ShowExpander}">
+                            <PathIcon.Foreground>
+                                <MultiBinding Converter="{x:Static converters:IconColorConverter.Instance}">
+                                    <Binding Path="IconKey" />
+                                    <Binding Path="IsDirectory" />
+                                </MultiBinding>
+                            </PathIcon.Foreground>
+                        </PathIcon>
 
                         <!-- Loading spinner -->
                         <ProgressBar Grid.Column="0" IsIndeterminate="True"
