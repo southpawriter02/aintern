@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIntern.Data.Tests", "tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIntern.Services.Tests", "tests\AIntern.Services.Tests\AIntern.Services.Tests.csproj", "{9A870EED-9FAD-4891-AD0B-06E5FF767143}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIntern.Desktop.Tests", "tests\AIntern.Desktop.Tests\AIntern.Desktop.Tests.csproj", "{237160C4-3979-4611-B083-454C17C2CF08}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,6 +117,18 @@ Global
 		{9A870EED-9FAD-4891-AD0B-06E5FF767143}.Release|x64.Build.0 = Release|Any CPU
 		{9A870EED-9FAD-4891-AD0B-06E5FF767143}.Release|x86.ActiveCfg = Release|Any CPU
 		{9A870EED-9FAD-4891-AD0B-06E5FF767143}.Release|x86.Build.0 = Release|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Debug|x64.Build.0 = Debug|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Debug|x86.Build.0 = Debug|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Release|x64.ActiveCfg = Release|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Release|x64.Build.0 = Release|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Release|x86.ActiveCfg = Release|Any CPU
+		{237160C4-3979-4611-B083-454C17C2CF08}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,5 +141,6 @@ Global
 		{347ABCB8-3F45-425C-B65E-7EA87323EAF3} = {35414E57-36C1-4004-AA10-68CF3D7B8197}
 		{4C61F801-D01F-449F-B948-BAA91A43622A} = {35414E57-36C1-4004-AA10-68CF3D7B8197}
 		{9A870EED-9FAD-4891-AD0B-06E5FF767143} = {35414E57-36C1-4004-AA10-68CF3D7B8197}
+		{237160C4-3979-4611-B083-454C17C2CF08} = {35414E57-36C1-4004-AA10-68CF3D7B8197}
 	EndGlobalSection
 EndGlobal
