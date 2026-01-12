@@ -42,4 +42,7 @@ public sealed class AppSettings
     public string EditorFontFamily { get; set; } = "Cascadia Code, Consolas, monospace";
     public int EditorFontSize { get; set; } = 14;
     public int RulerColumn { get; set; } = 0;
+
+    // Context Limits Settings (v0.3.4)
+    public ContextLimitsConfig ContextLimits { get; set; } = new();
 }
