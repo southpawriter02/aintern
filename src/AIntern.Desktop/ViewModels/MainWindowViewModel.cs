@@ -22,6 +22,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     public ConversationListViewModel ConversationListViewModel { get; }
     public InferenceSettingsViewModel InferenceSettingsViewModel { get; }
     public FileExplorerViewModel FileExplorer { get; }
+    public EditorPanelViewModel EditorPanel { get; }
 
     [ObservableProperty]
     private string _statusMessage = "No model loaded";
@@ -41,6 +42,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         ConversationListViewModel conversationListViewModel,
         InferenceSettingsViewModel inferenceSettingsViewModel,
         FileExplorerViewModel fileExplorer,
+        EditorPanelViewModel editorPanel,
         ILlmService llmService,
         ISettingsService settingsService,
         IConversationService conversationService,
@@ -53,6 +55,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         ConversationListViewModel = conversationListViewModel;
         InferenceSettingsViewModel = inferenceSettingsViewModel;
         FileExplorer = fileExplorer;
+        EditorPanel = editorPanel;
         _llmService = llmService;
         _settingsService = settingsService;
         _conversationService = conversationService;
@@ -97,11 +100,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         TokenInfo = $"Tokens: {e.TokensGenerated} ({e.TokensPerSecond:F1} tok/s)";
     }
 
-    private void OnFileOpenRequested(object? sender, FileOpenRequestedEventArgs e)
+    private async void OnFileOpenRequested(object? sender, FileOpenRequestedEventArgs e)
     {
-        // Forward to editor panel (v0.3.3)
-        // EditorPanel?.OpenFileCommand.Execute(e.FilePath);
-        System.Diagnostics.Debug.WriteLine($"Open file requested: {e.FilePath}");
+        // Forward to editor panel
+        await EditorPanel.OpenFileAsync(e.FilePath);
     }
 
     private void OnFileAttachRequested(object? sender, FileAttachRequestedEventArgs e)

@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AIntern.Desktop.Views.Dialogs.GoToLineDialog"
+        Title="Go to Line"
+        Width="300"
+        Height="140"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        ShowInTaskbar="False"
+        ExtendClientAreaToDecorationsHint="False">
+
+    <Grid Margin="16" RowDefinitions="Auto, Auto, Auto">
+        <!-- Label -->
+        <TextBlock Grid.Row="0"
+                   x:Name="PromptText"
+                   Text="Go to line (1 - 100):"
+                   Margin="0,0,0,8" />
+
+        <!-- Input -->
+        <TextBox Grid.Row="1"
+                 x:Name="LineNumberInput"
+                 Watermark="Line number"
+                 Margin="0,0,0,16" />
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8">
+            <Button Content="Cancel"
+                    Click="OnCancelClick"
+                    IsCancel="True" />
+            <Button Content="Go"
+                    Classes="primary"
+                    Click="OnGoClick"
+                    IsDefault="True" />
+        </StackPanel>
+    </Grid>
+</Window>

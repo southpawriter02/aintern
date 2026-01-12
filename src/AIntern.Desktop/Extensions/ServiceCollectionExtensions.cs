@@ -37,6 +37,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFileSystemService, FileSystemService>();
         services.AddSingleton<IWorkspaceService, WorkspaceService>();
 
+        // Dialog service (v0.3.3g)
+        services.AddSingleton<IDialogService, Services.DialogService>();
+
         // ViewModels (transient - created as needed)
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<ChatViewModel>();
@@ -49,6 +52,9 @@ public static class ServiceCollectionExtensions
 
         // File Explorer ViewModel (singleton - persists across navigation)
         services.AddSingleton<FileExplorerViewModel>();
+
+        // Editor Panel ViewModel (singleton - persists across navigation)
+        services.AddSingleton<EditorPanelViewModel>();
 
         return services;
     }
