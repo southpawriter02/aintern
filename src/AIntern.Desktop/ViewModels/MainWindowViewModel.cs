@@ -14,12 +14,14 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly IConversationService _conversationService;
     private readonly ISearchService _searchService;
     private readonly IExportService _exportService;
+    private readonly IWorkspaceService _workspaceService;
     private bool _disposed;
 
     public ChatViewModel ChatViewModel { get; }
     public ModelSelectorViewModel ModelSelectorViewModel { get; }
     public ConversationListViewModel ConversationListViewModel { get; }
     public InferenceSettingsViewModel InferenceSettingsViewModel { get; }
+    public FileExplorerViewModel FileExplorer { get; }
 
     [ObservableProperty]
     private string _statusMessage = "No model loaded";
@@ -30,30 +32,47 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private bool _isModelLoaded;
 
+    [ObservableProperty]
+    private bool _hasOpenWorkspace;
+
     public MainWindowViewModel(
         ChatViewModel chatViewModel,
         ModelSelectorViewModel modelSelectorViewModel,
         ConversationListViewModel conversationListViewModel,
         InferenceSettingsViewModel inferenceSettingsViewModel,
+        FileExplorerViewModel fileExplorer,
         ILlmService llmService,
         ISettingsService settingsService,
         IConversationService conversationService,
         ISearchService searchService,
-        IExportService exportService)
+        IExportService exportService,
+        IWorkspaceService workspaceService)
     {
         ChatViewModel = chatViewModel;
         ModelSelectorViewModel = modelSelectorViewModel;
         ConversationListViewModel = conversationListViewModel;
         InferenceSettingsViewModel = inferenceSettingsViewModel;
+        FileExplorer = fileExplorer;
         _llmService = llmService;
         _settingsService = settingsService;
         _conversationService = conversationService;
         _searchService = searchService;
         _exportService = exportService;
+        _workspaceService = workspaceService;
 
         // Subscribe to service events
         _llmService.ModelStateChanged += OnModelStateChanged;
         _llmService.InferenceProgress += OnInferenceProgress;
+
+        // Subscribe to file explorer events
+        FileExplorer.FileOpenRequested += OnFileOpenRequested;
+        FileExplorer.FileAttachRequested += OnFileAttachRequested;
+
+        // Subscribe to workspace changes
+        _workspaceService.WorkspaceChanged += OnWorkspaceChanged;
+
+        // Initialize HasOpenWorkspace
+        HasOpenWorkspace = _workspaceService.CurrentWorkspace != null;
 
         // Load settings and conversations on startup
         _ = InitializeAsync();
@@ -76,6 +95,25 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private void OnInferenceProgress(object? sender, InferenceProgressEventArgs e)
     {
         TokenInfo = $"Tokens: {e.TokensGenerated} ({e.TokensPerSecond:F1} tok/s)";
+    }
+
+    private void OnFileOpenRequested(object? sender, FileOpenRequestedEventArgs e)
+    {
+        // Forward to editor panel (v0.3.3)
+        // EditorPanel?.OpenFileCommand.Execute(e.FilePath);
+        System.Diagnostics.Debug.WriteLine($"Open file requested: {e.FilePath}");
+    }
+
+    private void OnFileAttachRequested(object? sender, FileAttachRequestedEventArgs e)
+    {
+        // Forward to chat view model (v0.3.4)
+        // ChatViewModel?.AttachFileCommand.Execute(e.FilePath);
+        System.Diagnostics.Debug.WriteLine($"Attach file requested: {e.FilePath}");
+    }
+
+    private void OnWorkspaceChanged(object? sender, WorkspaceChangedEventArgs e)
+    {
+        HasOpenWorkspace = e.CurrentWorkspace != null;
     }
 
     [RelayCommand]
@@ -143,9 +181,13 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
 
         _llmService.ModelStateChanged -= OnModelStateChanged;
         _llmService.InferenceProgress -= OnInferenceProgress;
+        FileExplorer.FileOpenRequested -= OnFileOpenRequested;
+        FileExplorer.FileAttachRequested -= OnFileAttachRequested;
+        _workspaceService.WorkspaceChanged -= OnWorkspaceChanged;
 
         ConversationListViewModel.Dispose();
         InferenceSettingsViewModel.Dispose();
+        FileExplorer.Dispose();
 
         if (_conversationService is IDisposable disposable)
         {
@@ -155,3 +197,4 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
         _disposed = true;
     }
 }
+

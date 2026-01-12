@@ -33,6 +33,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IExportService, ExportService>();
         services.AddSingleton<IMigrationService, MigrationService>();
 
+        // Workspace services (v0.3.x)
+        services.AddSingleton<IFileSystemService, FileSystemService>();
+        services.AddSingleton<IWorkspaceService, WorkspaceService>();
+
         // ViewModels (transient - created as needed)
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<ChatViewModel>();
@@ -42,6 +46,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<SystemPromptEditorViewModel>();
         services.AddTransient<SystemPromptSelectorViewModel>();
         services.AddTransient<SearchViewModel>();
+
+        // File Explorer ViewModel (singleton - persists across navigation)
+        services.AddSingleton<FileExplorerViewModel>();
 
         return services;
     }
@@ -56,3 +63,4 @@ public static class ServiceCollectionExtensions
         await initializer.InitializeAsync(ct);
     }
 }
+

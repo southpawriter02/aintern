@@ -76,6 +76,14 @@
     <SolidColorBrush x:Key="HoverBackground" Color="#2A2D2E" />
     <SolidColorBrush x:Key="SelectedBackground" Color="#094771" />
 
+    <!-- TreeView Colors (Catppuccin Mocha) -->
+    <SolidColorBrush x:Key="TreeViewItemSelectedBackground" Color="#45475A" />
+    <SolidColorBrush x:Key="TreeViewItemHoverBackground" Color="#313244" />
+
+    <!-- Error background for file explorer -->
+    <SolidColorBrush x:Key="SystemErrorBackgroundBrush" Color="#5A1D1D" />
+    <SolidColorBrush x:Key="SystemErrorTextBrush" Color="#F48771" />
+
     <!-- Warning Colors -->
     <SolidColorBrush x:Key="WarningBackground" Color="#4D3D00" />
     <SolidColorBrush x:Key="WarningForeground" Color="#FFD700" />

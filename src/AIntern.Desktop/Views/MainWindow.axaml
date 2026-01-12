@@ -39,6 +39,11 @@
                     <views:InferenceSettingsPanel DockPanel.Dock="Bottom"
                                                   DataContext="{Binding InferenceSettingsViewModel}" />
 
+                    <!-- File Explorer -->
+                    <views:FileExplorerView DockPanel.Dock="Top"
+                                           DataContext="{Binding FileExplorer}"
+                                           MaxHeight="300" />
+
                     <!-- Conversation List -->
                     <views:ConversationListView DataContext="{Binding ConversationListViewModel}" />
                 </DockPanel>
