@@ -62,6 +62,14 @@ public sealed class SystemPromptConfiguration : IEntityTypeConfiguration<SystemP
     /// </summary>
     public const string DefaultCategory = "General";
 
+    /// <summary>
+    /// Maximum length for the TagsJson column.
+    /// </summary>
+    /// <remarks>
+    /// Added in v0.2.4a to support searchable tags.
+    /// </remarks>
+    public const int TagsJsonMaxLength = 1000;
+
     #endregion
 
     #region Index Names
@@ -140,6 +148,11 @@ public sealed class SystemPromptConfiguration : IEntityTypeConfiguration<SystemP
         builder.Property(sp => sp.Content)
             .IsRequired()
             .HasComment("The actual system prompt text sent to the model.");
+
+        // TagsJson column - optional JSON array of tags (added in v0.2.4a)
+        builder.Property(sp => sp.TagsJson)
+            .HasMaxLength(TagsJsonMaxLength)
+            .HasComment("JSON-serialized array of searchable tags, e.g., [\"coding\", \"helpful\"].");
 
         // Category column
         builder.Property(sp => sp.Category)

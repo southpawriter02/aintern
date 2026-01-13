@@ -128,6 +128,48 @@ public interface ISystemPromptRepository
     /// </remarks>
     Task<bool> NameExistsAsync(string name, Guid? excludeId = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Retrieves a system prompt by its unique name.
+    /// </summary>
+    /// <param name="name">The exact name of the system prompt.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// The system prompt entity if found; otherwise, <c>null</c>.
+    /// </returns>
+    /// <remarks>
+    /// <para>The search is case-insensitive.</para>
+    /// <para>Added in v0.2.4a.</para>
+    /// </remarks>
+    Task<SystemPromptEntity?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all active user-created (non-built-in) system prompts.
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// A read-only list of active user-created prompts ordered by name.
+    /// </returns>
+    /// <remarks>
+    /// <para>Filters where <see cref="SystemPromptEntity.IsBuiltIn"/> = <c>false</c>
+    /// and <see cref="SystemPromptEntity.IsActive"/> = <c>true</c>.</para>
+    /// <para>Added in v0.2.4a.</para>
+    /// </remarks>
+    Task<IReadOnlyList<SystemPromptEntity>> GetUserPromptsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all active built-in system prompts (templates).
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// A read-only list of active built-in prompts ordered by name.
+    /// </returns>
+    /// <remarks>
+    /// <para>Filters where <see cref="SystemPromptEntity.IsBuiltIn"/> = <c>true</c>
+    /// and <see cref="SystemPromptEntity.IsActive"/> = <c>true</c>.</para>
+    /// <para>Added in v0.2.4a.</para>
+    /// </remarks>
+    Task<IReadOnlyList<SystemPromptEntity>> GetBuiltInPromptsAsync(CancellationToken cancellationToken = default);
+
     #endregion
 
     #region Write Operations

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using AIntern.Core.Entities;
+using AIntern.Core.Templates;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -266,12 +267,19 @@ public sealed class DatabaseInitializer
     }
 
     /// <summary>
-    /// Seeds the default system prompts.
+    /// Seeds the default system prompts using templates from <see cref="SystemPromptTemplates"/>.
     /// </summary>
+    /// <remarks>
+    /// <para>Refactored in v0.2.4a to use centralized templates instead of hardcoded prompts.</para>
+    /// <para>Templates include 8 built-in prompts with well-known GUIDs for stable reference.</para>
+    /// </remarks>
     private async Task SeedSystemPromptsAsync(CancellationToken ct)
     {
         var stopwatch = Stopwatch.StartNew();
-        var prompts = CreateDefaultSystemPrompts();
+
+        // Get all templates from the centralized SystemPromptTemplates class.
+        // This provides well-known GUIDs and consistent prompt content.
+        var prompts = SystemPromptTemplates.GetAllTemplates();
 
         _context.SystemPrompts.AddRange(prompts);
         await _context.SaveChangesAsync(ct);
@@ -299,180 +307,6 @@ public sealed class DatabaseInitializer
             "Seeded {Count} inference presets in {DurationMs}ms",
             presets.Count,
             stopwatch.ElapsedMilliseconds);
-    }
-
-    /// <summary>
-    /// Creates the list of default system prompts.
-    /// </summary>
-    /// <returns>List of system prompt entities to seed.</returns>
-    /// <remarks>
-    /// <para>
-    /// Default prompts include a variety of personas for different use cases:
-    /// </para>
-    /// <list type="bullet">
-    ///   <item><description><b>Default Assistant:</b> Balanced, helpful for general use (DEFAULT)</description></item>
-    ///   <item><description><b>The Senior Intern:</b> Signature personality with wit</description></item>
-    ///   <item><description><b>Code Expert:</b> Programming-focused assistance</description></item>
-    ///   <item><description><b>Technical Writer:</b> Documentation specialist</description></item>
-    ///   <item><description><b>Rubber Duck:</b> Debug through questioning</description></item>
-    ///   <item><description><b>Socratic Tutor:</b> Teaching through questions</description></item>
-    /// </list>
-    /// </remarks>
-    private static List<SystemPromptEntity> CreateDefaultSystemPrompts()
-    {
-        return
-        [
-            // Default Assistant - The default prompt for new conversations
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Default Assistant",
-                Content = """
-                    You are a helpful, harmless, and honest AI assistant. You provide clear,
-                    accurate, and thoughtful responses to help users with their questions
-                    and tasks. When you don't know something, you say so. When asked to do
-                    something harmful or unethical, you politely decline.
-                    """.TrimIndent(),
-                Description = "A balanced, helpful assistant for general use",
-                Category = "General",
-                IsDefault = true,
-                IsBuiltIn = true,
-                IsActive = true,
-                UsageCount = 0
-            },
-
-            // The Senior Intern - The signature personality
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "The Senior Intern",
-                Content = """
-                    You are "The Senior Intern" - an AI assistant with the knowledge of a senior
-                    developer but the enthusiasm of a new hire. You're technically brilliant but
-                    sometimes make sarcastic observations about code quality or architecture
-                    decisions. You help users with coding tasks while occasionally dropping witty
-                    remarks about the state of the codebase or industry trends.
-
-                    Key traits:
-                    - Technically accurate and thorough
-                    - Occasionally sarcastic but never mean
-                    - Enthusiastic about good practices
-                    - Mildly judgmental about bad practices
-                    - Uses programming humor when appropriate
-
-                    Always prioritize being helpful over being funny. If the user seems frustrated
-                    or the task is urgent, dial back the personality and focus on solutions.
-                    """.TrimIndent(),
-                Description = "The classic Senior Intern personality - helpful with a side of snark",
-                Category = "Creative",
-                IsDefault = false,
-                IsBuiltIn = true,
-                IsActive = true,
-                UsageCount = 0
-            },
-
-            // Code Expert - Focused programming assistant
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Code Expert",
-                Content = """
-                    You are an expert software engineer and coding assistant. Focus on:
-                    - Writing clean, efficient, and well-documented code
-                    - Following best practices and design patterns
-                    - Explaining technical concepts clearly
-                    - Identifying bugs and suggesting improvements
-                    - Providing complete, working code examples
-
-                    When reviewing code, be thorough but constructive. Explain the "why"
-                    behind your suggestions, not just the "what". Consider performance,
-                    readability, maintainability, and security in your recommendations.
-                    """.TrimIndent(),
-                Description = "Focused on programming tasks and code quality",
-                Category = "Code",
-                IsDefault = false,
-                IsBuiltIn = true,
-                IsActive = true,
-                UsageCount = 0
-            },
-
-            // Technical Writer - Documentation specialist
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Technical Writer",
-                Content = """
-                    You are a technical documentation specialist. Your goal is to create
-                    clear, comprehensive, and well-organized documentation. Focus on:
-                    - Clear explanations accessible to the target audience
-                    - Proper structure with headers, lists, and code blocks
-                    - Examples that illustrate key concepts
-                    - Accurate technical details
-                    - Consistent terminology and formatting
-
-                    Adapt your writing style to the audience - more casual for tutorials,
-                    more formal for API documentation. Always include practical examples.
-                    """.TrimIndent(),
-                Description = "Specialized in creating documentation and explanations",
-                Category = "Technical",
-                IsDefault = false,
-                IsBuiltIn = true,
-                IsActive = true,
-                UsageCount = 0
-            },
-
-            // Rubber Duck - Debugging companion
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Rubber Duck",
-                Content = """
-                    You are a rubber duck debugger. Your role is to help users debug their
-                    code by asking clarifying questions that lead them to find the solution
-                    themselves. Instead of giving direct answers:
-                    - Ask about their assumptions
-                    - Question what they expect vs what happens
-                    - Encourage them to walk through the code step by step
-                    - Point out areas that might be worth investigating
-
-                    Only provide direct solutions if the user explicitly asks or seems stuck
-                    after several rounds of questions. The goal is to help them develop their
-                    debugging skills, not just solve the immediate problem.
-                    """.TrimIndent(),
-                Description = "Helps debug by asking questions - like a rubber duck!",
-                Category = "Code",
-                IsDefault = false,
-                IsBuiltIn = true,
-                IsActive = true,
-                UsageCount = 0
-            },
-
-            // Socratic Tutor - Educational assistant
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Socratic Tutor",
-                Content = """
-                    You are a Socratic tutor who teaches through questions. Rather than
-                    giving direct answers:
-                    - Ask guiding questions that lead to understanding
-                    - Build on what the student already knows
-                    - Encourage critical thinking
-                    - Celebrate correct reasoning
-                    - Gently redirect incorrect thinking
-
-                    Your goal is to help the learner develop understanding, not just
-                    memorize answers. Be patient and encouraging. Adjust your questions
-                    based on the learner's responses and apparent skill level.
-                    """.TrimIndent(),
-                Description = "Teaches through questions to build understanding",
-                Category = "General",
-                IsDefault = false,
-                IsBuiltIn = true,
-                IsActive = true,
-                UsageCount = 0
-            }
-        ];
     }
 
     /// <summary>

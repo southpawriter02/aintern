@@ -312,4 +312,195 @@ public class SystemPromptRepositoryTests : IDisposable
     }
 
     #endregion
+
+    #region v0.2.4a Methods Tests
+
+    /// <summary>
+    /// Verifies GetByNameAsync returns prompt when name exists.
+    /// </summary>
+    [Fact]
+    public async Task GetByNameAsync_ReturnsPrompt_WhenNameExists()
+    {
+        // Arrange
+        await _repository.CreateAsync(new SystemPromptEntity
+        {
+            Name = "Unique Prompt",
+            Content = "Test content"
+        });
+
+        // Act
+        var result = await _repository.GetByNameAsync("Unique Prompt");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Unique Prompt", result.Name);
+    }
+
+    /// <summary>
+    /// Verifies GetByNameAsync returns null when name does not exist.
+    /// </summary>
+    [Fact]
+    public async Task GetByNameAsync_ReturnsNull_WhenNameNotFound()
+    {
+        // Act
+        var result = await _repository.GetByNameAsync("Nonexistent Prompt");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    /// <summary>
+    /// Verifies GetByNameAsync is case-insensitive.
+    /// </summary>
+    [Fact]
+    public async Task GetByNameAsync_IsCaseInsensitive()
+    {
+        // Arrange
+        await _repository.CreateAsync(new SystemPromptEntity
+        {
+            Name = "Test Prompt",
+            Content = "Test content"
+        });
+
+        // Act
+        var result = await _repository.GetByNameAsync("test prompt");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Test Prompt", result.Name);
+    }
+
+    /// <summary>
+    /// Verifies GetUserPromptsAsync excludes built-in prompts.
+    /// </summary>
+    [Fact]
+    public async Task GetUserPromptsAsync_ExcludesBuiltIn()
+    {
+        // Arrange
+        _context.SystemPrompts.Add(new SystemPromptEntity
+        {
+            Id = Guid.NewGuid(),
+            Name = "Built-In Prompt",
+            Content = "Built-in content",
+            IsBuiltIn = true,
+            IsActive = true
+        });
+
+        await _repository.CreateAsync(new SystemPromptEntity
+        {
+            Name = "User Prompt",
+            Content = "User content",
+            IsBuiltIn = false
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetUserPromptsAsync();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("User Prompt", result[0].Name);
+        Assert.False(result[0].IsBuiltIn);
+    }
+
+    /// <summary>
+    /// Verifies GetUserPromptsAsync excludes inactive prompts.
+    /// </summary>
+    [Fact]
+    public async Task GetUserPromptsAsync_ExcludesInactive()
+    {
+        // Arrange
+        var active = await _repository.CreateAsync(new SystemPromptEntity
+        {
+            Name = "Active User Prompt",
+            Content = "Active content"
+        });
+
+        var inactive = await _repository.CreateAsync(new SystemPromptEntity
+        {
+            Name = "Inactive User Prompt",
+            Content = "Inactive content"
+        });
+
+        await _repository.DeleteAsync(inactive.Id);  // Soft delete
+
+        // Act
+        var result = await _repository.GetUserPromptsAsync();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Active User Prompt", result[0].Name);
+    }
+
+    /// <summary>
+    /// Verifies GetBuiltInPromptsAsync only returns built-in prompts.
+    /// </summary>
+    [Fact]
+    public async Task GetBuiltInPromptsAsync_OnlyReturnsBuiltIn()
+    {
+        // Arrange
+        _context.SystemPrompts.Add(new SystemPromptEntity
+        {
+            Id = Guid.NewGuid(),
+            Name = "Built-In Prompt",
+            Content = "Built-in content",
+            IsBuiltIn = true,
+            IsActive = true
+        });
+
+        await _repository.CreateAsync(new SystemPromptEntity
+        {
+            Name = "User Prompt",
+            Content = "User content",
+            IsBuiltIn = false
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetBuiltInPromptsAsync();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Built-In Prompt", result[0].Name);
+        Assert.True(result[0].IsBuiltIn);
+    }
+
+    /// <summary>
+    /// Verifies GetBuiltInPromptsAsync excludes inactive built-in prompts.
+    /// </summary>
+    [Fact]
+    public async Task GetBuiltInPromptsAsync_ExcludesInactive()
+    {
+        // Arrange
+        _context.SystemPrompts.Add(new SystemPromptEntity
+        {
+            Id = Guid.NewGuid(),
+            Name = "Active Built-In",
+            Content = "Content",
+            IsBuiltIn = true,
+            IsActive = true
+        });
+
+        _context.SystemPrompts.Add(new SystemPromptEntity
+        {
+            Id = Guid.NewGuid(),
+            Name = "Inactive Built-In",
+            Content = "Content",
+            IsBuiltIn = true,
+            IsActive = false
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetBuiltInPromptsAsync();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Active Built-In", result[0].Name);
+    }
+
+    #endregion
 }

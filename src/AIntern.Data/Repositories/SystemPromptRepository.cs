@@ -200,6 +200,71 @@ public sealed class SystemPromptRepository : ISystemPromptRepository
         return exists;
     }
 
+    /// <inheritdoc />
+    public async Task<SystemPromptEntity?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("[ENTER] GetByNameAsync - Name: '{Name}'", name);
+
+        // Case-insensitive name lookup using EF.Functions.Like for SQLite compatibility.
+        // This is more reliable than string.Equals with StringComparison across different providers.
+        var prompt = await _context.SystemPrompts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Name.ToLower() == name.ToLower(), cancellationToken);
+
+        if (prompt == null)
+        {
+            _logger.LogDebug("[EXIT] GetByNameAsync - Prompt not found: '{Name}'", name);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "[EXIT] GetByNameAsync - Found prompt: {PromptId} ({Name})",
+                prompt.Id, prompt.Name);
+        }
+
+        return prompt;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SystemPromptEntity>> GetUserPromptsAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("[ENTER] GetUserPromptsAsync");
+
+        // Filter for user-created prompts: IsBuiltIn = false AND IsActive = true.
+        // This excludes both built-in templates and soft-deleted user prompts.
+        var prompts = await _context.SystemPrompts
+            .AsNoTracking()
+            .Where(p => !p.IsBuiltIn && p.IsActive)
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken);
+
+        _logger.LogDebug(
+            "[EXIT] GetUserPromptsAsync - Retrieved {Count} user prompts",
+            prompts.Count);
+
+        return prompts;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<SystemPromptEntity>> GetBuiltInPromptsAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("[ENTER] GetBuiltInPromptsAsync");
+
+        // Filter for built-in templates: IsBuiltIn = true AND IsActive = true.
+        // Built-in prompts can be soft-deleted (hidden) by users.
+        var prompts = await _context.SystemPrompts
+            .AsNoTracking()
+            .Where(p => p.IsBuiltIn && p.IsActive)
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken);
+
+        _logger.LogDebug(
+            "[EXIT] GetBuiltInPromptsAsync - Retrieved {Count} built-in prompts",
+            prompts.Count);
+
+        return prompts;
+    }
+
     #endregion
 
     #region Write Operations

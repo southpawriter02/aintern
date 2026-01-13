@@ -86,6 +86,18 @@ public sealed class SystemPromptEntity
     /// </remarks>
     public string Content { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Gets or sets the tags as a JSON-serialized array.
+    /// </summary>
+    /// <remarks>
+    /// <para>Tags provide searchable keywords for finding prompts.</para>
+    /// <para>Stored as a JSON array, e.g., <c>["coding", "helpful", "technical"]</c>.</para>
+    /// <para>Maximum length: 1000 characters (enforced by EF Core config).</para>
+    /// <para>Use <see cref="Models.SystemPrompt.Tags"/> for the deserialized list.</para>
+    /// <para>Added in v0.2.4a.</para>
+    /// </remarks>
+    public string? TagsJson { get; set; }
+
     #endregion
 
     #region Organization
