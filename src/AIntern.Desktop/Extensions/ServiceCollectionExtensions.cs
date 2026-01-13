@@ -41,6 +41,8 @@ public static class ServiceCollectionExtensions
     /// <item><see cref="ISettingsService"/> - Persistent application settings</item>
     /// <item><see cref="ILlmService"/> - LLM model management and inference</item>
     /// <item><see cref="IConversationService"/> - Conversation state management</item>
+    /// <item><see cref="IInferenceSettingsService"/> - Inference parameters and presets</item>
+    /// <item><see cref="ISystemPromptService"/> - System prompt management (v0.2.4b)</item>
     /// </list>
     /// </para>
     /// <para>
@@ -113,6 +115,20 @@ public static class ServiceCollectionExtensions
                 scope.ServiceProvider.GetRequiredService<IInferencePresetRepository>(),
                 sp.GetRequiredService<ISettingsService>(),
                 sp.GetRequiredService<ILogger<InferenceSettingsService>>());
+        });
+
+        // System Prompt: manages system prompts, templates, and current selection.
+        // Uses a factory to resolve scoped repository dependencies.
+        // The service maintains prompt selection state and fires events on changes.
+        // Added in v0.2.4b.
+        services.AddSingleton<ISystemPromptService>(sp =>
+        {
+            // Create a scope to resolve scoped services (repositories).
+            var scope = sp.CreateScope();
+            return new SystemPromptService(
+                scope.ServiceProvider.GetRequiredService<ISystemPromptRepository>(),
+                sp.GetRequiredService<ISettingsService>(),
+                sp.GetRequiredService<ILogger<SystemPromptService>>());
         });
 
         // LLM: manages model loading, inference, and resource cleanup.

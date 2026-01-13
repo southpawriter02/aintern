@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.4b] - 2026-01-13
+
+System prompt service layer with CRUD operations and event notifications. See [detailed notes](docs/changelog/v0.2.4b.md).
+
+### Added
+
+- ISystemPromptService: Service interface for system prompt management
+  - CurrentPrompt property for the selected prompt
+  - Query methods: GetAllPromptsAsync, GetUserPromptsAsync, GetTemplatesAsync, GetByIdAsync, GetDefaultPromptAsync, SearchPromptsAsync
+  - Mutation methods: CreatePromptAsync, CreateFromTemplateAsync, UpdatePromptAsync, DeletePromptAsync, DuplicatePromptAsync, SetAsDefaultAsync, SetCurrentPromptAsync
+  - Utility: FormatPromptForContext, InitializeAsync
+  - Events: PromptListChanged, CurrentPromptChanged
+- SystemPromptService: Full implementation (~750 lines)
+  - Thread-safe with SemaphoreSlim (same pattern as InferenceSettingsService)
+  - Exhaustive logging with [ENTER]/[INFO]/[SKIP]/[EXIT]/[EVENT] markers
+  - Auto-increment duplicate names for CreateFromTemplateAsync/DuplicatePromptAsync
+  - Automatic fallback to default when current prompt is deleted
+- PromptListChangeType: Enum for list change categorization (PromptCreated, PromptUpdated, PromptDeleted, DefaultChanged, ListRefreshed)
+- PromptListChangedEventArgs: Event args with ChangeType, AffectedPromptId, AffectedPromptName
+- CurrentPromptChangedEventArgs: Event args with NewPrompt, PreviousPrompt
+
+### Changed
+
+- AppSettings: Added CurrentSystemPromptId property for persisting prompt selection
+- ServiceCollectionExtensions: Added ISystemPromptService DI registration as singleton with scoped repository factory
+
+## [0.2.4a] - 2026-01-13
+
+System prompt domain model and repository implementation. See [detailed notes](docs/changelog/v0.2.4a.md).
+
+### Added
+
+- SystemPrompt: Rich domain model for system prompts
+  - 12 properties with validation constants (NameMaxLength, ContentMaxLength, etc.)
+  - Validate() method returning ValidationResult with all constraint violations
+  - Duplicate(newName?) for creating user copies of templates
+  - Computed properties: CharacterCount, EstimatedTokenCount (~4 chars/token)
+  - FromEntity()/ToEntity() mapping methods for EF Core integration
+- SystemPromptTemplates: 8 built-in prompt templates with well-known GUIDs
+  - Default Assistant (General, IsDefault=true)
+  - The Senior Intern (Creative, snarky coding assistant)
+  - Code Expert, Rubber Duck, Code Reviewer, Debugger (Code category)
+  - Technical Writer, Socratic Tutor (Technical/General)
+- ISystemPromptRepository: Complete repository interface (16 methods)
+  - Read: GetByIdAsync, GetDefaultAsync, GetAllActiveAsync, GetByCategoryAsync, GetCategoriesAsync, SearchAsync, NameExistsAsync, GetByNameAsync, GetUserPromptsAsync, GetBuiltInPromptsAsync
+  - Write: CreateAsync, UpdateAsync, DeleteAsync (soft), HardDeleteAsync (with built-in protection)
+  - Actions: SetAsDefaultAsync (atomic), IncrementUsageCountAsync, RestoreAsync
+- SystemPromptRepository: Full implementation with soft-delete and built-in protection
+- SystemPromptConfiguration: EF Core configuration with 6 indexes
+
+### Changed
+
+- SystemPromptEntity: Added TagsJson (JSON-serialized tags array) and Conversations navigation property
+- ValidationResult: Enhanced with FirstError property and GetAllErrors(separator) method
+
 ## [0.2.3e] - 2026-01-13
 
 Settings panel UI with preset selector and MainWindow integration. See [detailed notes](docs/changelog/v0.2.3e.md).

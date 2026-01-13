@@ -74,6 +74,27 @@ public sealed class AppSettings
     /// </remarks>
     public Guid? ActivePresetId { get; set; }
 
+    /// <summary>
+    /// Gets or sets the ID of the currently selected system prompt.
+    /// </summary>
+    /// <value>
+    /// The GUID of the selected system prompt, or <c>null</c> if using the default.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// Persisted to settings.json to restore the user's last-selected prompt on startup.
+    /// Set by <see cref="Interfaces.ISystemPromptService.SetCurrentPromptAsync"/> when
+    /// a prompt is selected.
+    /// </para>
+    /// <para>
+    /// If this is null or the referenced prompt no longer exists,
+    /// <see cref="Interfaces.ISystemPromptService.InitializeAsync"/> falls back
+    /// to the default system prompt.
+    /// </para>
+    /// <para>Added in v0.2.4b.</para>
+    /// </remarks>
+    public Guid? CurrentSystemPromptId { get; set; }
+
     #endregion
 
     #region UI Settings
