@@ -1,0 +1,445 @@
+<!--
+    ConversationListView.axaml
+    AIntern.Desktop - Conversation List UI (v0.2.2c)
+
+    Visual sidebar component for browsing, searching, and managing conversations.
+    Implements date-based grouping with collapsible sections, inline renaming,
+    context menus, and keyboard navigation.
+
+    Structure:
+    ├── Header Section
+    │   ├── "Conversations" title
+    │   └── [+] New Conversation button
+    ├── Search Section
+    │   ├── Search icon
+    │   ├── Search TextBox
+    │   └── Clear button (when has text)
+    └── Content Panel (mutually exclusive states)
+        ├── Loading State (ProgressRing + text)
+        ├── Empty State (ChatIcon + message + button)
+        └── Grouped List (ItemsControl with Expanders)
+            └── ConversationItem DataTemplate
+                ├── Pin indicator (when IsPinned)
+                ├── Title / EditingTitle TextBox
+                ├── RelativeTime
+                ├── Preview text
+                ├── MessageCountText
+                └── Context menu
+
+    ViewModel: ConversationListViewModel
+    Commands: CreateNewConversation, SelectConversation, DeleteConversation,
+              RenameConversation, ConfirmRename, CancelRename, ArchiveConversation,
+              TogglePin, ClearSearch, LoadConversations
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:converters="using:AIntern.Desktop.Converters"
+             mc:Ignorable="d"
+             d:DesignWidth="280"
+             d:DesignHeight="600"
+             x:Class="AIntern.Desktop.Views.ConversationListView"
+             x:DataType="vm:ConversationListViewModel"
+             Background="{DynamicResource SidebarBackground}">
+
+    <!--
+        Main Layout Container
+        Row 0: Header with title and new button
+        Row 1: Search box with icon
+        Row 2: Content area (loading, empty, or grouped list)
+    -->
+    <Grid RowDefinitions="Auto, Auto, *">
+
+        <!-- ================================================================ -->
+        <!-- HEADER SECTION                                                    -->
+        <!-- Contains "Conversations" title and New Conversation [+] button   -->
+        <!-- ================================================================ -->
+        <Border Grid.Row="0"
+                Padding="12,12,12,8"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*, Auto">
+                <!-- Title -->
+                <TextBlock Grid.Column="0"
+                           Text="Conversations"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimary}"
+                           VerticalAlignment="Center" />
+
+                <!-- New Conversation Button -->
+                <Button Grid.Column="1"
+                        Theme="{StaticResource IconButton}"
+                        Command="{Binding CreateNewConversationCommand}"
+                        ToolTip.Tip="New Conversation">
+                    <PathIcon Data="{StaticResource PlusIcon}"
+                              Width="16"
+                              Height="16" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ================================================================ -->
+        <!-- SEARCH SECTION                                                    -->
+        <!-- Search icon, borderless TextBox, and clear button                -->
+        <!-- ================================================================ -->
+        <Border Grid.Row="1"
+                Padding="12,8"
+                Background="{DynamicResource ControlBackground}"
+                Margin="8,8,8,0"
+                CornerRadius="4">
+            <Grid ColumnDefinitions="Auto, *, Auto">
+                <!-- Search Icon -->
+                <PathIcon Grid.Column="0"
+                          Data="{StaticResource SearchIcon}"
+                          Width="14"
+                          Height="14"
+                          Foreground="{DynamicResource TextMuted}"
+                          Margin="0,0,8,0" />
+
+                <!-- Search TextBox -->
+                <TextBox Grid.Column="1"
+                         x:Name="SearchTextBox"
+                         Theme="{StaticResource BorderlessTextBox}"
+                         Text="{Binding SearchQuery, Mode=TwoWay}"
+                         Watermark="Search conversations..."
+                         KeyDown="OnSearchKeyDown" />
+
+                <!-- Clear Search Button -->
+                <Button Grid.Column="2"
+                        Theme="{StaticResource SmallIconButton}"
+                        Command="{Binding ClearSearchCommand}"
+                        IsVisible="{Binding SearchQuery, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                        ToolTip.Tip="Clear search">
+                    <PathIcon Data="{StaticResource CloseIcon}"
+                              Width="10"
+                              Height="10" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ================================================================ -->
+        <!-- CONTENT PANEL                                                     -->
+        <!-- Contains three mutually exclusive states                         -->
+        <!-- ================================================================ -->
+        <Panel Grid.Row="2" Margin="0,8,0,0">
+
+            <!-- ============================================================ -->
+            <!-- LOADING STATE                                                 -->
+            <!-- Shown when IsLoading is true                                 -->
+            <!-- Uses animated PathIcon as spinning indicator                 -->
+            <!-- ============================================================ -->
+            <StackPanel IsVisible="{Binding IsLoading}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="12">
+                <!-- Simple loading indicator using PathIcon with rotation animation -->
+                <Border Width="32"
+                        Height="32"
+                        HorizontalAlignment="Center">
+                    <PathIcon Data="{StaticResource SearchIcon}"
+                              Width="24"
+                              Height="24"
+                              Foreground="{DynamicResource AccentBrush}"
+                              Opacity="0.7"
+                              RenderTransformOrigin="0.5,0.5">
+                        <PathIcon.RenderTransform>
+                            <RotateTransform />
+                        </PathIcon.RenderTransform>
+                        <PathIcon.Styles>
+                            <Style Selector="PathIcon">
+                                <Style.Animations>
+                                    <Animation Duration="0:0:1" IterationCount="Infinite">
+                                        <KeyFrame Cue="0%">
+                                            <Setter Property="RotateTransform.Angle" Value="0" />
+                                        </KeyFrame>
+                                        <KeyFrame Cue="100%">
+                                            <Setter Property="RotateTransform.Angle" Value="360" />
+                                        </KeyFrame>
+                                    </Animation>
+                                </Style.Animations>
+                            </Style>
+                        </PathIcon.Styles>
+                    </PathIcon>
+                </Border>
+                <TextBlock Text="Loading conversations..."
+                           Foreground="{DynamicResource TextMuted}"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- ============================================================ -->
+            <!-- EMPTY STATE                                                   -->
+            <!-- Shown when IsEmpty is true and not loading                   -->
+            <!-- ============================================================ -->
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="16"
+                        Margin="24">
+                <!-- Only visible when empty and not loading -->
+                <StackPanel.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="IsEmpty" />
+                        <Binding Path="!IsLoading" />
+                    </MultiBinding>
+                </StackPanel.IsVisible>
+
+                <!-- Chat Icon -->
+                <PathIcon Data="{StaticResource ChatIcon}"
+                          Width="48"
+                          Height="48"
+                          Foreground="{DynamicResource TextMuted}"
+                          HorizontalAlignment="Center" />
+
+                <!-- Empty State Message - different text based on search state -->
+                <TextBlock IsVisible="{Binding !IsSearching}"
+                           Text="No conversations yet"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Foreground="{DynamicResource TextPrimary}"
+                           FontWeight="Medium" />
+
+                <TextBlock IsVisible="{Binding IsSearching}"
+                           Text="No results found"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Foreground="{DynamicResource TextPrimary}"
+                           FontWeight="Medium" />
+
+                <!-- Fallback empty state text based on search state -->
+                <TextBlock IsVisible="{Binding !IsSearching}"
+                           Text="Start a new conversation to begin chatting."
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Foreground="{DynamicResource TextMuted}"
+                           FontSize="12" />
+
+                <TextBlock IsVisible="{Binding IsSearching}"
+                           Text="Try a different search term."
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Foreground="{DynamicResource TextMuted}"
+                           FontSize="12" />
+
+                <!-- New Conversation Button (only when not searching) -->
+                <Button Theme="{StaticResource AccentButton}"
+                        Content="New Conversation"
+                        Command="{Binding CreateNewConversationCommand}"
+                        IsVisible="{Binding !IsSearching}"
+                        HorizontalAlignment="Center"
+                        Margin="0,8,0,0" />
+            </StackPanel>
+
+            <!-- ============================================================ -->
+            <!-- GROUPED CONVERSATION LIST                                     -->
+            <!-- Shown when not empty and not loading                         -->
+            <!-- ============================================================ -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <!-- Only visible when not empty and not loading -->
+                <ScrollViewer.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="!IsEmpty" />
+                        <Binding Path="!IsLoading" />
+                    </MultiBinding>
+                </ScrollViewer.IsVisible>
+
+                <!-- Groups ItemsControl -->
+                <ItemsControl ItemsSource="{Binding Groups}"
+                              x:Name="GroupsItemsControl"
+                              Margin="4,0,4,4">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ConversationGroupViewModel">
+                            <!-- Date Group with Expander -->
+                            <Expander Theme="{StaticResource GroupHeaderExpander}"
+                                      IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                                <!-- Group Header -->
+                                <Expander.Header>
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        <!-- Group title - titles are already uppercased in ViewModel -->
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Title}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource GroupHeaderForeground}" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Count}"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextMuted}"
+                                                   Margin="8,0,0,0" />
+                                    </Grid>
+                                </Expander.Header>
+
+                                <!-- Conversations within Group -->
+                                <ItemsControl ItemsSource="{Binding Conversations}"
+                                              Margin="0,4,0,8">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ConversationSummaryViewModel">
+                                            <!-- Conversation Item -->
+                                            <Border x:Name="ConversationItemBorder"
+                                                    Padding="8,10"
+                                                    Margin="0,1"
+                                                    CornerRadius="4"
+                                                    Background="{DynamicResource ConversationItemBackground}"
+                                                    PointerPressed="OnConversationPointerPressed"
+                                                    Cursor="Hand"
+                                                    Tag="{Binding IsSelected, Converter={x:Static converters:BoolToSelectedConverter.Instance}}"
+                                                    Classes="conversation-item">
+
+                                                <!-- Trigger styles based on IsSelected via Tag -->
+                                                <Border.Styles>
+                                                    <Style Selector="Border.conversation-item:pointerover">
+                                                        <Setter Property="Background" Value="{DynamicResource ConversationItemHoverBackground}" />
+                                                    </Style>
+                                                    <Style Selector="Border.conversation-item[Tag=Selected]">
+                                                        <Setter Property="Background" Value="{DynamicResource ConversationItemSelectedBackground}" />
+                                                    </Style>
+                                                    <Style Selector="Border.conversation-item[Tag=Selected]:pointerover">
+                                                        <Setter Property="Background" Value="{DynamicResource ConversationItemSelectedHoverBackground}" />
+                                                    </Style>
+                                                </Border.Styles>
+
+                                                <!-- Item Content Grid -->
+                                                <Grid RowDefinitions="Auto, Auto, Auto">
+
+                                                    <!-- Row 0: Title Row with Pin indicator -->
+                                                    <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto">
+                                                        <!-- Pin Indicator -->
+                                                        <PathIcon Grid.Column="0"
+                                                                  Data="{StaticResource PinIcon}"
+                                                                  Width="12"
+                                                                  Height="12"
+                                                                  Foreground="{DynamicResource PinIndicatorForeground}"
+                                                                  Margin="0,0,6,0"
+                                                                  IsVisible="{Binding IsPinned}"
+                                                                  VerticalAlignment="Center" />
+
+                                                        <!-- Title (normal state) -->
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding DisplayTitle}"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="{DynamicResource TextPrimary}"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   IsVisible="{Binding !IsRenaming}"
+                                                                   VerticalAlignment="Center" />
+
+                                                        <!-- Title (rename state) -->
+                                                        <TextBox Grid.Column="1"
+                                                                 Theme="{StaticResource InlineEditTextBox}"
+                                                                 Text="{Binding EditingTitle, Mode=TwoWay}"
+                                                                 IsVisible="{Binding IsRenaming}"
+                                                                 x:Name="RenameTextBox"
+                                                                 KeyDown="OnRenameKeyDown"
+                                                                 LostFocus="OnRenameLostFocus"
+                                                                 VerticalAlignment="Center" />
+
+                                                        <!-- Relative Time -->
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding RelativeTime}"
+                                                                   FontSize="11"
+                                                                   Foreground="{DynamicResource TextMuted}"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="8,0,0,0" />
+                                                    </Grid>
+
+                                                    <!-- Row 1: Preview Text -->
+                                                    <TextBlock Grid.Row="1"
+                                                               Text="{Binding Preview}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextMuted}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxLines="1"
+                                                               Margin="0,4,0,0"
+                                                               IsVisible="{Binding Preview, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                                    <!-- Row 2: Message Count -->
+                                                    <TextBlock Grid.Row="2"
+                                                               Text="{Binding MessageCountText}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextMuted}"
+                                                               Margin="0,4,0,0" />
+                                                </Grid>
+
+                                                <!-- Context Menu -->
+                                                <Border.ContextMenu>
+                                                    <ContextMenu>
+                                                        <!-- Rename -->
+                                                        <MenuItem Header="Rename"
+                                                                  Command="{Binding $parent[ItemsControl].((vm:ConversationListViewModel)DataContext).RenameConversationCommand}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource EditIcon}"
+                                                                          Width="14"
+                                                                          Height="14" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+
+                                                        <!-- Pin/Unpin -->
+                                                        <MenuItem Header="{Binding IsPinned, Converter={x:Static converters:PinTextConverter.Instance}}"
+                                                                  Command="{Binding $parent[ItemsControl].((vm:ConversationListViewModel)DataContext).TogglePinCommand}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource PinIcon}"
+                                                                          Width="14"
+                                                                          Height="14" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+
+                                                        <Separator />
+
+                                                        <!-- Archive -->
+                                                        <MenuItem Header="Archive"
+                                                                  Command="{Binding $parent[ItemsControl].((vm:ConversationListViewModel)DataContext).ArchiveConversationCommand}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource ArchiveIcon}"
+                                                                          Width="14"
+                                                                          Height="14" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+
+                                                        <!-- Delete -->
+                                                        <MenuItem Header="Delete"
+                                                                  Command="{Binding $parent[ItemsControl].((vm:ConversationListViewModel)DataContext).DeleteConversationCommand}"
+                                                                  CommandParameter="{Binding}"
+                                                                  Foreground="{DynamicResource DestructiveForeground}">
+                                                            <MenuItem.Icon>
+                                                                <PathIcon Data="{StaticResource DeleteIcon}"
+                                                                          Width="14"
+                                                                          Height="14"
+                                                                          Foreground="{DynamicResource DestructiveForeground}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </Border.ContextMenu>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Expander>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Panel>
+
+        <!-- ================================================================ -->
+        <!-- ERROR BANNER                                                      -->
+        <!-- Overlay displayed at bottom when ErrorMessage is set             -->
+        <!-- ================================================================ -->
+        <Border Grid.Row="2"
+                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="{DynamicResource ErrorBackground}"
+                Padding="12,8"
+                VerticalAlignment="Bottom"
+                Margin="8">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource ErrorForeground}"
+                       FontSize="12" />
+        </Border>
+
+    </Grid>
+
+</UserControl>

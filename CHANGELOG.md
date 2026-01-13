@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.2c] - 2026-01-13
+
+Conversation list UI implementation. See [detailed notes](docs/changelog/v0.2.2c.md).
+
+### Added
+
+- ConversationListView.axaml with sidebar layout (header, search, grouped list)
+- ConversationListView.axaml.cs code-behind with keyboard/pointer handlers
+- PinTextConverter for dynamic "Pin"/"Unpin" context menu text
+- BoolToSelectedConverter for selection styling via Tag attribute
+- Icons.axaml resource dictionary with 10 StreamGeometry icons
+- Dark.axaml additions: 7 color brushes, 6 new ControlThemes
+
 ## [0.2.2b] - 2026-01-12
 
 ViewModel layer for conversation persistence. See [detailed notes](docs/changelog/v0.2.2b.md).
