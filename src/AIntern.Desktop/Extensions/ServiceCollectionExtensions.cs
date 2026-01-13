@@ -53,6 +53,8 @@ public static class ServiceCollectionExtensions
     /// <item><see cref="ModelSelectorViewModel"/> - Transient</item>
     /// <item><see cref="ConversationListViewModel"/> - Transient</item>
     /// <item><see cref="InferenceSettingsViewModel"/> - Singleton (maintains state)</item>
+    /// <item><see cref="SystemPromptEditorViewModel"/> - Transient (per editor window)</item>
+    /// <item><see cref="SystemPromptSelectorViewModel"/> - Singleton (shared state)</item>
     /// </list>
     /// </para>
     /// </remarks>
@@ -168,6 +170,18 @@ public static class ServiceCollectionExtensions
         // Singleton to maintain state across the application lifecycle.
         // Subscribes to IInferenceSettingsService events for two-way sync.
         services.AddSingleton<InferenceSettingsViewModel>();
+
+        // System Prompt Editor: manages prompt editing state with service integration.
+        // Transient so each editor window gets its own instance with independent state.
+        // Subscribes to ISystemPromptService events for list synchronization.
+        // Added in v0.2.4c.
+        services.AddTransient<SystemPromptEditorViewModel>();
+
+        // System Prompt Selector: quick selector for the chat header dropdown.
+        // Singleton to share selection state across the application.
+        // Subscribes to ISystemPromptService events for automatic synchronization.
+        // Added in v0.2.4c.
+        services.AddSingleton<SystemPromptSelectorViewModel>();
 
         return services;
     }

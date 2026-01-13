@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.4c] - 2026-01-13
+
+Editor ViewModels for system prompt management. See [detailed notes](docs/changelog/v0.2.4c.md).
+
+### Added
+
+- SystemPromptViewModel: List item ViewModel for system prompts (~320 lines)
+  - Observable properties: Name, Content, Description, Category, IsBuiltIn, IsDefault, IsSelected, UsageCount
+  - Computed properties: CharacterCount, EstimatedTokenCount, ContentPreview, TypeLabel, CategoryIcon
+  - Constructor mapping from SystemPrompt domain model
+  - Property change handlers for computed property notifications
+- SystemPromptEditorViewModel: Full editor ViewModel with CRUD operations (~550 lines)
+  - Prompt lists: UserPrompts, Templates (ObservableCollection<SystemPromptViewModel>)
+  - Editor state: PromptName, PromptDescription, PromptCategory, EditorContent
+  - State flags: IsDirty, IsEditing, IsNewPrompt, IsLoading
+  - Computed properties: CharacterCount, EstimatedTokenCount, HasContent, HasValidName, CanSave, CanEdit, CanDelete, CanSetDefault
+  - Commands: Initialize, LoadPrompts, CreateNewPrompt, SavePrompt, DeletePrompt, DuplicatePrompt, SetAsDefault, CreateFromTemplate, DiscardChanges
+  - Dirty tracking via _originalPrompt comparison
+  - Event subscription to ISystemPromptService.PromptListChanged
+- SystemPromptSelectorViewModel: Quick selector for chat header dropdown (~200 lines)
+  - Properties: AvailablePrompts (with "No prompt" option), SelectedPrompt, IsLoading
+  - Computed: HasPromptSelected, DisplayText, ContentPreview, SelectedCategory, IsBuiltInSelected
+  - Commands: Initialize, SelectPrompt, RefreshPrompts
+  - Event subscriptions: PromptListChanged, CurrentPromptChanged
+
+### Changed
+
+- ServiceCollectionExtensions: Added DI registrations
+  - SystemPromptEditorViewModel (Transient - per editor window)
+  - SystemPromptSelectorViewModel (Singleton - shared state)
+  - Updated XML documentation
+
 ## [0.2.4b] - 2026-01-13
 
 System prompt service layer with CRUD operations and event notifications. See [detailed notes](docs/changelog/v0.2.4b.md).
