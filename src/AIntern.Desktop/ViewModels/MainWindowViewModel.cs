@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using AIntern.Core.Events;
 using AIntern.Core.Interfaces;
+using AIntern.Desktop.Views;
 
 namespace AIntern.Desktop.ViewModels;
 
@@ -34,6 +36,13 @@ namespace AIntern.Desktop.ViewModels;
 /// <item><see cref="ILlmService.InferenceProgress"/> - Updates token statistics display</item>
 /// </list>
 /// </para>
+/// <para>
+/// <b>v0.2.4e Additions:</b>
+/// <list type="bullet">
+/// <item><see cref="OpenSystemPromptEditorCommand"/> - Opens the SystemPromptEditorWindow</item>
+/// <item>Requires <see cref="ISystemPromptService"/> dependency for editor ViewModel construction</item>
+/// </list>
+/// </para>
 /// </remarks>
 public partial class MainWindowViewModel : ViewModelBase
 {
@@ -42,7 +51,12 @@ public partial class MainWindowViewModel : ViewModelBase
     // Service dependencies for model state and settings
     private readonly ILlmService _llmService;
     private readonly ISettingsService _settingsService;
+    private readonly ISystemPromptService _systemPromptService;
+    private readonly IDispatcher _dispatcher;
     private readonly ILogger<MainWindowViewModel>? _logger;
+
+    // Reference to the main window for dialog display (v0.2.4e)
+    private Window? _mainWindow;
 
     #endregion
 
@@ -132,6 +146,8 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <param name="inferenceSettingsViewModel">The inference settings panel ViewModel (v0.2.3e).</param>
     /// <param name="llmService">The LLM service for model state events.</param>
     /// <param name="settingsService">The settings service for loading configuration.</param>
+    /// <param name="systemPromptService">The system prompt service for editor ViewModel (v0.2.4e).</param>
+    /// <param name="dispatcher">The dispatcher for UI thread operations (v0.2.4e).</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <remarks>
     /// <para>
@@ -139,6 +155,13 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </para>
     /// <para>
     /// Sets up event subscriptions for model state and inference progress.
+    /// </para>
+    /// <para>
+    /// <b>v0.2.4e Changes:</b>
+    /// <list type="bullet">
+    ///   <item>Added <paramref name="systemPromptService"/> for editor window construction</item>
+    ///   <item>Added <paramref name="dispatcher"/> for thread-safe operations</item>
+    /// </list>
     /// </para>
     /// </remarks>
     public MainWindowViewModel(
@@ -148,6 +171,8 @@ public partial class MainWindowViewModel : ViewModelBase
         InferenceSettingsViewModel inferenceSettingsViewModel,
         ILlmService llmService,
         ISettingsService settingsService,
+        ISystemPromptService systemPromptService,
+        IDispatcher dispatcher,
         ILogger<MainWindowViewModel>? logger = null)
     {
         var sw = Stopwatch.StartNew();
@@ -160,11 +185,13 @@ public partial class MainWindowViewModel : ViewModelBase
         ConversationListViewModel = conversationListViewModel ?? throw new ArgumentNullException(nameof(conversationListViewModel));
         InferenceSettingsViewModel = inferenceSettingsViewModel ?? throw new ArgumentNullException(nameof(inferenceSettingsViewModel));
 
-        // Store services for event subscriptions
+        // Store services for event subscriptions and operations
         _llmService = llmService ?? throw new ArgumentNullException(nameof(llmService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        _systemPromptService = systemPromptService ?? throw new ArgumentNullException(nameof(systemPromptService));
+        _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
-        _logger?.LogDebug("[INFO] Child ViewModels assigned");
+        _logger?.LogDebug("[INFO] Child ViewModels and services assigned");
 
         // Subscribe to model state changes for status bar updates
         _llmService.ModelStateChanged += OnModelStateChanged;
@@ -181,6 +208,24 @@ public partial class MainWindowViewModel : ViewModelBase
     #region Initialization
 
     /// <summary>
+    /// Sets the main window reference for dialog display.
+    /// </summary>
+    /// <param name="window">The main application window.</param>
+    /// <remarks>
+    /// <para>
+    /// This method should be called from the MainWindow's OnOpened event after
+    /// setting the DataContext. The window reference is needed for showing
+    /// modal dialogs like the SystemPromptEditorWindow.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    public void SetMainWindow(Window window)
+    {
+        _mainWindow = window ?? throw new ArgumentNullException(nameof(window));
+        _logger?.LogDebug("[INFO] Main window reference set");
+    }
+
+    /// <summary>
     /// Initializes async operations after window loads.
     /// </summary>
     /// <returns>A task representing the async initialization.</returns>
@@ -190,6 +235,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <list type="bullet">
     /// <item>Loads application settings from persistent storage</item>
     /// <item>Populates the conversation list in the sidebar</item>
+    /// <item>Initializes the system prompt selector (v0.2.4e)</item>
     /// <item>Updates status bar with current model state</item>
     /// </list>
     /// </para>
@@ -224,6 +270,12 @@ public partial class MainWindowViewModel : ViewModelBase
             await InferenceSettingsViewModel.InitializeCommand.ExecuteAsync(null);
             _logger?.LogInformation("[INFO] InferenceSettingsViewModel initialized with {PresetCount} presets",
                 InferenceSettingsViewModel.Presets.Count);
+
+            // v0.2.4e: Initialize system prompt selector (loads prompts from database)
+            _logger?.LogDebug("[INFO] Initializing SystemPromptSelectorViewModel");
+            await ChatViewModel.SystemPromptSelectorViewModel.InitializeAsync();
+            _logger?.LogInformation("[INFO] SystemPromptSelectorViewModel initialized with {PromptCount} prompts",
+                ChatViewModel.SystemPromptSelectorViewModel.AvailablePrompts.Count);
 
             // Update status bar with model state
             StatusMessage = _llmService.IsModelLoaded
@@ -326,6 +378,76 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _logger?.LogDebug("[INFO] FocusSearch command executed - view should handle focus");
         _logger?.LogDebug("[EXIT] FocusSearch");
+    }
+
+    /// <summary>
+    /// Opens the System Prompt Editor window as a modal dialog.
+    /// </summary>
+    /// <returns>A task representing the async dialog operation.</returns>
+    /// <remarks>
+    /// <para>
+    /// This command is invoked from the chat header's Edit button in the
+    /// <see cref="SystemPromptSelector"/> control. The editor window allows
+    /// full CRUD operations on system prompts including:
+    /// <list type="bullet">
+    ///   <item>Creating new prompts</item>
+    ///   <item>Editing existing user prompts</item>
+    ///   <item>Duplicating templates as user prompts</item>
+    ///   <item>Setting a prompt as default</item>
+    ///   <item>Deleting user prompts</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// The window is shown as a modal dialog, blocking interaction with the
+    /// main window until closed. Any changes made are automatically reflected
+    /// in the chat header selector through service events.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    [RelayCommand]
+    private async Task OpenSystemPromptEditorAsync()
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] OpenSystemPromptEditorAsync");
+
+        try
+        {
+            if (_mainWindow == null)
+            {
+                _logger?.LogWarning("[WARN] Main window reference not set - cannot show editor dialog");
+                return;
+            }
+
+            // Create a new editor ViewModel for this window instance.
+            // The ViewModel is transient - each editor window gets its own instance.
+            var editorViewModel = new SystemPromptEditorViewModel(
+                _systemPromptService,
+                _dispatcher,
+                _logger != null
+                    ? Microsoft.Extensions.Logging.LoggerFactory.Create(b => { }).CreateLogger<SystemPromptEditorViewModel>()
+                    : null);
+
+            // Create and show the editor window as a modal dialog.
+            var editorWindow = new SystemPromptEditorWindow
+            {
+                DataContext = editorViewModel
+            };
+
+            _logger?.LogDebug("[INFO] Showing SystemPromptEditorWindow as modal dialog");
+            await editorWindow.ShowDialog(_mainWindow);
+
+            _logger?.LogDebug("[INFO] SystemPromptEditorWindow closed");
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[ERROR] OpenSystemPromptEditorAsync failed: {Message}", ex.Message);
+            SetError($"Failed to open editor: {ex.Message}");
+        }
+        finally
+        {
+            sw.Stop();
+            _logger?.LogDebug("[EXIT] OpenSystemPromptEditorAsync - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+        }
     }
 
     #endregion

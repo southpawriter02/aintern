@@ -6,9 +6,66 @@
              x:DataType="vm:ChatViewModel"
              Background="{DynamicResource WindowBackground}">
 
-    <Grid RowDefinitions="*, Auto">
-        <!-- Messages List -->
-        <ScrollViewer Grid.Row="0"
+    <!--
+        ChatView Layout (v0.2.4e):
+        ==========================
+        Row 0: System Prompt Selector Header (NEW)
+        Row 1: System Prompt Display Expander (NEW)
+        Row 2: Messages List (existing)
+        Row 3: Input Area (existing)
+    -->
+    <Grid RowDefinitions="Auto, Auto, *, Auto">
+
+        <!-- ================================================================== -->
+        <!-- Row 0: System Prompt Selector Header (v0.2.4e)                     -->
+        <!-- Provides quick dropdown selection of system prompts in chat header -->
+        <!-- ================================================================== -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <views:SystemPromptSelector x:Name="PromptSelector"
+                                        DataContext="{Binding SystemPromptSelectorViewModel}" />
+        </Border>
+
+        <!-- ================================================================== -->
+        <!-- Row 1: System Prompt Display Expander (v0.2.4e)                   -->
+        <!-- Shows the active system prompt content in a collapsible panel     -->
+        <!-- Only visible when a system prompt is selected                     -->
+        <!-- ================================================================== -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding ShowSystemPromptMessage}"
+                Background="{DynamicResource SystemPromptBackgroundColor}"
+                Padding="12"
+                Margin="12,12,12,0"
+                CornerRadius="8">
+            <Expander IsExpanded="False">
+                <!-- Expander Header: Icon + Prompt Name -->
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource PromptIcon}"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource TextMuted}" />
+                        <TextBlock Text="{Binding SystemPromptName, StringFormat='Using: {0}'}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextMuted}" />
+                    </StackPanel>
+                </Expander.Header>
+
+                <!-- Expander Content: Full prompt text (read-only) -->
+                <TextBlock Text="{Binding SystemPromptContent}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextMuted}"
+                           FontSize="12"
+                           Margin="24,8,0,0" />
+            </Expander>
+        </Border>
+
+        <!-- ================================================================== -->
+        <!-- Row 2: Messages List                                              -->
+        <!-- ================================================================== -->
+        <ScrollViewer Grid.Row="2"
                       x:Name="MessagesScrollViewer"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
@@ -42,8 +99,10 @@
             </Panel>
         </ScrollViewer>
 
-        <!-- Error Display -->
-        <Border Grid.Row="0"
+        <!-- ================================================================== -->
+        <!-- Error Display                                                     -->
+        <!-- ================================================================== -->
+        <Border Grid.Row="2"
                 IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                 Background="{DynamicResource ErrorBackground}"
                 Padding="16"
@@ -54,8 +113,10 @@
                        Foreground="{DynamicResource ErrorForeground}" />
         </Border>
 
-        <!-- Input Area -->
-        <Border Grid.Row="1"
+        <!-- ================================================================== -->
+        <!-- Row 3: Input Area                                                 -->
+        <!-- ================================================================== -->
+        <Border Grid.Row="3"
                 Background="{DynamicResource SidebarBackground}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0"

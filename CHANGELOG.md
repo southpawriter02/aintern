@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.4e] - 2026-01-13
+
+Chat integration for system prompt feature. See [detailed notes](docs/changelog/v0.2.4e.md).
+
+### Added
+
+- SystemPromptSelector.axaml: Chat header dropdown control (139 lines)
+  - ComboBox dropdown with all available prompts including "(No prompt)" option
+  - Default prompt indicator (star icon)
+  - Category display for template prompts
+  - Edit button that raises routed event to open editor window
+- SystemPromptSelector.axaml.cs: Code-behind with routed event (183 lines)
+  - EditButtonClickEvent with Bubble routing strategy
+  - Event handler wiring for Edit button
+  - Exhaustive logging with [ENTER]/[EXIT]/[INFO]/[INIT] markers
+- ChatView.axaml: 4-row Grid layout (expanded from 2-row)
+  - Row 0: SystemPromptSelector header with dropdown
+  - Row 1: System prompt content Expander (collapsible, shows name and content)
+  - Row 2: Messages list (existing)
+  - Row 3: Input area (existing)
+- ChatViewModel.cs: System prompt integration (~150 lines)
+  - SystemPromptSelectorViewModel property for header dropdown binding
+  - ShowSystemPromptMessage, SystemPromptContent, SystemPromptName properties
+  - BuildContextWithSystemPrompt() method prepends system message to LLM context
+  - OnCurrentPromptChanged event handler for UI synchronization
+- MainWindowViewModel.cs: Editor command and window reference (~80 lines)
+  - SetMainWindow(Window) method for dialog display
+  - OpenSystemPromptEditorCommand for opening editor as modal dialog
+  - InitializeAsync updates to initialize SystemPromptSelectorViewModel
+- SystemPromptBackgroundColor in Dark.axaml: Subtle blue background (#1A2D3D) for prompt expander
+
+### Changed
+
+- ChatView layout expanded to 4 rows for system prompt header and expander
+- ChatViewModel constructor now takes ISystemPromptService and SystemPromptSelectorViewModel
+- MainWindowViewModel constructor now takes ISystemPromptService and IDispatcher
+
 ## [0.2.4d] - 2026-01-13
 
 System prompt editor window UI. See [detailed notes](docs/changelog/v0.2.4d.md).

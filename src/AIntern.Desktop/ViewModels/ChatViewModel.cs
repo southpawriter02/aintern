@@ -13,7 +13,7 @@ namespace AIntern.Desktop.ViewModels;
 
 /// <summary>
 /// ViewModel for the chat interface panel.
-/// Manages user input, message display, and streaming response generation.
+/// Manages user input, message display, streaming response generation, and system prompt integration.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -25,6 +25,7 @@ namespace AIntern.Desktop.ViewModels;
 /// <item><see cref="ILlmService"/> for text generation</item>
 /// <item><see cref="IConversationService"/> for message history and persistence</item>
 /// <item><see cref="ISettingsService"/> for inference parameters</item>
+/// <item><see cref="ISystemPromptService"/> for system prompt management (v0.2.4e)</item>
 /// <item><see cref="IDispatcher"/> for UI thread marshalling</item>
 /// </list>
 /// </para>
@@ -33,6 +34,15 @@ namespace AIntern.Desktop.ViewModels;
 /// <list type="bullet">
 /// <item><see cref="IConversationService.ConversationChanged"/> - Refreshes UI when conversation loads</item>
 /// <item><see cref="IConversationService.SaveStateChanged"/> - Updates save status indicator</item>
+/// <item><see cref="ISystemPromptService.CurrentPromptChanged"/> - Updates system prompt display (v0.2.4e)</item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>v0.2.4e System Prompt Integration:</b>
+/// <list type="bullet">
+/// <item>Exposes <see cref="SystemPromptSelectorViewModel"/> for chat header dropdown</item>
+/// <item>Displays active system prompt in collapsible expander</item>
+/// <item>Prepends system message to LLM context via <see cref="BuildContextWithSystemPrompt"/></item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -44,6 +54,7 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
     private readonly ILlmService _llmService;
     private readonly IConversationService _conversationService;
     private readonly ISettingsService _settingsService;
+    private readonly ISystemPromptService _systemPromptService;
     private readonly IDispatcher _dispatcher;
     private readonly ILogger<ChatViewModel>? _logger;
 
@@ -126,6 +137,64 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
 
     #endregion
 
+    #region System Prompt Properties (v0.2.4e)
+
+    /// <summary>
+    /// Gets the ViewModel for the system prompt selector dropdown in the chat header.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This ViewModel is injected via DI as a singleton to maintain consistent selection
+    /// state across the application. It provides the available prompts list and handles
+    /// selection changes through <see cref="ISystemPromptService"/>.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    public SystemPromptSelectorViewModel SystemPromptSelectorViewModel { get; }
+
+    /// <summary>
+    /// Gets or sets whether to show the system prompt message expander.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Set to <c>true</c> when a system prompt is selected (CurrentPrompt is not null),
+    /// <c>false</c> otherwise. Used to control visibility of the system prompt expander
+    /// in the chat view.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private bool _showSystemPromptMessage;
+
+    /// <summary>
+    /// Gets or sets the content of the currently selected system prompt.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Displayed in the system prompt expander when expanded. Updated via
+    /// <see cref="OnCurrentPromptChanged"/> event handler when the user selects
+    /// a different prompt.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private string? _systemPromptContent;
+
+    /// <summary>
+    /// Gets or sets the name of the currently selected system prompt.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Displayed in the system prompt expander header (e.g., "Using: The Senior Intern").
+    /// Updated via <see cref="OnCurrentPromptChanged"/> event handler.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private string? _systemPromptName;
+
+    #endregion
+
     #region Constructor
 
     /// <summary>
@@ -134,12 +203,27 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
     /// <param name="llmService">The LLM service for text generation.</param>
     /// <param name="conversationService">The conversation service for message history.</param>
     /// <param name="settingsService">The settings service for inference parameters.</param>
+    /// <param name="systemPromptService">The system prompt service for prompt management (v0.2.4e).</param>
+    /// <param name="systemPromptSelectorViewModel">The selector ViewModel for the chat header dropdown (v0.2.4e).</param>
     /// <param name="dispatcher">The dispatcher for UI thread operations.</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
+    /// <remarks>
+    /// <para>
+    /// <b>v0.2.4e Changes:</b>
+    /// <list type="bullet">
+    ///   <item>Added <paramref name="systemPromptService"/> dependency for prompt access</item>
+    ///   <item>Added <paramref name="systemPromptSelectorViewModel"/> for header dropdown</item>
+    ///   <item>Subscribes to <see cref="ISystemPromptService.CurrentPromptChanged"/> event</item>
+    ///   <item>Initializes system prompt display state from service</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
     public ChatViewModel(
         ILlmService llmService,
         IConversationService conversationService,
         ISettingsService settingsService,
+        ISystemPromptService systemPromptService,
+        SystemPromptSelectorViewModel systemPromptSelectorViewModel,
         IDispatcher dispatcher,
         ILogger<ChatViewModel>? logger = null)
     {
@@ -148,6 +232,8 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
         _llmService = llmService ?? throw new ArgumentNullException(nameof(llmService));
         _conversationService = conversationService ?? throw new ArgumentNullException(nameof(conversationService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        _systemPromptService = systemPromptService ?? throw new ArgumentNullException(nameof(systemPromptService));
+        SystemPromptSelectorViewModel = systemPromptSelectorViewModel ?? throw new ArgumentNullException(nameof(systemPromptSelectorViewModel));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
         _logger = logger;
 
@@ -169,8 +255,15 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
         _conversationService.ConversationChanged += OnConversationChanged;
         _conversationService.SaveStateChanged += OnSaveStateChanged;
 
+        // v0.2.4e: Subscribe to system prompt changes for UI synchronization
+        _systemPromptService.CurrentPromptChanged += OnCurrentPromptChanged;
+        _logger?.LogDebug("[INIT] Subscribed to ISystemPromptService.CurrentPromptChanged event");
+
         // Load current conversation state into the UI
         RefreshFromConversation();
+
+        // v0.2.4e: Initialize system prompt display state from current selection
+        InitializeSystemPromptDisplay();
 
         _logger?.LogDebug("[INIT] ChatViewModel construction completed - {ElapsedMs}ms", sw.ElapsedMilliseconds);
     }
@@ -191,12 +284,18 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
     /// <summary>
     /// Sends the current user input and generates a streaming response.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>v0.2.4e Enhancement:</b> Now includes system prompt in LLM context via
+    /// <see cref="BuildContextWithSystemPrompt"/> when a prompt is selected.
+    /// </para>
+    /// </remarks>
     [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task SendMessageAsync()
     {
         // Guard: ensure we have valid input
         if (string.IsNullOrWhiteSpace(UserInput)) return;
-        
+
         // Guard: ensure model is loaded
         if (!_llmService.IsModelLoaded)
         {
@@ -216,7 +315,7 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
             Content = userMessage
         };
         Messages.Add(userMessageVm);
-        
+
         // Also add to the conversation service for context tracking
         _conversationService.AddMessage(userMessageVm.ToChatMessage());
 
@@ -243,12 +342,16 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
                 TopP: settings.TopP                  // Nucleus sampling threshold
             );
 
-            // Get the full conversation context for the model
-            var conversation = _conversationService.GetMessages();
+            // v0.2.4e: Build context with system prompt prepended
+            // This ensures the LLM receives the system instructions before the conversation
+            var context = BuildContextWithSystemPrompt();
+
+            _logger?.LogDebug("[INFO] Built LLM context with {MessageCount} messages (including system prompt if present)",
+                context.Count());
 
             // Stream tokens from the LLM and update UI in real-time
             await foreach (var token in _llmService.GenerateStreamingAsync(
-                conversation, options, _generationCts.Token))
+                context, options, _generationCts.Token))
             {
                 // Must update UI on the UI thread (Avalonia requirement)
                 await Dispatcher.UIThread.InvokeAsync(() =>
@@ -274,7 +377,7 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
             // Known inference error - display to user
             SetError($"Generation failed: {ex.Message}");
             assistantMessageVm.CompleteStreaming();
-            
+
             // Show error in message if no content was generated
             if (string.IsNullOrEmpty(assistantMessageVm.Content))
             {
@@ -286,7 +389,7 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
             // Unexpected error - log and display generic message
             SetError($"Unexpected error: {ex.Message}");
             assistantMessageVm.CompleteStreaming();
-            
+
             if (string.IsNullOrEmpty(assistantMessageVm.Content))
             {
                 assistantMessageVm.Content = "[Error occurred]";
@@ -402,6 +505,113 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
             SendMessageCommand.Execute(null);
         }
     }
+
+    #region System Prompt Methods (v0.2.4e)
+
+    /// <summary>
+    /// Initializes the system prompt display state from the current service selection.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Called during construction to set the initial state of the system prompt
+    /// expander based on the <see cref="ISystemPromptService.CurrentPrompt"/>.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    private void InitializeSystemPromptDisplay()
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] InitializeSystemPromptDisplay");
+
+        var currentPrompt = _systemPromptService.CurrentPrompt;
+
+        if (currentPrompt != null)
+        {
+            ShowSystemPromptMessage = true;
+            SystemPromptName = currentPrompt.Name;
+            SystemPromptContent = currentPrompt.Content;
+
+            _logger?.LogDebug("[INFO] Initialized system prompt display - Name: {Name}, ContentLength: {Length}",
+                currentPrompt.Name, currentPrompt.Content?.Length ?? 0);
+        }
+        else
+        {
+            ShowSystemPromptMessage = false;
+            SystemPromptName = null;
+            SystemPromptContent = null;
+
+            _logger?.LogDebug("[INFO] No system prompt selected - expander hidden");
+        }
+
+        sw.Stop();
+        _logger?.LogDebug("[EXIT] InitializeSystemPromptDisplay - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+    }
+
+    /// <summary>
+    /// Builds the LLM context with the system prompt prepended to the conversation.
+    /// </summary>
+    /// <returns>
+    /// An enumerable of <see cref="ChatMessage"/> objects representing the full context,
+    /// with the system prompt (if selected) as the first message.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method implements the standard LLM convention of placing the system message
+    /// first in the context, followed by the conversation history. The system message
+    /// sets the behavior, personality, and constraints for the assistant.
+    /// </para>
+    /// <para>
+    /// If no system prompt is selected (<see cref="ISystemPromptService.CurrentPrompt"/> is null),
+    /// only the conversation messages are returned.
+    /// </para>
+    /// <para>
+    /// The system prompt content is formatted via <see cref="ISystemPromptService.FormatPromptForContext"/>
+    /// which may add variable substitution or other processing.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    private IEnumerable<ChatMessage> BuildContextWithSystemPrompt()
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] BuildContextWithSystemPrompt");
+
+        var currentPrompt = _systemPromptService.CurrentPrompt;
+
+        // Prepend system prompt if one is selected
+        if (currentPrompt != null)
+        {
+            var formattedContent = _systemPromptService.FormatPromptForContext(currentPrompt);
+
+            _logger?.LogDebug("[INFO] Prepending system prompt - Name: {Name}, FormattedLength: {Length}",
+                currentPrompt.Name, formattedContent?.Length ?? 0);
+
+            yield return new ChatMessage
+            {
+                Id = Guid.NewGuid(),
+                Role = MessageRole.System,
+                Content = formattedContent ?? currentPrompt.Content,
+                Timestamp = DateTime.UtcNow
+            };
+
+            // Note: Usage count is automatically incremented by ISystemPromptService
+            // when the prompt is selected via SetCurrentPromptAsync (see v0.2.4b)
+        }
+        else
+        {
+            _logger?.LogDebug("[INFO] No system prompt selected - context will start with conversation messages");
+        }
+
+        // Yield all conversation messages from the service
+        foreach (var message in _conversationService.GetMessages())
+        {
+            yield return message;
+        }
+
+        sw.Stop();
+        _logger?.LogDebug("[EXIT] BuildContextWithSystemPrompt - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+    }
+
+    #endregion
 
     #region Event Handlers
 
@@ -529,6 +739,57 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
         _logger?.LogDebug("[EXIT] OnSaveStateChanged - {ElapsedMs}ms", sw.ElapsedMilliseconds);
     }
 
+    /// <summary>
+    /// Handles system prompt changes from the <see cref="ISystemPromptService"/>.
+    /// </summary>
+    /// <param name="sender">The event source.</param>
+    /// <param name="e">Event arguments containing old and new prompt information.</param>
+    /// <remarks>
+    /// <para>
+    /// Updates the system prompt display properties when the user selects a different
+    /// prompt or clears the selection:
+    /// <list type="bullet">
+    /// <item><see cref="ShowSystemPromptMessage"/> - Controls expander visibility</item>
+    /// <item><see cref="SystemPromptName"/> - Expander header text</item>
+    /// <item><see cref="SystemPromptContent"/> - Expander content text</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// All UI updates are marshalled to the UI thread via <see cref="IDispatcher"/>.
+    /// </para>
+    /// <para>Added in v0.2.4e.</para>
+    /// </remarks>
+    private void OnCurrentPromptChanged(object? sender, CurrentPromptChangedEventArgs e)
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] OnCurrentPromptChanged - NewPrompt: {NewName}, PreviousPrompt: {PrevName}",
+            e.NewPrompt?.Name ?? "(null)",
+            e.PreviousPrompt?.Name ?? "(null)");
+
+        // Marshal UI updates to the UI thread
+        _dispatcher.InvokeAsync(() =>
+        {
+            if (e.NewPrompt != null)
+            {
+                ShowSystemPromptMessage = true;
+                SystemPromptName = e.NewPrompt.Name;
+                SystemPromptContent = e.NewPrompt.Content;
+
+                _logger?.LogDebug("[INFO] System prompt display updated - Name: {Name}", e.NewPrompt.Name);
+            }
+            else
+            {
+                ShowSystemPromptMessage = false;
+                SystemPromptName = null;
+                SystemPromptContent = null;
+
+                _logger?.LogDebug("[INFO] System prompt cleared - expander hidden");
+            }
+        });
+
+        _logger?.LogDebug("[EXIT] OnCurrentPromptChanged - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+    }
+
     #endregion
 
     #region Private Methods
@@ -597,6 +858,7 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
     /// Performs the following cleanup:
     /// <list type="bullet">
     /// <item>Unsubscribes from <see cref="IConversationService"/> events</item>
+    /// <item>Unsubscribes from <see cref="ISystemPromptService"/> events (v0.2.4e)</item>
     /// <item>Cancels any in-progress generation</item>
     /// <item>Disposes the cancellation token source</item>
     /// </list>
@@ -617,6 +879,10 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
         _conversationService.ConversationChanged -= OnConversationChanged;
         _conversationService.SaveStateChanged -= OnSaveStateChanged;
         _logger?.LogDebug("[INFO] Unsubscribed from IConversationService events");
+
+        // v0.2.4e: Unsubscribe from system prompt service events
+        _systemPromptService.CurrentPromptChanged -= OnCurrentPromptChanged;
+        _logger?.LogDebug("[INFO] Unsubscribed from ISystemPromptService.CurrentPromptChanged event");
 
         // Cancel any in-progress generation
         if (_generationCts != null)

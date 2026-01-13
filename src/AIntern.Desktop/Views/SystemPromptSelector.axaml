@@ -1,0 +1,138 @@
+<!--
+    SystemPromptSelector.axaml - Quick Selector Dropdown Control for System Prompts
+
+    Version: v0.2.4e
+    Created: 2026-01-13
+
+    This UserControl provides a dropdown selector for choosing the active system prompt
+    in the chat interface. It appears in the chat header and allows quick selection
+    without opening the full editor window.
+
+    Features:
+    =========
+    - ComboBox dropdown with all available prompts
+    - "(No system prompt)" option at the top
+    - Default prompt indicator (★ star icon)
+    - Category display for template prompts
+    - Edit button to open the full editor
+
+    Data Context:
+    =============
+    This control expects a SystemPromptSelectorViewModel as its DataContext.
+    The ViewModel is typically provided by the parent ChatView through binding.
+
+    Key Bindings:
+    =============
+    - ItemsSource: AvailablePrompts (ObservableCollection<SystemPromptViewModel>)
+    - SelectedItem: SelectedPrompt (SystemPromptViewModel?)
+    - Edit button: Routed to parent via event/command
+
+    Styling:
+    ========
+    Uses dynamic resource brushes from Dark.axaml for consistent theming.
+    - ControlBackground: Control container background
+    - TextPrimary/TextMuted: Text colors
+    - AccentBrush: Star indicator for default prompts
+-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="40"
+             x:Class="AIntern.Desktop.Views.SystemPromptSelector"
+             x:DataType="vm:SystemPromptSelectorViewModel">
+
+    <!--
+        Main Layout:
+        - Column 0: "Using:" label
+        - Column 1: ComboBox dropdown (flexible width)
+        - Column 2: Edit button
+    -->
+    <Border Background="{DynamicResource ControlBackground}"
+            CornerRadius="4"
+            Padding="8,6">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+
+            <!-- ================================================================== -->
+            <!-- Column 0: Label                                                    -->
+            <!-- ================================================================== -->
+            <TextBlock Grid.Column="0"
+                       Text="Using:"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextMuted}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0" />
+
+            <!-- ================================================================== -->
+            <!-- Column 1: Prompt Dropdown                                         -->
+            <!-- ================================================================== -->
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding AvailablePrompts}"
+                      SelectedItem="{Binding SelectedPrompt}"
+                      MinWidth="150"
+                      MaxWidth="350"
+                      HorizontalAlignment="Stretch">
+
+                <!-- Custom item template for prompt display -->
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SystemPromptViewModel">
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="4,2">
+
+                            <!-- Star indicator for default prompt -->
+                            <PathIcon Grid.Column="0"
+                                       Data="{StaticResource StarIcon}"
+                                       Width="12" Height="12"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       IsVisible="{Binding IsDefault}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,6,0" />
+
+                            <!-- Prompt name and category -->
+                            <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Name}"
+                                           FontSize="12"
+                                           TextTrimming="CharacterEllipsis" />
+
+                                <!-- Category label (shown only for templates) -->
+                                <TextBlock Text="{Binding Category}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource TextMuted}"
+                                           IsVisible="{Binding Category, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <!-- Built-in indicator badge -->
+                            <Border Grid.Column="2"
+                                    IsVisible="{Binding IsBuiltIn}"
+                                    Background="{DynamicResource SidebarBackground}"
+                                    CornerRadius="2"
+                                    Padding="4,1"
+                                    VerticalAlignment="Center"
+                                    Margin="8,0,0,0">
+                                <TextBlock Text="Built-in"
+                                           FontSize="9"
+                                           Foreground="{DynamicResource TextMuted}" />
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <!-- ================================================================== -->
+            <!-- Column 2: Edit Button                                             -->
+            <!-- ================================================================== -->
+            <!-- Edit button - Opens the SystemPromptEditorWindow via parent command -->
+            <Button Grid.Column="2"
+                    x:Name="EditButton"
+                    ToolTip.Tip="Edit System Prompts"
+                    Theme="{StaticResource IconButton}"
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center">
+                <PathIcon Data="{StaticResource EditIcon}"
+                          Width="14" Height="14" />
+            </Button>
+
+        </Grid>
+    </Border>
+
+</UserControl>

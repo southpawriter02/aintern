@@ -230,6 +230,17 @@
     </ControlTheme>
 
     <!-- ============================================================== -->
+    <!-- System Prompt Selector Colors (v0.2.4e)                        -->
+    <!-- Colors for the chat header system prompt display.              -->
+    <!-- ============================================================== -->
+
+    <!-- System Prompt Background - Used for the collapsible system prompt
+         content display in the chat header. Subtle differentiation from
+         the main chat background to indicate system context.
+         Usage: <Border Background="{DynamicResource SystemPromptBackgroundColor}"> -->
+    <SolidColorBrush x:Key="SystemPromptBackgroundColor" Color="#1A2D3D" />
+
+    <!-- ============================================================== -->
     <!-- System Prompt Editor ControlThemes (v0.2.4d)                   -->
     <!-- ControlThemes for the system prompt editor window.             -->
     <!-- ============================================================== -->
