@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.3b] - 2026-01-13
+
+Inference settings service with event-driven architecture. See [detailed notes](docs/changelog/v0.2.3b.md).
+
+### Added
+
+- IInferenceSettingsService: Interface for centralized settings management with preset support
+- InferenceSettingsChangedEventArgs: Event args with ChangeType (ParameterChanged, PresetApplied, ResetToDefaults, AllChanged) and ChangedParameter
+- PresetChangedEventArgs: Event args for preset CRUD operations (Applied, Created, Updated, Deleted, DefaultChanged)
+- InferenceSettingsService: Full implementation (~750 lines) with:
+  - Parameter updates with clamping and change detection
+  - Preset operations (apply, save, update, delete, reset, set default)
+  - Thread-safe async operations via SemaphoreSlim
+  - Float epsilon comparison (0.001) for change detection
+  - HasUnsavedChanges property for tracking modifications
+  - InitializeAsync for startup preset restoration
+- DI registration for IInferenceSettingsService (singleton with scoped repository factory)
+
+### Changed
+
+- AppSettings: Added ActivePresetId (Guid?) for preset persistence across sessions
+
 ## [0.2.3a] - 2026-01-13
 
 Inference parameter models and repository enhancements. See [detailed notes](docs/changelog/v0.2.3a.md).

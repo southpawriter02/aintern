@@ -102,6 +102,20 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<ILogger<DatabaseConversationService>>());
         });
 
+        // Inference Settings: manages live inference parameters with preset support.
+        // Uses a factory to resolve scoped repository dependencies.
+        // The service coordinates between repository (presets), settings service
+        // (persistence), and consumers (LlmService, ViewModels).
+        services.AddSingleton<IInferenceSettingsService>(sp =>
+        {
+            // Create a scope to resolve scoped services (repositories).
+            var scope = sp.CreateScope();
+            return new InferenceSettingsService(
+                scope.ServiceProvider.GetRequiredService<IInferencePresetRepository>(),
+                sp.GetRequiredService<ISettingsService>(),
+                sp.GetRequiredService<ILogger<InferenceSettingsService>>());
+        });
+
         // ┌─────────────────────────────────────────────────────────────────┐
         // │ UI INFRASTRUCTURE                                                │
         // └─────────────────────────────────────────────────────────────────┘

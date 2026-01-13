@@ -54,6 +54,26 @@ public sealed class AppSettings
     /// </summary>
     public int MaxTokens { get; set; } = 2048;
 
+    /// <summary>
+    /// Gets or sets the ID of the last active inference preset.
+    /// </summary>
+    /// <value>
+    /// The GUID of the active preset, or <c>null</c> if using default settings.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// Persisted to settings.json to restore the user's last-used preset on startup.
+    /// Set by <see cref="Interfaces.IInferenceSettingsService.ApplyPresetAsync"/> when
+    /// a preset is applied.
+    /// </para>
+    /// <para>
+    /// If this is null or the referenced preset no longer exists,
+    /// <see cref="Interfaces.IInferenceSettingsService.InitializeAsync"/> falls back
+    /// to the default preset (Balanced).
+    /// </para>
+    /// </remarks>
+    public Guid? ActivePresetId { get; set; }
+
     #endregion
 
     #region UI Settings
