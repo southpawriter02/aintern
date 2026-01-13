@@ -1,3 +1,19 @@
+<!--
+    MainWindow.axaml - Main Application Window
+
+    Version: v0.2.2d
+
+    Layout:
+    - SplitView with collapsible sidebar pane
+    - Sidebar contains: ModelSelectorView + ConversationListView
+    - Content area contains: ChatView
+    - Status bar at bottom with model info and token statistics
+
+    Keyboard Shortcuts:
+    - Ctrl+N: Create new conversation
+    - Ctrl+B: Toggle sidebar visibility
+    - Ctrl+F: Focus search box
+-->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:AIntern.Desktop.ViewModels"
@@ -9,63 +25,142 @@
         MinWidth="800" MinHeight="600"
         Background="{DynamicResource WindowBackground}">
 
+    <!--
+        Keyboard Bindings for Global Commands
+        These shortcuts are available regardless of focus state.
+    -->
+    <Window.KeyBindings>
+        <!-- Ctrl+N: Create new conversation -->
+        <KeyBinding Gesture="Ctrl+N" Command="{Binding NewConversationCommand}" />
+        <!-- Ctrl+B: Toggle sidebar visibility -->
+        <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleSidebarCommand}" />
+        <!-- Ctrl+F: Focus search box in conversation list -->
+        <KeyBinding Gesture="Ctrl+F" Command="{Binding FocusSearchCommand}" />
+    </Window.KeyBindings>
+
     <Grid RowDefinitions="*, Auto">
-        <!-- Main Content -->
-        <Grid Grid.Row="0" ColumnDefinitions="280, Auto, *">
-            <!-- Sidebar -->
-            <Border Grid.Column="0"
-                    Background="{DynamicResource SidebarBackground}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,0,1,0">
-                <DockPanel>
-                    <!-- Model Selector at Top -->
-                    <views:ModelSelectorView DockPanel.Dock="Top"
-                                             DataContext="{Binding ModelSelectorViewModel}" />
+        <!--
+            Main Content Area using SplitView
 
-                    <!-- Future: Chat History List -->
-                    <Border DockPanel.Dock="Bottom" Padding="16">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Chat History"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextMuted}" />
-                            <TextBlock Text="Coming in v0.2.0"
-                                       Foreground="{DynamicResource TextMuted}"
-                                       FontStyle="Italic"
-                                       FontSize="12" />
-                        </StackPanel>
-                    </Border>
-                </DockPanel>
-            </Border>
+            SplitView provides:
+            - Built-in pane open/close behavior
+            - Smooth animations (when enabled)
+            - Proper focus management
 
-            <!-- Splitter -->
-            <GridSplitter Grid.Column="1"
-                          Width="4"
-                          Background="Transparent"
-                          ResizeDirection="Columns" />
+            DisplayMode="Inline" means:
+            - Pane pushes content when open
+            - No overlay behavior
+            - Consistent with desktop app conventions
+        -->
+        <SplitView Grid.Row="0"
+                   IsPaneOpen="{Binding IsSidebarVisible}"
+                   DisplayMode="Inline"
+                   OpenPaneLength="{Binding SidebarWidth}"
+                   CompactPaneLength="0"
+                   PanePlacement="Left">
 
-            <!-- Chat Area -->
-            <views:ChatView Grid.Column="2"
-                            DataContext="{Binding ChatViewModel}" />
-        </Grid>
+            <!--
+                Sidebar Pane
+                Contains model selector at top and conversation list below.
+            -->
+            <SplitView.Pane>
+                <Border Background="{DynamicResource SidebarBackground}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,1,0">
+                    <Grid RowDefinitions="Auto, *">
+                        <!--
+                            Model Selector
+                            Allows user to select and load GGUF model files.
+                        -->
+                        <views:ModelSelectorView Grid.Row="0"
+                                                 DataContext="{Binding ModelSelectorViewModel}" />
 
-        <!-- Status Bar -->
+                        <!--
+                            Conversation List
+                            Shows conversation history grouped by date.
+                            Provides search, rename, delete, and pin functionality.
+                        -->
+                        <views:ConversationListView Grid.Row="1"
+                                                    DataContext="{Binding ConversationListViewModel}" />
+                    </Grid>
+                </Border>
+            </SplitView.Pane>
+
+            <!--
+                Main Content Area
+                Contains the chat view and sidebar toggle button when sidebar is hidden.
+            -->
+            <SplitView.Content>
+                <Grid>
+                    <!--
+                        Chat View
+                        Main chat interface with message display and input area.
+                    -->
+                    <views:ChatView DataContext="{Binding ChatViewModel}" />
+
+                    <!--
+                        Sidebar Toggle Button
+                        Only visible when sidebar is hidden.
+                        Allows user to restore sidebar visibility.
+                    -->
+                    <Button HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            Margin="8"
+                            Command="{Binding ToggleSidebarCommand}"
+                            IsVisible="{Binding !IsSidebarVisible}"
+                            Classes="IconButton"
+                            ToolTip.Tip="Show Sidebar (Ctrl+B)">
+                        <PathIcon Data="{StaticResource MenuIcon}"
+                                  Width="16" Height="16" />
+                    </Button>
+                </Grid>
+            </SplitView.Content>
+        </SplitView>
+
+        <!--
+            Status Bar
+            Shows model state, token statistics, and generation progress.
+        -->
         <Border Grid.Row="1"
                 Background="{DynamicResource StatusBarBackground}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="12,6">
-            <Grid ColumnDefinitions="*, Auto, Auto">
+            <Grid ColumnDefinitions="*, Auto, Auto, Auto">
+                <!--
+                    Status Message
+                    Shows "No model loaded" or "Model: {name}"
+                -->
                 <TextBlock Text="{Binding StatusMessage}"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextSecondary}" />
 
+                <!--
+                    Save Status Indicator
+                    Shows "Saving...", "Saved", or "Save failed"
+                -->
                 <TextBlock Grid.Column="1"
+                           Text="{Binding ChatViewModel.SaveStatus}"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextMuted}"
+                           Margin="16,0"
+                           IsVisible="{Binding ChatViewModel.SaveStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                <!--
+                    Token Statistics
+                    Shows "Tokens: X (Y.Y tok/s)" during generation
+                -->
+                <TextBlock Grid.Column="2"
                            Text="{Binding TokenInfo}"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextMuted}"
                            Margin="16,0" />
 
-                <ProgressBar Grid.Column="2"
+                <!--
+                    Progress Indicator
+                    Indeterminate progress bar shown during generation
+                -->
+                <ProgressBar Grid.Column="3"
                              IsVisible="{Binding ChatViewModel.IsGenerating}"
                              IsIndeterminate="True"
                              Width="80"

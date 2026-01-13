@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.2d] - 2026-01-13
+
+Chat integration with conversation persistence. See [detailed notes](docs/changelog/v0.2.2d.md).
+
+### Changed
+
+- ChatViewModel: Event subscriptions to IConversationService, RefreshFromConversation, IDisposable
+- ChatMessageViewModel: Performance stats (TokenCount, GenerationTime, TokensPerSecond)
+- MainWindowViewModel: ConversationListViewModel composition, InitializeAsync, sidebar toggle
+- MainWindow.axaml: SplitView layout replacing Grid, ConversationListView integration
+- MainWindow.axaml.cs: OnOpened initialization for async startup
+
+### Added
+
+- Icons.axaml: MenuIcon for sidebar toggle button
+- Keyboard shortcuts: Ctrl+N (new), Ctrl+B (toggle sidebar), Ctrl+F (search focus)
+- Save status indicator in status bar
+
 ## [0.2.2c] - 2026-01-13
 
 Conversation list UI implementation. See [detailed notes](docs/changelog/v0.2.2c.md).

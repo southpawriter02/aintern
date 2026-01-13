@@ -50,6 +50,20 @@ public partial class ChatMessageViewModel : ViewModelBase
     [ObservableProperty]
     private DateTime _timestamp;
 
+    /// <summary>
+    /// Gets or sets the number of tokens in this message.
+    /// Only populated for completed assistant messages.
+    /// </summary>
+    [ObservableProperty]
+    private int? _tokenCount;
+
+    /// <summary>
+    /// Gets or sets the time taken to generate this message.
+    /// Only populated for assistant messages after generation completes.
+    /// </summary>
+    [ObservableProperty]
+    private TimeSpan? _generationTime;
+
     #endregion
 
     #region Computed Properties
@@ -78,6 +92,42 @@ public partial class ChatMessageViewModel : ViewModelBase
         _ => "Unknown"                       // Fallback for safety
     };
 
+    /// <summary>
+    /// Gets the calculated tokens per second for this message.
+    /// Only available for completed assistant messages with both TokenCount and GenerationTime.
+    /// </summary>
+    public double? TokensPerSecond
+    {
+        get
+        {
+            if (TokenCount.HasValue && GenerationTime.HasValue && GenerationTime.Value.TotalSeconds > 0)
+            {
+                return TokenCount.Value / GenerationTime.Value.TotalSeconds;
+            }
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets a formatted string of performance statistics.
+    /// Shows token count and generation speed when available.
+    /// </summary>
+    /// <remarks>
+    /// Example output: "127 tokens | 42.3 tok/s"
+    /// Returns null if statistics are not available.
+    /// </remarks>
+    public string? PerformanceStats
+    {
+        get
+        {
+            if (TokensPerSecond.HasValue && TokenCount.HasValue)
+            {
+                return $"{TokenCount} tokens | {TokensPerSecond:F1} tok/s";
+            }
+            return null;
+        }
+    }
+
     #endregion
 
     #region Constructors
@@ -104,9 +154,13 @@ public partial class ChatMessageViewModel : ViewModelBase
         Content = message.Content;
         Role = message.Role;
         Timestamp = message.Timestamp;
-        
+
         // Invert IsComplete to get IsStreaming
         IsStreaming = !message.IsComplete;
+
+        // Copy performance statistics
+        TokenCount = message.TokenCount;
+        GenerationTime = message.GenerationTime;
     }
 
     #endregion
@@ -161,7 +215,9 @@ public partial class ChatMessageViewModel : ViewModelBase
         Content = Content,
         Role = Role,
         Timestamp = Timestamp,
-        IsComplete = !IsStreaming  // Invert IsStreaming to get IsComplete
+        IsComplete = !IsStreaming,  // Invert IsStreaming to get IsComplete
+        TokenCount = TokenCount,
+        GenerationTime = GenerationTime
     };
 
     #endregion
