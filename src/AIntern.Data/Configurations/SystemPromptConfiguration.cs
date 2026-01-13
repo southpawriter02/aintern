@@ -195,7 +195,12 @@ public sealed class SystemPromptConfiguration : IEntityTypeConfiguration<SystemP
     /// <param name="builder">The entity type builder.</param>
     private static void ConfigureIndexes(EntityTypeBuilder<SystemPromptEntity> builder)
     {
-        // Unique index on Name
+        // Unique constraint on Name: Prevents duplicate prompt names in the system.
+        // This is enforced at the database level for several reasons:
+        // 1. Names are used to identify prompts in the UI dropdown
+        // 2. Default prompt lookup may use name as a fallback identifier
+        // 3. Export/import features rely on unique names for merge logic
+        // The repository checks this before insert to provide better error messages.
         builder.HasIndex(sp => sp.Name)
             .HasDatabaseName(IndexName)
             .IsUnique();

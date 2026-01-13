@@ -222,8 +222,13 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
     /// <param name="builder">The entity type builder.</param>
     private static void ConfigureRelationships(EntityTypeBuilder<ConversationEntity> builder)
     {
-        // Relationship to SystemPromptEntity (many-to-one)
-        // When a SystemPrompt is deleted, set SystemPromptId to null
+        // SetNull behavior: When a SystemPrompt is deleted, conversations remain intact.
+        // This is the appropriate choice because:
+        // 1. Conversations have value independent of their prompt
+        // 2. Users shouldn't lose conversation history when cleaning up prompts
+        // 3. A null SystemPromptId simply means "no prompt assigned"
+        // Alternative (Cascade) would delete all conversations using a prompt - too destructive.
+        // Alternative (Restrict) would prevent prompt deletion if any conversation uses it.
         builder.HasOne(c => c.SystemPrompt)
             .WithMany(sp => sp.Conversations)
             .HasForeignKey(c => c.SystemPromptId)

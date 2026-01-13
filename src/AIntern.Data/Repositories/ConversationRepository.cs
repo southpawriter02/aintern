@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AIntern.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,15 +15,46 @@ namespace AIntern.Data.Repositories;
 /// for conversations and messages, with comprehensive logging support.
 /// </para>
 /// <para>
-/// Key implementation details:
+/// <b>Key Implementation Details:</b>
 /// </para>
 /// <list type="bullet">
-///   <item><description>Uses <see cref="Microsoft.EntityFrameworkCore.EF.Functions"/> for efficient bulk updates</description></item>
-///   <item><description>Automatically manages message sequence numbers</description></item>
-///   <item><description>Atomically updates MessageCount and TotalTokenCount</description></item>
-///   <item><description>Uses AsNoTracking() for read-only queries</description></item>
+///   <item><description>Uses <see cref="Microsoft.EntityFrameworkCore.RelationalQueryableExtensions.ExecuteUpdateAsync{TSource}"/> for efficient single-roundtrip bulk updates</description></item>
+///   <item><description>Automatically manages message sequence numbers using MAX + 1 pattern</description></item>
+///   <item><description>Atomically updates MessageCount and TotalTokenCount on add/delete operations</description></item>
+///   <item><description>Uses AsNoTracking() for read-only queries to improve performance</description></item>
 /// </list>
+/// <para>
+/// <b>Logging Behavior:</b>
+/// </para>
+/// <list type="bullet">
+///   <item><description><b>Debug:</b> Entry/exit for all operations with parameters and timing</description></item>
+///   <item><description><b>Warning:</b> When bulk operations affect 0 rows (may indicate missing entity)</description></item>
+/// </list>
+/// <para>
+/// <b>Thread Safety:</b> This class is not thread-safe. Each request should use its own
+/// instance via dependency injection with scoped lifetime.
+/// </para>
 /// </remarks>
+/// <example>
+/// <code>
+/// // Typical usage via dependency injection
+/// public class ConversationService
+/// {
+///     private readonly IConversationRepository _repository;
+///     
+///     public ConversationService(IConversationRepository repository)
+///     {
+///         _repository = repository;
+///     }
+///     
+///     public async Task&lt;ConversationEntity&gt; StartNewConversationAsync(string title)
+///     {
+///         var conversation = new ConversationEntity { Title = title };
+///         return await _repository.CreateAsync(conversation);
+///     }
+/// }
+/// </code>
+/// </example>
 public sealed class ConversationRepository : IConversationRepository
 {
     #region Fields
@@ -64,16 +96,19 @@ public sealed class ConversationRepository : IConversationRepository
     /// <inheritdoc />
     public async Task<ConversationEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Getting conversation by ID: {ConversationId}", id);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] GetByIdAsync - ConversationId: {ConversationId}", id);
 
+        // Use AsNoTracking() since this is a read-only query - improves performance
+        // by not adding the entity to the change tracker.
         var conversation = await _context.Conversations
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
-        if (conversation == null)
-        {
-            _logger.LogDebug("Conversation not found: {ConversationId}", id);
-        }
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] GetByIdAsync - ConversationId: {ConversationId}, Found: {Found}, Duration: {DurationMs}ms",
+            id, conversation != null, stopwatch.ElapsedMilliseconds);
 
         return conversation;
     }
@@ -207,13 +242,30 @@ public sealed class ConversationRepository : IConversationRepository
     /// <inheritdoc />
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Deleting conversation: {ConversationId}", id);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] DeleteAsync - ConversationId: {ConversationId}", id);
 
+        // ExecuteDeleteAsync performs a bulk delete directly in the database without loading
+        // the entity into memory. Messages are cascade-deleted due to FK configuration.
         var affectedRows = await _context.Conversations
             .Where(c => c.Id == id)
             .ExecuteDeleteAsync(cancellationToken);
 
-        _logger.LogDebug("Deleted conversation {ConversationId}, affected rows: {AffectedRows}", id, affectedRows);
+        stopwatch.Stop();
+
+        // Log warning if nothing was deleted - may indicate the conversation doesn't exist
+        if (affectedRows == 0)
+        {
+            _logger.LogWarning(
+                "DeleteAsync affected 0 rows - conversation may not exist: {ConversationId}",
+                id);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "[EXIT] DeleteAsync - ConversationId: {ConversationId}, AffectedRows: {AffectedRows}, Duration: {DurationMs}ms",
+                id, affectedRows, stopwatch.ElapsedMilliseconds);
+        }
     }
 
     #endregion
@@ -223,8 +275,10 @@ public sealed class ConversationRepository : IConversationRepository
     /// <inheritdoc />
     public async Task ArchiveAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Archiving conversation: {ConversationId}", id);
+        _logger.LogDebug("[ENTER] ArchiveAsync - ConversationId: {ConversationId}", id);
 
+        // ExecuteUpdateAsync performs a bulk update directly in the database.
+        // This is more efficient than loading the entity, modifying, and saving.
         var affectedRows = await _context.Conversations
             .Where(c => c.Id == id)
             .ExecuteUpdateAsync(setters => setters
@@ -232,7 +286,19 @@ public sealed class ConversationRepository : IConversationRepository
                 .SetProperty(c => c.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
 
-        _logger.LogDebug("Archived conversation {ConversationId}, affected rows: {AffectedRows}", id, affectedRows);
+        // Log warning if no rows affected - conversation may not exist
+        if (affectedRows == 0)
+        {
+            _logger.LogWarning(
+                "ArchiveAsync affected 0 rows - conversation may not exist: {ConversationId}",
+                id);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "[EXIT] ArchiveAsync - ConversationId: {ConversationId}, AffectedRows: {AffectedRows}",
+                id, affectedRows);
+        }
     }
 
     /// <inheritdoc />
@@ -287,9 +353,16 @@ public sealed class ConversationRepository : IConversationRepository
     /// <inheritdoc />
     public async Task<MessageEntity> AddMessageAsync(Guid conversationId, MessageEntity message, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Adding message to conversation: {ConversationId}", conversationId);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug(
+            "[ENTER] AddMessageAsync - ConversationId: {ConversationId}, Role: {Role}",
+            conversationId, message.Role);
 
-        // Assign sequence number
+        // Assign sequence number using MAX + 1 pattern.
+        // This ensures messages are ordered chronologically within a conversation.
+        // Note: This pattern is safe for single-user scenarios but not suitable for
+        // high-concurrency scenarios where multiple messages could be added simultaneously.
+        // In such cases, consider using a database sequence or optimistic concurrency.
         var maxSequence = await _context.Messages
             .Where(m => m.ConversationId == conversationId)
             .MaxAsync(m => (int?)m.SequenceNumber, cancellationToken) ?? 0;
@@ -309,7 +382,9 @@ public sealed class ConversationRepository : IConversationRepository
 
         _context.Messages.Add(message);
 
-        // Update conversation counts
+        // Atomically update conversation metadata using ExecuteUpdateAsync.
+        // This is done separately from SaveChangesAsync to ensure the counts are
+        // updated even if the message entity was already tracked.
         var tokenIncrement = message.TokenCount ?? 0;
 
         await _context.Conversations
@@ -322,11 +397,14 @@ public sealed class ConversationRepository : IConversationRepository
 
         await _context.SaveChangesAsync(cancellationToken);
 
+        stopwatch.Stop();
         _logger.LogDebug(
-            "Added message {MessageId} to conversation {ConversationId} with sequence {SequenceNumber}",
+            "[EXIT] AddMessageAsync - MessageId: {MessageId}, ConversationId: {ConversationId}, Sequence: {SequenceNumber}, Tokens: {TokenCount}, Duration: {DurationMs}ms",
             message.Id,
             conversationId,
-            message.SequenceNumber);
+            message.SequenceNumber,
+            message.TokenCount ?? 0,
+            stopwatch.ElapsedMilliseconds);
 
         return message;
     }
@@ -385,14 +463,20 @@ public sealed class ConversationRepository : IConversationRepository
     /// <inheritdoc />
     public async Task DeleteMessageAsync(Guid messageId, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Deleting message: {MessageId}", messageId);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] DeleteMessageAsync - MessageId: {MessageId}", messageId);
 
+        // First, we need to load the message to get its ConversationId and TokenCount
+        // so we can update the conversation metadata after deletion.
         var message = await _context.Messages
             .FirstOrDefaultAsync(m => m.Id == messageId, cancellationToken);
 
         if (message == null)
         {
-            _logger.LogDebug("Message not found: {MessageId}", messageId);
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "DeleteMessageAsync - Message not found: {MessageId}, Duration: {DurationMs}ms",
+                messageId, stopwatch.ElapsedMilliseconds);
             return;
         }
 
@@ -412,7 +496,10 @@ public sealed class ConversationRepository : IConversationRepository
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogDebug("Deleted message {MessageId} from conversation {ConversationId}", messageId, conversationId);
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] DeleteMessageAsync - MessageId: {MessageId}, ConversationId: {ConversationId}, TokensRemoved: {TokensRemoved}, Duration: {DurationMs}ms",
+            messageId, conversationId, tokenDecrement, stopwatch.ElapsedMilliseconds);
     }
 
     #endregion

@@ -233,17 +233,23 @@ public sealed class InferencePresetConfiguration : IEntityTypeConfiguration<Infe
     /// <param name="builder">The entity type builder.</param>
     private static void ConfigureIndexes(EntityTypeBuilder<InferencePresetEntity> builder)
     {
-        // Unique index on Name
+        // Unique constraint on Name: Essential for preset identification.
+        // This is enforced at the database level because:
+        // 1. Presets are selected by name in the UI
+        // 2. Duplication feature creates new names based on existing names
+        // 3. Application-level checks could have race conditions
         builder.HasIndex(ip => ip.Name)
             .HasDatabaseName(IndexName)
             .IsUnique();
 
-        // Index for finding default preset
+        // Index for finding the default preset quickly
         builder.HasIndex(ip => ip.IsDefault)
             .HasDatabaseName(IndexIsDefault);
 
-        // Composite index for preset list query:
-        // ORDER BY IsBuiltIn DESC, UpdatedAt DESC (built-in presets first, then by recency)
+        // Composite index for preset list query.
+        // Sort order: Built-in presets first (system-provided), then by recency.
+        // This ensures users always see stable reference presets at the top,
+        // with their custom presets sorted by most recently modified.
         builder.HasIndex(ip => new { ip.IsBuiltIn, ip.UpdatedAt })
             .HasDatabaseName(IndexList)
             .IsDescending(true, true);

@@ -173,8 +173,12 @@ public sealed class MessageConfiguration : IEntityTypeConfiguration<MessageEntit
         builder.HasIndex(m => m.Role)
             .HasDatabaseName(IndexRole);
 
-        // Unique composite index for message ordering within conversation
-        // Ensures no two messages in the same conversation have the same sequence number
+        // Unique composite index for message ordering within conversation.
+        // This constraint is CRITICAL for maintaining conversation integrity:
+        // 1. Prevents duplicate sequence numbers (database-enforced ordering)
+        // 2. Ensures messages can be reliably ordered without gaps or overlaps
+        // 3. Catches application bugs that might assign duplicate sequences
+        // Note: Repository layer assigns sequences using MAX+1 pattern.
         builder.HasIndex(m => new { m.ConversationId, m.SequenceNumber })
             .HasDatabaseName(IndexConversationSequence)
             .IsUnique();
@@ -186,8 +190,12 @@ public sealed class MessageConfiguration : IEntityTypeConfiguration<MessageEntit
     /// <param name="builder">The entity type builder.</param>
     private static void ConfigureRelationships(EntityTypeBuilder<MessageEntity> builder)
     {
-        // Relationship to ConversationEntity (many-to-one)
-        // When a Conversation is deleted, all its messages are deleted
+        // Cascade delete: When a conversation is deleted, all its messages must go with it.
+        // This is the only sensible behavior because:
+        // 1. Messages have no meaning without their parent conversation
+        // 2. Orphaned messages would waste storage and cause confusion
+        // 3. The FK constraint would prevent deletion anyway if not cascaded
+        // Alternative (Restrict) would require manual message deletion first.
         builder.HasOne(m => m.Conversation)
             .WithMany(c => c.Messages)
             .HasForeignKey(m => m.ConversationId)

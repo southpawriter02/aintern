@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AIntern.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,14 +15,25 @@ namespace AIntern.Data.Repositories;
 /// for system prompts, with comprehensive logging support.
 /// </para>
 /// <para>
-/// Key implementation details:
+/// <b>Key Implementation Details:</b>
 /// </para>
 /// <list type="bullet">
-///   <item><description>Supports soft delete via IsActive flag</description></item>
-///   <item><description>Protects built-in prompts from hard deletion</description></item>
-///   <item><description>Provides atomic default switching</description></item>
-///   <item><description>Category-based organization</description></item>
+///   <item><description><b>Soft delete:</b> Uses IsActive flag to mark prompts as deleted without removing data</description></item>
+///   <item><description><b>Built-in protection:</b> Prevents hard deletion of IsBuiltIn prompts</description></item>
+///   <item><description><b>Atomic default switching:</b> Uses two ExecuteUpdateAsync calls to atomically change the default prompt</description></item>
+///   <item><description><b>Category organization:</b> Prompts can be filtered and grouped by category</description></item>
 /// </list>
+/// <para>
+/// <b>Logging Behavior:</b>
+/// </para>
+/// <list type="bullet">
+///   <item><description><b>Debug:</b> Entry/exit for all operations with parameters and timing</description></item>
+///   <item><description><b>Warning:</b> When bulk operations affect 0 rows or built-in protection triggers</description></item>
+/// </list>
+/// <para>
+/// <b>Thread Safety:</b> This class is not thread-safe. Each request should use its own
+/// instance via dependency injection with scoped lifetime.
+/// </para>
 /// </remarks>
 public sealed class SystemPromptRepository : ISystemPromptRepository
 {
@@ -225,8 +237,13 @@ public sealed class SystemPromptRepository : ISystemPromptRepository
     /// <inheritdoc />
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Soft-deleting system prompt: {PromptId}", id);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] DeleteAsync (soft) - PromptId: {PromptId}", id);
 
+        // Soft delete: Mark as inactive rather than removing from database.
+        // This preserves referential integrity with conversations that used this prompt
+        // and allows for potential restoration later.
+        // Also clear IsDefault to prevent an inactive prompt from being the default.
         var affectedRows = await _context.SystemPrompts
             .Where(p => p.Id == id)
             .ExecuteUpdateAsync(setters => setters
@@ -235,35 +252,60 @@ public sealed class SystemPromptRepository : ISystemPromptRepository
                 .SetProperty(p => p.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
 
-        _logger.LogDebug("Soft-deleted system prompt {PromptId}, affected rows: {AffectedRows}", id, affectedRows);
+        stopwatch.Stop();
+
+        if (affectedRows == 0)
+        {
+            _logger.LogWarning(
+                "DeleteAsync affected 0 rows - prompt may not exist: {PromptId}",
+                id);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "[EXIT] DeleteAsync - PromptId: {PromptId}, AffectedRows: {AffectedRows}, Duration: {DurationMs}ms",
+                id, affectedRows, stopwatch.ElapsedMilliseconds);
+        }
     }
 
     /// <inheritdoc />
     public async Task HardDeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Hard-deleting system prompt: {PromptId}", id);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] HardDeleteAsync - PromptId: {PromptId}", id);
 
+        // Hard delete requires loading the entity first to check the IsBuiltIn flag.
+        // Built-in prompts are protected from permanent deletion.
         var prompt = await _context.SystemPrompts.FindAsync([id], cancellationToken);
 
         if (prompt == null)
         {
-            _logger.LogDebug("System prompt not found for hard delete: {PromptId}", id);
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "HardDeleteAsync - Prompt not found: {PromptId}, Duration: {DurationMs}ms",
+                id, stopwatch.ElapsedMilliseconds);
             return;
         }
 
+        // Guard clause: Protect built-in prompts from permanent deletion.
+        // Built-in prompts are seeded during database initialization and should
+        // never be removed to ensure the application always has default prompts.
         if (prompt.IsBuiltIn)
         {
+            stopwatch.Stop();
             _logger.LogWarning(
-                "Cannot hard-delete built-in system prompt {PromptId}: {Name}",
-                id,
-                prompt.Name);
+                "HardDeleteAsync BLOCKED - Cannot delete built-in prompt {PromptId}: {Name}",
+                id, prompt.Name);
             return;
         }
 
         _context.SystemPrompts.Remove(prompt);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogDebug("Hard-deleted system prompt: {PromptId}", id);
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] HardDeleteAsync - PromptId: {PromptId}, Name: {Name}, Duration: {DurationMs}ms",
+            id, prompt.Name, stopwatch.ElapsedMilliseconds);
     }
 
     #endregion
@@ -273,17 +315,24 @@ public sealed class SystemPromptRepository : ISystemPromptRepository
     /// <inheritdoc />
     public async Task SetAsDefaultAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Setting system prompt {PromptId} as default", id);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] SetAsDefaultAsync - PromptId: {PromptId}", id);
 
-        // Clear existing default
-        await _context.SystemPrompts
+        // Atomic default switching using two ExecuteUpdateAsync calls.
+        // Step 1: Clear the IsDefault flag from all currently-default prompts.
+        // This handles the case where multiple prompts somehow became default.
+        var clearedCount = await _context.SystemPrompts
             .Where(p => p.IsDefault)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(p => p.IsDefault, false)
                 .SetProperty(p => p.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
 
-        // Set new default
+        _logger.LogDebug(
+            "SetAsDefaultAsync - Cleared IsDefault from {Count} prompts",
+            clearedCount);
+
+        // Step 2: Set the new prompt as default.
         var affectedRows = await _context.SystemPrompts
             .Where(p => p.Id == id)
             .ExecuteUpdateAsync(setters => setters
@@ -291,7 +340,20 @@ public sealed class SystemPromptRepository : ISystemPromptRepository
                 .SetProperty(p => p.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
 
-        _logger.LogDebug("Set system prompt {PromptId} as default, affected rows: {AffectedRows}", id, affectedRows);
+        stopwatch.Stop();
+
+        if (affectedRows == 0)
+        {
+            _logger.LogWarning(
+                "SetAsDefaultAsync affected 0 rows - prompt may not exist: {PromptId}",
+                id);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "[EXIT] SetAsDefaultAsync - PromptId: {PromptId}, Duration: {DurationMs}ms",
+                id, stopwatch.ElapsedMilliseconds);
+        }
     }
 
     /// <inheritdoc />
@@ -312,8 +374,11 @@ public sealed class SystemPromptRepository : ISystemPromptRepository
     /// <inheritdoc />
     public async Task RestoreAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Restoring system prompt: {PromptId}", id);
+        _logger.LogDebug("[ENTER] RestoreAsync - PromptId: {PromptId}", id);
 
+        // Restore a soft-deleted prompt by setting IsActive back to true.
+        // This is the inverse of DeleteAsync and allows recovery of accidentally
+        // deleted prompts without data loss.
         var affectedRows = await _context.SystemPrompts
             .Where(p => p.Id == id)
             .ExecuteUpdateAsync(setters => setters
@@ -321,7 +386,18 @@ public sealed class SystemPromptRepository : ISystemPromptRepository
                 .SetProperty(p => p.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
 
-        _logger.LogDebug("Restored system prompt {PromptId}, affected rows: {AffectedRows}", id, affectedRows);
+        if (affectedRows == 0)
+        {
+            _logger.LogWarning(
+                "RestoreAsync affected 0 rows - prompt may not exist: {PromptId}",
+                id);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "[EXIT] RestoreAsync - PromptId: {PromptId}, AffectedRows: {AffectedRows}",
+                id, affectedRows);
+        }
     }
 
     #endregion

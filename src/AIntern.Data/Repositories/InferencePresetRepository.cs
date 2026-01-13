@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AIntern.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,14 +15,25 @@ namespace AIntern.Data.Repositories;
 /// for inference presets, with comprehensive logging support.
 /// </para>
 /// <para>
-/// Key implementation details:
+/// <b>Key Implementation Details:</b>
 /// </para>
 /// <list type="bullet">
-///   <item><description>Protects built-in presets from deletion</description></item>
-///   <item><description>Provides atomic default switching</description></item>
-///   <item><description>Supports preset duplication for customization</description></item>
-///   <item><description>Automatic default reassignment on deletion</description></item>
+///   <item><description><b>Built-in protection:</b> Prevents deletion of IsBuiltIn presets</description></item>
+///   <item><description><b>Atomic default switching:</b> Uses two ExecuteUpdateAsync calls to atomically change the default preset</description></item>
+///   <item><description><b>Duplication:</b> Creates a user-owned copy of any preset with a new name</description></item>
+///   <item><description><b>Default reassignment:</b> Automatically assigns a new default if the current default is deleted</description></item>
 /// </list>
+/// <para>
+/// <b>Logging Behavior:</b>
+/// </para>
+/// <list type="bullet">
+///   <item><description><b>Debug:</b> Entry/exit for all operations with parameters and timing</description></item>
+///   <item><description><b>Warning:</b> When built-in protection triggers or preset not found</description></item>
+/// </list>
+/// <para>
+/// <b>Thread Safety:</b> This class is not thread-safe. Each request should use its own
+/// instance via dependency injection with scoped lifetime.
+/// </para>
 /// </remarks>
 public sealed class InferencePresetRepository : IInferencePresetRepository
 {
@@ -204,33 +216,46 @@ public sealed class InferencePresetRepository : IInferencePresetRepository
     /// <inheritdoc />
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Deleting inference preset: {PresetId}", id);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] DeleteAsync - PresetId: {PresetId}", id);
 
+        // Load the preset to check IsBuiltIn and IsDefault flags.
+        // Built-in presets are protected from deletion.
         var preset = await _context.InferencePresets.FindAsync([id], cancellationToken);
 
         if (preset == null)
         {
-            _logger.LogDebug("Inference preset not found for deletion: {PresetId}", id);
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "DeleteAsync - Preset not found: {PresetId}, Duration: {DurationMs}ms",
+                id, stopwatch.ElapsedMilliseconds);
             return;
         }
 
+        // Guard clause: Protect built-in presets from deletion.
+        // Built-in presets are seeded during database initialization and should
+        // never be removed to ensure users always have baseline options.
         if (preset.IsBuiltIn)
         {
+            stopwatch.Stop();
             _logger.LogWarning(
-                "Cannot delete built-in inference preset {PresetId}: {Name}",
-                id,
-                preset.Name);
+                "DeleteAsync BLOCKED - Cannot delete built-in preset {PresetId}: {Name}, Duration: {DurationMs}ms",
+                id, preset.Name, stopwatch.ElapsedMilliseconds);
             return;
         }
 
+        // Track whether this was the default before deletion.
+        // If so, we need to reassign the default to another preset.
         var wasDefault = preset.IsDefault;
+        var deletedName = preset.Name;
 
         _context.InferencePresets.Remove(preset);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogDebug("Deleted inference preset: {PresetId}", id);
+        _logger.LogDebug("Deleted preset {PresetId}: {Name}", id, deletedName);
 
-        // Reassign default if needed
+        // Automatic default reassignment: If we just deleted the default preset,
+        // select a new default. Priority: built-in presets first, then by name.
         if (wasDefault)
         {
             _logger.LogDebug("Reassigning default after deleting default preset");
@@ -249,25 +274,42 @@ public sealed class InferencePresetRepository : IInferencePresetRepository
                         .SetProperty(p => p.UpdatedAt, DateTime.UtcNow),
                         cancellationToken);
 
-                _logger.LogDebug("Reassigned default to preset {PresetId}: {Name}", newDefault.Id, newDefault.Name);
+                _logger.LogDebug(
+                    "Reassigned default to preset {PresetId}: {Name}",
+                    newDefault.Id, newDefault.Name);
+            }
+            else
+            {
+                _logger.LogWarning("No presets remain to assign as default");
             }
         }
+
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] DeleteAsync - PresetId: {PresetId}, Duration: {DurationMs}ms",
+            id, stopwatch.ElapsedMilliseconds);
     }
 
     /// <inheritdoc />
     public async Task SetAsDefaultAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Setting inference preset {PresetId} as default", id);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("[ENTER] SetAsDefaultAsync - PresetId: {PresetId}", id);
 
-        // Clear existing default
-        await _context.InferencePresets
+        // Atomic default switching using two ExecuteUpdateAsync calls.
+        // Step 1: Clear the IsDefault flag from all currently-default presets.
+        var clearedCount = await _context.InferencePresets
             .Where(p => p.IsDefault)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(p => p.IsDefault, false)
                 .SetProperty(p => p.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
 
-        // Set new default
+        _logger.LogDebug(
+            "SetAsDefaultAsync - Cleared IsDefault from {Count} presets",
+            clearedCount);
+
+        // Step 2: Set the new preset as default.
         var affectedRows = await _context.InferencePresets
             .Where(p => p.Id == id)
             .ExecuteUpdateAsync(setters => setters
@@ -275,24 +317,48 @@ public sealed class InferencePresetRepository : IInferencePresetRepository
                 .SetProperty(p => p.UpdatedAt, DateTime.UtcNow),
                 cancellationToken);
 
-        _logger.LogDebug("Set inference preset {PresetId} as default, affected rows: {AffectedRows}", id, affectedRows);
+        stopwatch.Stop();
+
+        if (affectedRows == 0)
+        {
+            _logger.LogWarning(
+                "SetAsDefaultAsync affected 0 rows - preset may not exist: {PresetId}",
+                id);
+        }
+        else
+        {
+            _logger.LogDebug(
+                "[EXIT] SetAsDefaultAsync - PresetId: {PresetId}, Duration: {DurationMs}ms",
+                id, stopwatch.ElapsedMilliseconds);
+        }
     }
 
     /// <inheritdoc />
     public async Task<InferencePresetEntity?> DuplicateAsync(Guid id, string newName, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Duplicating inference preset {PresetId} with new name '{NewName}'", id, newName);
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug(
+            "[ENTER] DuplicateAsync - SourcePresetId: {PresetId}, NewName: {NewName}",
+            id, newName);
 
+        // Load the source preset to copy its properties.
+        // UseAsNoTracking() since we're creating a new entity, not modifying the source.
         var source = await _context.InferencePresets
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
         if (source == null)
         {
-            _logger.LogDebug("Source inference preset not found for duplication: {PresetId}", id);
+            stopwatch.Stop();
+            _logger.LogWarning(
+                "DuplicateAsync - Source preset not found: {PresetId}, Duration: {DurationMs}ms",
+                id, stopwatch.ElapsedMilliseconds);
             return null;
         }
 
+        // Create a new preset with the source's parameter values.
+        // The duplicate is always user-created (IsBuiltIn = false) and not the default.
+        // This allows users to customize built-in presets without losing the originals.
         var duplicate = new InferencePresetEntity
         {
             Id = Guid.NewGuid(),
@@ -304,18 +370,17 @@ public sealed class InferencePresetRepository : IInferencePresetRepository
             RepeatPenalty = source.RepeatPenalty,
             MaxTokens = source.MaxTokens,
             ContextSize = source.ContextSize,
-            IsDefault = false,
-            IsBuiltIn = false
+            IsDefault = false,  // Duplicates are never default
+            IsBuiltIn = false   // Duplicates are always user-created
         };
 
         _context.InferencePresets.Add(duplicate);
         await _context.SaveChangesAsync(cancellationToken);
 
+        stopwatch.Stop();
         _logger.LogDebug(
-            "Duplicated inference preset {SourceId} to {DuplicateId} with name '{Name}'",
-            id,
-            duplicate.Id,
-            newName);
+            "[EXIT] DuplicateAsync - SourceId: {SourceId}, DuplicateId: {DuplicateId}, Name: {Name}, Duration: {DurationMs}ms",
+            id, duplicate.Id, newName, stopwatch.ElapsedMilliseconds);
 
         return duplicate;
     }

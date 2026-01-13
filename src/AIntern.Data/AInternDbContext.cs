@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AIntern.Core.Entities;
 using AIntern.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,18 @@ namespace AIntern.Data;
 ///   <item><description>Comprehensive logging at all appropriate levels</description></item>
 ///   <item><description>Dual constructors for DI and design-time scenarios</description></item>
 /// </list>
+/// <para>
+/// <b>Logging Behavior:</b>
+/// </para>
+/// <list type="bullet">
+///   <item><description><b>Debug:</b> Entry/exit for SaveChanges with timing and entity counts</description></item>
+///   <item><description><b>Information:</b> Configuration loading, table mappings</description></item>
+///   <item><description><b>Warning:</b> Design-time constructor usage</description></item>
+/// </list>
+/// <para>
+/// <b>Thread Safety:</b> This class is not thread-safe. Each request should use its own
+/// instance via dependency injection with scoped lifetime.
+/// </para>
 /// <para>
 /// The context automatically sets CreatedAt when entities are added and UpdatedAt when
 /// entities are modified, ensuring consistent timestamp handling across the application.
@@ -165,17 +178,20 @@ public class AInternDbContext : DbContext
     /// </remarks>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        _logger.LogDebug("Applying entity configurations from assembly");
+        _logger.LogDebug("[ENTER] OnModelCreating - Applying entity configurations");
 
         base.OnModelCreating(modelBuilder);
 
-        // Automatically apply all IEntityTypeConfiguration<T> implementations
-        // from the assembly containing ConversationConfiguration
+        // Use ApplyConfigurationsFromAssembly for automatic discovery of IEntityTypeConfiguration<T>.
+        // This is preferred over explicit registration because:
+        // 1. Adding new configurations doesn't require changes here
+        // 2. Configurations are co-located with their responsibilities
+        // 3. Reduces risk of forgetting to register new configurations
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(ConversationConfiguration).Assembly);
 
         _logger.LogInformation(
-            "Entity configurations applied for tables: {Tables}",
+            "[EXIT] OnModelCreating - Configured tables: {Tables}",
             string.Join(", ", new[]
             {
                 ConversationConfiguration.TableName,
@@ -212,8 +228,19 @@ public class AInternDbContext : DbContext
     /// </remarks>
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        var stopwatch = Stopwatch.StartNew();
+        
+        // Update timestamps before saving to ensure consistent audit trail.
+        // This is done synchronously for the sync SaveChanges path.
         UpdateTimestamps();
-        return base.SaveChanges(acceptAllChangesOnSuccess);
+        var result = base.SaveChanges(acceptAllChangesOnSuccess);
+        
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] SaveChanges - Saved {Count} changes in {DurationMs}ms",
+            result, stopwatch.ElapsedMilliseconds);
+        
+        return result;
     }
 
     /// <summary>
@@ -249,10 +276,21 @@ public class AInternDbContext : DbContext
     /// This override automatically manages CreatedAt and UpdatedAt timestamps
     /// for all entities that have these properties.
     /// </remarks>
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        var stopwatch = Stopwatch.StartNew();
+        
+        // Update timestamps before saving to ensure consistent audit trail.
+        // This ensures CreatedAt is set on new entities and UpdatedAt on modified ones.
         UpdateTimestamps();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] SaveChangesAsync - Saved {Count} changes in {DurationMs}ms",
+            result, stopwatch.ElapsedMilliseconds);
+        
+        return result;
     }
 
     #endregion
