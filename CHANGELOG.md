@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.2b] - 2026-01-12
+
+ViewModel layer for conversation persistence. See [detailed notes](docs/changelog/v0.2.2b.md).
+
+### Added
+
+- IDispatcher interface for testable UI thread dispatching
+- AvaloniaDispatcher implementation with exhaustive logging
+- ConversationSummaryViewModel with RelativeTime formatting
+- ConversationGroupViewModel with date-based grouping
+- ConversationListViewModel with 10 commands and 300ms debounced search
+- DI registration for dispatcher and ViewModels
+
 ## [0.2.2a] - 2026-01-12
 
 Service layer for conversation persistence. See [detailed notes](docs/changelog/v0.2.2a.md).

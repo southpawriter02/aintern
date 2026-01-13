@@ -103,6 +103,14 @@ public static class ServiceCollectionExtensions
         });
 
         // ┌─────────────────────────────────────────────────────────────────┐
+        // │ UI INFRASTRUCTURE                                                │
+        // └─────────────────────────────────────────────────────────────────┘
+        
+        // Dispatcher: UI thread abstraction for testable ViewModels.
+        // Singleton because Avalonia.Threading.Dispatcher is thread-safe.
+        services.AddSingleton<IDispatcher, AvaloniaDispatcher>();
+
+        // ┌─────────────────────────────────────────────────────────────────┐
         // │ VIEWMODELS (Transient - created fresh when requested)           │
         // └─────────────────────────────────────────────────────────────────┘
         
@@ -114,6 +122,9 @@ public static class ServiceCollectionExtensions
         
         // Model selector: file picker and model loading UI
         services.AddTransient<ModelSelectorViewModel>();
+        
+        // Conversation list: sidebar with grouped conversations
+        services.AddTransient<ConversationListViewModel>();
 
         return services;
     }
