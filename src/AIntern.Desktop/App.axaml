@@ -12,6 +12,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://AIntern.Desktop/Themes/Dark.axaml" />
                 <ResourceInclude Source="avares://AIntern.Desktop/Resources/Icons.axaml" />
+                <ResourceInclude Source="avares://AIntern.Desktop/Controls/ParameterSlider.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

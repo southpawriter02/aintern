@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.3d] - 2026-01-13
+
+Parameter slider control for inference settings UI. See [detailed notes](docs/changelog/v0.2.3d.md).
+
+### Added
+
+- ParameterSlider: Custom templated control for inference parameters
+  - 10 styled properties (Label, Value, Min, Max, Step, Description, ValueFormat, Unit, ShowDescription, IsInteger)
+  - FormattedValue computed property with format string and unit suffix support
+  - Value coercion clamping to Min/Max range
+  - Keyboard navigation (Arrow±Step, Shift+Arrow±Step×10, Home/End)
+  - PART_Slider template part for inner slider access
+  - 3-row Grid layout (Label+Badge, Slider, Description)
+- ParameterSlider.axaml: Control theme with dynamic resource bindings
+  - Monospace font for value badge (prevents layout shift)
+
+### Changed
+
+- App.axaml: Added ResourceInclude for ParameterSlider.axaml
+
 ## [0.2.3c] - 2026-01-13
 
 ViewModels for inference settings panel. See [detailed notes](docs/changelog/v0.2.3c.md).

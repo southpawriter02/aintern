@@ -1,0 +1,137 @@
+<!--
+    ============================================================================
+    ParameterSlider Control Theme (v0.2.3d)
+    ============================================================================
+
+    Provides the visual template for the ParameterSlider custom control.
+
+    PURPOSE:
+    Renders a labeled slider with value badge and optional description text
+    for inference parameter adjustment (Temperature, Top-P, Max Tokens, etc.)
+
+    VISUAL LAYOUT:
+    ┌────────────────────────────────────────────────────────┐
+    │ Temperature                              [   0.7   ]   │  Row 0: Label + Badge
+    │ ═══════════════════●══════════════════════════════════ │  Row 1: Slider
+    │ Balanced creativity and consistency                    │  Row 2: Description
+    └────────────────────────────────────────────────────────┘
+
+    TEMPLATE PARTS:
+    - PART_Slider: The inner Slider control for value input and keyboard navigation
+
+    THEME RESOURCES USED:
+    - TextPrimary    (#CCCCCC): Label and value badge text color
+    - TextMuted      (#808080): Description text color
+    - ControlBackground (#2D2D30): Value badge background
+    - AccentHoverBrush (#1C97EA): Slider thumb hover color
+
+    BINDING NOTES:
+    - FormattedValue uses RelativeSource TemplatedParent binding because it's a
+      computed CLR property, not a StyledProperty (TemplateBinding won't work)
+    - All other properties use TemplateBinding for better performance
+
+    USAGE:
+    <controls:ParameterSlider
+        Label="Temperature"
+        Value="{Binding Temperature}"
+        Minimum="0"
+        Maximum="2"
+        Step="0.1"
+        Description="{Binding TemperatureDescription}"
+        ValueFormat="F1" />
+
+    ============================================================================
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:AIntern.Desktop.Controls">
+
+    <!-- ====================================================================== -->
+    <!-- ParameterSlider ControlTheme                                           -->
+    <!-- Reusable slider control for inference parameter adjustment.            -->
+    <!-- Features: label, value badge, description, keyboard navigation.        -->
+    <!-- ====================================================================== -->
+    <ControlTheme x:Key="{x:Type controls:ParameterSlider}"
+                  TargetType="controls:ParameterSlider">
+
+        <!-- Default property setters -->
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Margin" Value="0,4" />
+
+        <!-- Control template -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!-- Main container: 3-row grid -->
+                <Grid RowDefinitions="Auto,Auto,Auto">
+
+                    <!-- ====================================================== -->
+                    <!-- Row 0: Label and Value Badge                           -->
+                    <!-- ====================================================== -->
+                    <Grid Grid.Row="0"
+                          ColumnDefinitions="*,Auto"
+                          Margin="0,0,0,4">
+
+                        <!-- Label (left-aligned) -->
+                        <!-- Displays the parameter name (e.g., "Temperature") -->
+                        <TextBlock Text="{TemplateBinding Label}"
+                                   FontWeight="SemiBold"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimary}" />
+
+                        <!-- Value Badge (right-aligned) -->
+                        <!-- Shows formatted value with optional unit suffix -->
+                        <!-- Uses monospace font to prevent layout shift as value changes -->
+                        <Border Grid.Column="1"
+                                Background="{DynamicResource ControlBackground}"
+                                CornerRadius="4"
+                                Padding="8,2"
+                                MinWidth="60"
+                                HorizontalAlignment="Right">
+
+                            <!-- FormattedValue binding: must use RelativeSource because -->
+                            <!-- it's a computed CLR property, not a StyledProperty -->
+                            <TextBlock Text="{Binding FormattedValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                       FontFamily="Consolas, Menlo, Monaco, monospace"
+                                       FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimary}" />
+                        </Border>
+                    </Grid>
+
+                    <!-- ====================================================== -->
+                    <!-- Row 1: Slider                                          -->
+                    <!-- ====================================================== -->
+                    <!-- The main slider control for value input -->
+                    <!-- Named PART_Slider for code-behind keyboard navigation -->
+                    <Slider Grid.Row="1"
+                            Name="PART_Slider"
+                            Value="{TemplateBinding Value, Mode=TwoWay}"
+                            Minimum="{TemplateBinding Minimum}"
+                            Maximum="{TemplateBinding Maximum}"
+                            SmallChange="{TemplateBinding Step}"
+                            LargeChange="{TemplateBinding Step}"
+                            TickFrequency="{TemplateBinding Step}"
+                            IsSnapToTickEnabled="True"
+                            Focusable="True"
+                            Margin="0,4" />
+
+                    <!-- ====================================================== -->
+                    <!-- Row 2: Description                                     -->
+                    <!-- ====================================================== -->
+                    <!-- Contextual help text that may change based on value -->
+                    <!-- Visibility controlled by ShowDescription property -->
+                    <TextBlock Grid.Row="2"
+                               Text="{TemplateBinding Description}"
+                               IsVisible="{TemplateBinding ShowDescription}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMuted}"
+                               TextWrapping="Wrap"
+                               Margin="0,2,0,8" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+</ResourceDictionary>
