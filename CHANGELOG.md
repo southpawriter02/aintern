@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.1c] - 2026-01-12
+
+DbContext and Entity Framework Core configurations. See [detailed notes](docs/changelog/v0.2.1c.md).
+
+### Added
+
+- AInternDbContext with 4 DbSet properties and automatic timestamp management
+- Entity configurations for Conversation, Message, SystemPrompt, InferencePreset
+- 19 database indexes for query optimization
+- Unit tests for DbContext and configurations (22 tests)
+- Feature documentation (docs/features/dbcontext.md)
+
+## [0.2.1b] - 2026-01-12
+
+Entity classes for database persistence. See [detailed notes](docs/changelog/v0.2.1b.md).
+
+### Added
+
+- Entity classes: ConversationEntity, MessageEntity, SystemPromptEntity, InferencePresetEntity
+- Unit tests for entities (26 tests)
+- Feature documentation (docs/features/entities.md)
+
 ## [0.2.1a] - 2026-01-12
 
 ### Added
