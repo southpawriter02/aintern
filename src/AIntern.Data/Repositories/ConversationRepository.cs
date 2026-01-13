@@ -461,6 +461,68 @@ public sealed class ConversationRepository : IConversationRepository
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <para>
+    /// This method retrieves messages in pages, where page 1 contains the most recent messages.
+    /// The algorithm works as follows:
+    /// </para>
+    /// <list type="number">
+    ///   <item><description>Calculate skip as <c>(pageNumber - 1) * pageSize</c></description></item>
+    ///   <item><description>Order by SequenceNumber descending to get newest first</description></item>
+    ///   <item><description>Skip and take to get the page</description></item>
+    ///   <item><description>Order the result by SequenceNumber ascending for display</description></item>
+    /// </list>
+    /// <para>
+    /// <b>Example:</b> For a conversation with 100 messages and pageSize=50:
+    /// </para>
+    /// <list type="bullet">
+    ///   <item><description>Page 1 (skip=0, take=50): Messages 51-100 (desc), returned as 51-100 (asc)</description></item>
+    ///   <item><description>Page 2 (skip=50, take=50): Messages 1-50 (desc), returned as 1-50 (asc)</description></item>
+    /// </list>
+    /// </remarks>
+    public async Task<IReadOnlyList<MessageEntity>> GetMessagesPagedAsync(
+        Guid conversationId,
+        int pageNumber,
+        int pageSize = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug(
+            "[ENTER] GetMessagesPagedAsync - ConversationId: {ConversationId}, Page: {PageNumber}, PageSize: {PageSize}",
+            conversationId, pageNumber, pageSize);
+
+        // Validate page number (must be 1 or greater)
+        if (pageNumber < 1)
+        {
+            _logger.LogWarning(
+                "[WARN] GetMessagesPagedAsync - Invalid page number {PageNumber}, defaulting to 1",
+                pageNumber);
+            pageNumber = 1;
+        }
+
+        // Calculate skip amount (0-indexed internally)
+        var skip = (pageNumber - 1) * pageSize;
+
+        // Retrieve messages: order descending to get newest first, then skip/take,
+        // finally order ascending for chronological display order.
+        var messages = await _context.Messages
+            .AsNoTracking()
+            .Where(m => m.ConversationId == conversationId)
+            .OrderByDescending(m => m.SequenceNumber)
+            .Skip(skip)
+            .Take(pageSize)
+            .OrderBy(m => m.SequenceNumber)
+            .ToListAsync(cancellationToken);
+
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] GetMessagesPagedAsync - ConversationId: {ConversationId}, Page: {PageNumber}, Retrieved: {Count}, Duration: {DurationMs}ms",
+            conversationId, pageNumber, messages.Count, stopwatch.ElapsedMilliseconds);
+
+        return messages;
+    }
+
+    /// <inheritdoc />
     public async Task DeleteMessageAsync(Guid messageId, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();

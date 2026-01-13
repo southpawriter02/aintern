@@ -319,12 +319,75 @@ public partial class ChatViewModel : ViewModelBase, IDisposable
     {
         // Clear UI message list
         Messages.Clear();
-        
+
         // Clear conversation service history
         _conversationService.ClearConversation();
-        
+
         // Clear any displayed errors
         ClearError();
+    }
+
+    /// <summary>
+    /// Explicitly saves the current conversation to the database.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This command allows manual triggering of a save operation via the Ctrl+S
+    /// keyboard shortcut. While auto-save handles most persistence, users may
+    /// want to manually save to ensure changes are committed immediately.
+    /// </para>
+    /// <para>
+    /// The command is a no-op if there are no unsaved changes, preventing
+    /// unnecessary database writes.
+    /// </para>
+    /// </remarks>
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] SaveAsync - HasUnsavedChanges: {HasUnsavedChanges}", HasUnsavedChanges);
+
+        // Skip if no changes to save
+        if (!HasUnsavedChanges)
+        {
+            _logger?.LogDebug("[SKIP] SaveAsync - No unsaved changes to save");
+            return;
+        }
+
+        try
+        {
+            _logger?.LogInformation("[INFO] Manual save initiated by user");
+            await _conversationService.SaveCurrentConversationAsync();
+            _logger?.LogDebug("[INFO] Manual save completed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[ERROR] Manual save failed: {Message}", ex.Message);
+            SetError($"Save failed: {ex.Message}");
+        }
+
+        _logger?.LogDebug("[EXIT] SaveAsync - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+    }
+
+    /// <summary>
+    /// Clears the unsaved changes flag without saving.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Used when the user explicitly chooses to discard changes (e.g., clicking
+    /// "Don't Save" in the unsaved changes dialog when closing the window).
+    /// </para>
+    /// <para>
+    /// This method only clears the local flag; it does not affect the conversation
+    /// service state. The conversation will still be considered "dirty" by the service,
+    /// but this ViewModel will allow operations that check <see cref="HasUnsavedChanges"/>
+    /// to proceed.
+    /// </para>
+    /// </remarks>
+    public void ClearUnsavedChangesFlag()
+    {
+        _logger?.LogDebug("[INFO] ClearUnsavedChangesFlag called - clearing HasUnsavedChanges flag");
+        HasUnsavedChanges = false;
     }
 
     /// <summary>

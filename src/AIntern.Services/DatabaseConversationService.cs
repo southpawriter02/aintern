@@ -83,6 +83,12 @@ public sealed class DatabaseConversationService : IConversationService, IDisposa
     /// </summary>
     private bool _isDisposed;
 
+    /// <summary>
+    /// Tracks current page number for lazy loading (1-indexed).
+    /// Page 1 is the most recent messages.
+    /// </summary>
+    private int _currentPage = 1;
+
     #endregion
 
     #region IConversationService Properties
@@ -289,6 +295,143 @@ public sealed class DatabaseConversationService : IConversationService, IDisposa
             stopwatch.ElapsedMilliseconds);
 
         return _currentConversation;
+    }
+
+    /// <inheritdoc />
+    public async Task<Conversation> LoadConversationLazyAsync(
+        Guid conversationId,
+        int initialMessageCount = 50,
+        CancellationToken ct = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug(
+            "[ENTER] LoadConversationLazyAsync - Id: {ConversationId}, InitialCount: {InitialCount}",
+            conversationId, initialMessageCount);
+
+        // Save current conversation if it has unsaved changes.
+        if (_currentConversation.HasUnsavedChanges)
+        {
+            _logger.LogDebug("[INFO] LoadConversationLazyAsync - Saving current conversation first");
+            await SaveCurrentConversationAsync(ct);
+        }
+
+        var previousId = _currentConversation.IsPersisted ? _currentConversation.Id : (Guid?)null;
+
+        // Load conversation metadata without messages.
+        var entity = await _repository.GetByIdAsync(conversationId, ct);
+        if (entity is null)
+        {
+            _logger.LogWarning("[WARN] LoadConversationLazyAsync - Conversation not found: {ConversationId}", conversationId);
+            throw new InvalidOperationException($"Conversation {conversationId} not found");
+        }
+
+        // Get total message count for pagination tracking.
+        var totalCount = await _repository.GetMessageCountAsync(conversationId, ct);
+
+        // Load initial page of messages (most recent).
+        var messages = await _repository.GetMessagesPagedAsync(conversationId, 1, initialMessageCount, ct);
+
+        // Create domain model without messages first.
+        _currentConversation = new Conversation
+        {
+            Id = entity.Id,
+            Title = entity.Title,
+            CreatedAt = entity.CreatedAt,
+            UpdatedAt = entity.UpdatedAt,
+            ModelPath = entity.ModelPath,
+            ModelName = entity.ModelName,
+            SystemPromptId = entity.SystemPromptId,
+            IsArchived = entity.IsArchived,
+            IsPinned = entity.IsPinned,
+            IsPersisted = true,
+            HasUnsavedChanges = false
+        };
+
+        // Load messages into the conversation.
+        var domainMessages = messages.Select(MapMessageToDomain);
+        _currentConversation.LoadMessages(domainMessages);
+
+        // Set lazy loading state.
+        var hasMore = _currentConversation.LoadedMessageCount < totalCount;
+        _currentConversation.SetLazyLoadingState(hasMore, totalCount);
+
+        // Reset page tracker to 1 (we loaded the first page).
+        _currentPage = 1;
+
+        OnConversationChanged(ConversationChangeType.Loaded, previousId);
+
+        stopwatch.Stop();
+        _logger.LogInformation(
+            "[EXIT] LoadConversationLazyAsync - Loaded {ConversationId}: {Title} ({LoadedCount}/{TotalCount} messages, HasMore: {HasMore}) in {ElapsedMs}ms",
+            _currentConversation.Id,
+            _currentConversation.Title,
+            _currentConversation.LoadedMessageCount,
+            totalCount,
+            hasMore,
+            stopwatch.ElapsedMilliseconds);
+
+        return _currentConversation;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> LoadMoreMessagesAsync(int count = 50, CancellationToken ct = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug(
+            "[ENTER] LoadMoreMessagesAsync - ConversationId: {ConversationId}, RequestedCount: {Count}, CurrentPage: {Page}",
+            _currentConversation.Id, count, _currentPage);
+
+        // Check if there are more messages to load.
+        if (!_currentConversation.HasMoreMessages)
+        {
+            _logger.LogDebug("[SKIP] LoadMoreMessagesAsync - No more messages available");
+            return false;
+        }
+
+        // Conversation must be persisted to load more messages.
+        if (!_currentConversation.IsPersisted)
+        {
+            _logger.LogDebug("[SKIP] LoadMoreMessagesAsync - Conversation not persisted");
+            return false;
+        }
+
+        // Increment page and load next batch of older messages.
+        var nextPage = _currentPage + 1;
+        var messages = await _repository.GetMessagesPagedAsync(
+            _currentConversation.Id, nextPage, count, ct);
+
+        if (messages.Count == 0)
+        {
+            _logger.LogDebug("[INFO] LoadMoreMessagesAsync - No messages returned from page {Page}", nextPage);
+            _currentConversation.SetLazyLoadingState(false, _currentConversation.TotalMessageCount);
+            return false;
+        }
+
+        // Prepend older messages to the beginning.
+        var domainMessages = messages.Select(MapMessageToDomain);
+        _currentConversation.PrependMessages(domainMessages);
+
+        // Update page tracker.
+        _currentPage = nextPage;
+
+        // Update lazy loading state.
+        var hasMore = _currentConversation.LoadedMessageCount < _currentConversation.TotalMessageCount;
+        _currentConversation.SetLazyLoadingState(hasMore, _currentConversation.TotalMessageCount);
+
+        // Fire event for UI update.
+        OnConversationChanged(ConversationChangeType.MessagesLoaded);
+
+        stopwatch.Stop();
+        _logger.LogDebug(
+            "[EXIT] LoadMoreMessagesAsync - Loaded {NewCount} messages (page {Page}), Total loaded: {TotalLoaded}/{TotalCount}, HasMore: {HasMore}, Duration: {ElapsedMs}ms",
+            messages.Count,
+            _currentPage,
+            _currentConversation.LoadedMessageCount,
+            _currentConversation.TotalMessageCount,
+            hasMore,
+            stopwatch.ElapsedMilliseconds);
+
+        return true;
     }
 
     /// <inheritdoc />

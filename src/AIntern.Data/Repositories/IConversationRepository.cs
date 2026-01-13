@@ -272,6 +272,37 @@ public interface IConversationRepository
     Task<int> GetMessageCountAsync(Guid conversationId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves messages for a conversation using 1-indexed page-based pagination.
+    /// </summary>
+    /// <param name="conversationId">The unique identifier of the conversation.</param>
+    /// <param name="pageNumber">The 1-indexed page number to retrieve.</param>
+    /// <param name="pageSize">The number of messages per page (default: 50).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>
+    /// A read-only list of messages for the specified page, ordered by
+    /// <see cref="MessageEntity.SequenceNumber"/> ascending.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method uses 1-indexed pages (page 1 = first page, page 2 = second page, etc.)
+    /// as opposed to <see cref="GetMessagesAsync"/> which uses 0-based skip/take.
+    /// </para>
+    /// <para>
+    /// Messages are retrieved in reverse order from the database (newest first) then
+    /// sorted for display (oldest first). For example, with 100 messages and pageSize=50:
+    /// <list type="bullet">
+    ///   <item>Page 1: Messages 51-100 (most recent)</item>
+    ///   <item>Page 2: Messages 1-50 (older)</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    Task<IReadOnlyList<MessageEntity>> GetMessagesPagedAsync(
+        Guid conversationId,
+        int pageNumber,
+        int pageSize = 50,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes a message from a conversation.
     /// </summary>
     /// <param name="messageId">The unique identifier of the message to delete.</param>

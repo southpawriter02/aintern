@@ -128,6 +128,55 @@ public interface IConversationService
     Task<Conversation> LoadConversationAsync(Guid conversationId, CancellationToken ct = default);
 
     /// <summary>
+    /// Loads an existing conversation with lazy loading (pagination) support.
+    /// </summary>
+    /// <param name="conversationId">The conversation ID to load.</param>
+    /// <param name="initialMessageCount">
+    /// Maximum number of recent messages to load initially (default: 50).
+    /// </param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// The loaded conversation with the most recent messages.
+    /// Check <see cref="Conversation.HasMoreMessages"/> to determine if older messages exist.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">If conversation not found.</exception>
+    /// <remarks>
+    /// <para>
+    /// This method loads only the most recent <paramref name="initialMessageCount"/> messages
+    /// for better performance with large conversations. Use <see cref="LoadMoreMessagesAsync"/>
+    /// to load older messages as needed.
+    /// </para>
+    /// <para>
+    /// If the current conversation has unsaved changes, it is saved first.
+    /// </para>
+    /// </remarks>
+    Task<Conversation> LoadConversationLazyAsync(
+        Guid conversationId,
+        int initialMessageCount = 50,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Loads more messages from the current conversation (for lazy loading).
+    /// </summary>
+    /// <param name="count">Number of additional messages to load (default: 50).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// <c>true</c> if messages were loaded; <c>false</c> if no more messages exist.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Messages are prepended to the beginning of the conversation's message list
+    /// (older messages appear first). The <see cref="Conversation.HasMoreMessages"/>
+    /// property is updated after loading.
+    /// </para>
+    /// <para>
+    /// Fires <see cref="ConversationChanged"/> with <see cref="ConversationChangeType.MessagesLoaded"/>
+    /// when messages are successfully loaded.
+    /// </para>
+    /// </remarks>
+    Task<bool> LoadMoreMessagesAsync(int count = 50, CancellationToken ct = default);
+
+    /// <summary>
     /// Saves the current conversation to the database.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>

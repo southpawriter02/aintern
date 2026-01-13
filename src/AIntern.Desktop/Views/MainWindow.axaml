@@ -1,7 +1,7 @@
 <!--
     MainWindow.axaml - Main Application Window
 
-    Version: v0.2.2d
+    Version: v0.2.2e
 
     Layout:
     - SplitView with collapsible sidebar pane
@@ -11,6 +11,7 @@
 
     Keyboard Shortcuts:
     - Ctrl+N: Create new conversation
+    - Ctrl+S: Save current conversation
     - Ctrl+B: Toggle sidebar visibility
     - Ctrl+F: Focus search box
 -->
@@ -32,6 +33,8 @@
     <Window.KeyBindings>
         <!-- Ctrl+N: Create new conversation -->
         <KeyBinding Gesture="Ctrl+N" Command="{Binding NewConversationCommand}" />
+        <!-- Ctrl+S: Save current conversation (v0.2.2e) -->
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding ChatViewModel.SaveCommand}" />
         <!-- Ctrl+B: Toggle sidebar visibility -->
         <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleSidebarCommand}" />
         <!-- Ctrl+F: Focus search box in conversation list -->

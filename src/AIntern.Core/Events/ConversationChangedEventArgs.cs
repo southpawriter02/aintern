@@ -74,5 +74,14 @@ public enum ConversationChangeType
     /// <summary>
     /// All messages were cleared from the conversation.
     /// </summary>
-    Cleared
+    Cleared,
+
+    /// <summary>
+    /// Additional messages were loaded (lazy loading / pagination).
+    /// </summary>
+    /// <remarks>
+    /// Fired when <c>LoadMoreMessagesAsync</c> is called to load older messages.
+    /// The UI should prepend these messages to the message list.
+    /// </remarks>
+    MessagesLoaded
 }

@@ -124,6 +124,44 @@ public sealed class Conversation
 
     #endregion
 
+    #region Lazy Loading State (v0.2.2e)
+
+    /// <summary>
+    /// Gets or sets whether there are more messages available to load.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Set to <c>true</c> when the conversation is loaded with lazy loading
+    /// and not all messages were retrieved from the database.
+    /// </para>
+    /// <para>
+    /// Use <c>LoadMoreMessagesAsync</c> on <c>IConversationService</c> to
+    /// retrieve additional messages.
+    /// </para>
+    /// </remarks>
+    public bool HasMoreMessages { get; set; }
+
+    /// <summary>
+    /// Gets or sets the total number of messages in the database.
+    /// </summary>
+    /// <remarks>
+    /// This value is set when the conversation is loaded from the database.
+    /// It may differ from <see cref="LoadedMessageCount"/> when lazy loading is used.
+    /// </remarks>
+    public int TotalMessageCount { get; set; }
+
+    /// <summary>
+    /// Gets the number of messages currently loaded in memory.
+    /// </summary>
+    /// <remarks>
+    /// This is a computed property that returns the count of messages in the
+    /// <see cref="Messages"/> collection. When lazy loading, this may be less
+    /// than <see cref="TotalMessageCount"/>.
+    /// </remarks>
+    public int LoadedMessageCount => Messages.Count;
+
+    #endregion
+
     #region Messages
 
     /// <summary>
@@ -249,6 +287,41 @@ public sealed class Conversation
     {
         HasUnsavedChanges = false;
         IsPersisted = true;
+    }
+
+    /// <summary>
+    /// Prepends older messages to the beginning of the message list (internal use only).
+    /// </summary>
+    /// <param name="messages">Messages to prepend, ordered by SequenceNumber.</param>
+    /// <remarks>
+    /// <para>
+    /// This method is used by lazy loading to insert older messages at the beginning
+    /// of the conversation. Unlike <see cref="LoadMessages"/>, this does not clear
+    /// existing messages.
+    /// </para>
+    /// <para>
+    /// Messages are inserted at the beginning and maintain their original SequenceNumber
+    /// values from the database.
+    /// </para>
+    /// </remarks>
+    internal void PrependMessages(IEnumerable<ChatMessage> messages)
+    {
+        var orderedMessages = messages.OrderBy(m => m.SequenceNumber).ToList();
+        _messages.InsertRange(0, orderedMessages);
+    }
+
+    /// <summary>
+    /// Updates the lazy loading state (internal use only).
+    /// </summary>
+    /// <param name="hasMoreMessages">Whether more messages are available.</param>
+    /// <param name="totalCount">The total message count in the database.</param>
+    /// <remarks>
+    /// Called by DatabaseConversationService after loading to set the pagination state.
+    /// </remarks>
+    internal void SetLazyLoadingState(bool hasMoreMessages, int totalCount)
+    {
+        HasMoreMessages = hasMoreMessages;
+        TotalMessageCount = totalCount;
     }
 
     #endregion

@@ -1,5 +1,6 @@
 namespace AIntern.Desktop.ViewModels;
 
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ using AIntern.Core.Enums;
 using AIntern.Core.Events;
 using AIntern.Core.Interfaces;
 using AIntern.Core.Models;
+using AIntern.Desktop.Dialogs;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -55,6 +57,17 @@ public partial class ConversationListViewModel : ViewModelBase, IDisposable
     private bool _isDisposed;
 
     /// <summary>
+    /// Function to retrieve the owner window for modal dialogs.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Must be set by calling <see cref="SetOwnerWindowProvider"/> after construction.
+    /// Required for showing confirmation dialogs.
+    /// </para>
+    /// </remarks>
+    private Func<Window?>? _getOwnerWindow;
+
+    /// <summary>
     /// Search debounce delay in milliseconds.
     /// </summary>
     /// <remarks>
@@ -62,6 +75,35 @@ public partial class ConversationListViewModel : ViewModelBase, IDisposable
     /// reducing unnecessary API calls during rapid typing.
     /// </remarks>
     private const int SearchDebounceMs = 300;
+
+    #endregion
+
+    #region Configuration Methods
+
+    /// <summary>
+    /// Sets the owner window provider function for modal dialogs.
+    /// </summary>
+    /// <param name="provider">
+    /// A function that returns the owner window for modal dialogs.
+    /// May return null if no owner window is available.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// This method must be called after ViewModel construction to enable
+    /// confirmation dialogs (delete, rename, etc.).
+    /// </para>
+    /// <para>
+    /// Typically called from the View's code-behind or during composition:
+    /// </para>
+    /// <code>
+    /// viewModel.SetOwnerWindowProvider(() => this.GetVisualRoot() as Window);
+    /// </code>
+    /// </remarks>
+    public void SetOwnerWindowProvider(Func<Window?> provider)
+    {
+        _logger.LogDebug("[INFO] SetOwnerWindowProvider - Owner window provider set");
+        _getOwnerWindow = provider;
+    }
 
     #endregion
 
@@ -297,9 +339,15 @@ public partial class ConversationListViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    /// Deletes a conversation.
+    /// Deletes a conversation with confirmation dialog.
     /// </summary>
     /// <param name="summary">The conversation to delete.</param>
+    /// <remarks>
+    /// <para>
+    /// Shows a <see cref="DeleteConfirmationDialog"/> before deletion.
+    /// If no owner window is available, deletion proceeds without confirmation.
+    /// </para>
+    /// </remarks>
     [RelayCommand]
     private async Task DeleteConversationAsync(ConversationSummaryViewModel summary)
     {
@@ -309,6 +357,29 @@ public partial class ConversationListViewModel : ViewModelBase, IDisposable
         try
         {
             ClearError();
+
+            // Show confirmation dialog if owner window is available
+            var ownerWindow = _getOwnerWindow?.Invoke();
+            if (ownerWindow != null)
+            {
+                _logger.LogDebug("[INFO] DeleteConversationAsync - Showing confirmation dialog");
+
+                var confirmed = await DeleteConfirmationDialog.ShowAsync(
+                    ownerWindow,
+                    summary.Title,
+                    _logger);
+
+                if (!confirmed)
+                {
+                    _logger.LogInformation("Delete cancelled by user for conversation: {Id}", summary.Id);
+                    return;
+                }
+            }
+            else
+            {
+                _logger.LogWarning("[WARN] DeleteConversationAsync - No owner window available, proceeding without confirmation");
+            }
+
             await _conversationService.DeleteConversationAsync(summary.Id);
             _logger.LogInformation("Deleted conversation: {Id}", summary.Id);
         }

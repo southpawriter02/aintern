@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.2e] - 2026-01-13
+
+Polish & edge cases. See [detailed notes](docs/changelog/v0.2.2e.md).
+
+### Added
+
+- UnsavedChangesDialog: Save/Don't Save/Cancel prompt before close or navigation
+- DeleteConfirmationDialog: Confirmation before conversation deletion
+- Keyboard shortcuts: Ctrl+S (save), F2 (rename selected)
+- Lazy loading: LoadConversationLazyAsync, LoadMoreMessagesAsync for large conversations
+- GetMessagesPagedAsync: 1-indexed pagination for message retrieval
+- Destructive button style (.destructive class) in Dark.axaml
+
+### Changed
+
+- MainWindow.axaml.cs: OnClosing handler for unsaved changes, OnKeyDown for F2
+- ConversationListViewModel: Delete confirmation dialog integration
+- ChatViewModel: SaveCommand, ClearUnsavedChangesFlag method
+- Conversation.cs: HasMoreMessages, TotalMessageCount, PrependMessages
+
 ## [0.2.2d] - 2026-01-13
 
 Chat integration with conversation persistence. See [detailed notes](docs/changelog/v0.2.2d.md).
