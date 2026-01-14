@@ -7,9 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.1c] - 2026-01-14
+
+Enhanced language detection utility. See [detailed notes](docs/changelog/v0.3.1c.md).
+
+### Added
+
+- **LanguageDetector Enhancements** - Complete rewrite
+  - 83 file extension mappings (expanded from ~60)
+  - 35 special file names (Dockerfile, package.json, tsconfig.json, etc.)
+  - `DetectByPath()` - Detect from full file paths
+  - `GetDisplayName()` - Human-readable names (C#, F#, TypeScript)
+  - `GetIconName()` - Icon identifiers for UI
+  - `GetAllLanguages()` - Unique language list
+  - `GetExtensionsForLanguage()` - Reverse lookup
+  - `IsLikelyTextFile()` - Text file heuristic
+
+### Technical Details
+
+- 71 unit tests for LanguageDetector
+- VSCode/TextMate language identifier conventions
+
 ## [0.3.1b] - 2026-01-14
 
 Database entities for workspace persistence. See [detailed notes](docs/changelog/v0.3.1b.md).
+
 
 ### Added
 
