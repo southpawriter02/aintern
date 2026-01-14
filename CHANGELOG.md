@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.2e] - 2026-01-14
+
+Context menus & icon colors. See [detailed notes](docs/changelog/v0.3.2e.md).
+
+### Added
+
+- **IconColorConverter** - IMultiValueConverter for language-specific icon colors
+
+### Features
+
+- 17 language-specific colors (C#, JS, TS, Python, HTML, CSS, etc.)
+- Folder gold color (#E8A838) for all directories
+- Default gray (#8B8B8B) for unknown file types
+- GetColorForIconKey() and GetAllColors() helper methods
+
 ## [0.3.2d] - 2026-01-14
 
 Tree view UI. See [detailed notes](docs/changelog/v0.3.2d.md).
