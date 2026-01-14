@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using AIntern.Core.Events;
 using AIntern.Core.Interfaces;
+using AIntern.Core.Models;
 using AIntern.Desktop.Views;
 
 namespace AIntern.Desktop.ViewModels;
@@ -43,6 +44,13 @@ namespace AIntern.Desktop.ViewModels;
 /// <item>Requires <see cref="ISystemPromptService"/> dependency for editor ViewModel construction</item>
 /// </list>
 /// </para>
+/// <para>
+/// <b>v0.2.5e Additions:</b>
+/// <list type="bullet">
+/// <item><see cref="OpenSearchCommand"/> - Opens the SearchDialog (Ctrl+K)</item>
+/// <item>Requires <see cref="ISearchService"/> dependency for search ViewModel construction</item>
+/// </list>
+/// </para>
 /// </remarks>
 public partial class MainWindowViewModel : ViewModelBase
 {
@@ -52,6 +60,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ILlmService _llmService;
     private readonly ISettingsService _settingsService;
     private readonly ISystemPromptService _systemPromptService;
+    private readonly ISearchService _searchService;
     private readonly IDispatcher _dispatcher;
     private readonly ILogger<MainWindowViewModel>? _logger;
 
@@ -147,6 +156,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <param name="llmService">The LLM service for model state events.</param>
     /// <param name="settingsService">The settings service for loading configuration.</param>
     /// <param name="systemPromptService">The system prompt service for editor ViewModel (v0.2.4e).</param>
+    /// <param name="searchService">The search service for search dialog ViewModel (v0.2.5e).</param>
     /// <param name="dispatcher">The dispatcher for UI thread operations (v0.2.4e).</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <remarks>
@@ -163,6 +173,12 @@ public partial class MainWindowViewModel : ViewModelBase
     ///   <item>Added <paramref name="dispatcher"/> for thread-safe operations</item>
     /// </list>
     /// </para>
+    /// <para>
+    /// <b>v0.2.5e Changes:</b>
+    /// <list type="bullet">
+    ///   <item>Added <paramref name="searchService"/> for search dialog construction</item>
+    /// </list>
+    /// </para>
     /// </remarks>
     public MainWindowViewModel(
         ChatViewModel chatViewModel,
@@ -172,6 +188,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ILlmService llmService,
         ISettingsService settingsService,
         ISystemPromptService systemPromptService,
+        ISearchService searchService,
         IDispatcher dispatcher,
         ILogger<MainWindowViewModel>? logger = null)
     {
@@ -189,6 +206,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _llmService = llmService ?? throw new ArgumentNullException(nameof(llmService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _systemPromptService = systemPromptService ?? throw new ArgumentNullException(nameof(systemPromptService));
+        _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
         _logger?.LogDebug("[INFO] Child ViewModels and services assigned");
@@ -447,6 +465,100 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             sw.Stop();
             _logger?.LogDebug("[EXIT] OpenSystemPromptEditorAsync - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+        }
+    }
+
+    /// <summary>
+    /// Opens the Search dialog as a modal dialog.
+    /// </summary>
+    /// <returns>A task representing the async dialog operation.</returns>
+    /// <remarks>
+    /// <para>
+    /// This command is invoked via Ctrl+K keyboard shortcut from the main window.
+    /// The search dialog provides:
+    /// <list type="bullet">
+    ///   <item>Full-text search across conversations and messages</item>
+    ///   <item>Debounced search input (300ms)</item>
+    ///   <item>Filter tabs for All, Conversations, Messages</item>
+    ///   <item>Keyboard navigation (Up/Down, Enter, Escape)</item>
+    ///   <item>Grouped results by type</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// When a result is selected, the dialog returns the <see cref="SearchResult"/>
+    /// which can be used to navigate to the selected conversation or message.
+    /// </para>
+    /// <para>Added in v0.2.5e.</para>
+    /// </remarks>
+    [RelayCommand]
+    private async Task OpenSearchAsync()
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] OpenSearchAsync");
+
+        try
+        {
+            if (_mainWindow == null)
+            {
+                _logger?.LogWarning("[WARN] Main window reference not set - cannot show search dialog");
+                return;
+            }
+
+            // Create a new search ViewModel for this dialog instance.
+            // The ViewModel is transient - each dialog gets its own instance.
+            var searchViewModel = new SearchViewModel(
+                _searchService,
+                _logger != null
+                    ? Microsoft.Extensions.Logging.LoggerFactory.Create(b => { }).CreateLogger<SearchViewModel>()
+                    : null);
+
+            // Create and show the search dialog as a modal.
+            var searchDialog = new SearchDialog
+            {
+                DataContext = searchViewModel
+            };
+
+            _logger?.LogDebug("[INFO] Showing SearchDialog as modal dialog");
+            var result = await searchDialog.ShowDialog<SearchResult?>(_mainWindow);
+
+            if (result != null)
+            {
+                _logger?.LogInformation("[INFO] Search result selected: {Type} - {Title} (ConversationId: {ConvId})",
+                    result.TypeLabel, result.Title, result.ConversationId);
+
+                // Navigate to the selected conversation.
+                // Find the conversation in the list and select it.
+                var conversationToSelect = ConversationListViewModel.Groups
+                    .SelectMany(g => g.Conversations)
+                    .FirstOrDefault(c => c.Id == result.ConversationId);
+
+                if (conversationToSelect != null)
+                {
+                    await ConversationListViewModel.SelectConversationCommand.ExecuteAsync(conversationToSelect);
+                    _logger?.LogDebug("[INFO] Navigated to conversation: {Id}", result.ConversationId);
+                }
+                else
+                {
+                    _logger?.LogWarning("[WARN] Conversation not found in list: {Id}", result.ConversationId);
+                }
+            }
+            else
+            {
+                _logger?.LogDebug("[INFO] SearchDialog closed without selection");
+            }
+
+            // Dispose the ViewModel to clean up the debounce timer.
+            searchViewModel.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[ERROR] OpenSearchAsync failed: {Message}", ex.Message);
+            SetError($"Failed to open search: {ex.Message}");
+        }
+        finally
+        {
+            sw.Stop();
+            _logger?.LogDebug("[EXIT] OpenSearchAsync - {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 

@@ -1,0 +1,307 @@
+<!--
+    SearchDialog.axaml - Spotlight-style Search Dialog
+
+    Version: v0.2.5e
+    Created: 2026-01-14
+
+    This dialog provides a spotlight-style search interface with:
+    - Search input with icon and loading indicator
+    - Filter tabs (All | Conversations | Messages)
+    - Grouped results list with selection highlighting
+    - Status bar showing result count and timing
+    - Keyboard navigation (Up/Down, Enter, Escape)
+
+    Keyboard Shortcuts:
+    - Up/Down: Navigate through results
+    - Enter: Select current result and close
+    - Escape: Close without selection
+
+    Bound to: SearchViewModel (v0.2.5e)
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AIntern.Desktop.ViewModels"
+        xmlns:models="using:AIntern.Core.Models"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+        x:Class="AIntern.Desktop.Views.SearchDialog"
+        x:DataType="vm:SearchViewModel"
+        Title="Search"
+        Width="600" Height="500"
+        MinWidth="400" MinHeight="300"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="BorderOnly"
+        Background="{DynamicResource WindowBackground}">
+
+    <!-- ================================================================== -->
+    <!-- Window Key Bindings                                                 -->
+    <!-- ================================================================== -->
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Up" Command="{Binding NavigateUpCommand}" />
+        <KeyBinding Gesture="Down" Command="{Binding NavigateDownCommand}" />
+        <KeyBinding Gesture="Enter" Command="{Binding SelectResultCommand}" />
+        <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}" />
+    </Window.KeyBindings>
+
+    <!-- ================================================================== -->
+    <!-- Window Styles                                                       -->
+    <!-- ================================================================== -->
+    <Window.Styles>
+        <!-- Filter Tab Button Style -->
+        <Style Selector="Button.filter-tab">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.filter-tab:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        </Style>
+        <Style Selector="Button.filter-tab.active">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <!-- Result Item Style -->
+        <Style Selector="Border.result-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Margin" Value="4,2" />
+        </Style>
+        <Style Selector="Border.result-item:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        </Style>
+        <Style Selector="Border.result-item.selected">
+            <Setter Property="Background" Value="{DynamicResource ConversationItemSelectedBackground}" />
+        </Style>
+
+        <!-- Group Header Style -->
+        <Style Selector="TextBlock.group-header">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="Margin" Value="16,12,16,4" />
+        </Style>
+    </Window.Styles>
+
+    <!-- ================================================================== -->
+    <!-- Window Resources                                                    -->
+    <!-- ================================================================== -->
+    <Window.Resources>
+        <!-- Search Result Item Template -->
+        <DataTemplate x:Key="SearchResultTemplate" x:DataType="models:SearchResult">
+            <Border Classes="result-item">
+                <Grid RowDefinitions="Auto,Auto">
+                    <!-- Row 0: Title + Type Badge -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Title}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <!-- Type Badge -->
+                        <Border Grid.Column="1"
+                                Background="{DynamicResource ControlBackground}"
+                                CornerRadius="2"
+                                Padding="6,2"
+                                Margin="8,0,0,0">
+                            <TextBlock Text="{Binding TypeLabel}"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" />
+                        </Border>
+                    </Grid>
+                    <!-- Row 1: Preview Text -->
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding Preview}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextMuted}"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,4,0,0" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- ================================================================== -->
+    <!-- Main Content - 4-row Grid                                           -->
+    <!-- ================================================================== -->
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- ============================================================== -->
+        <!-- Row 0: Search Input                                             -->
+        <!-- ============================================================== -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource ControlBackground}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Search Icon -->
+                <PathIcon Grid.Column="0"
+                          Data="{StaticResource SearchIcon}"
+                          Width="16" Height="16"
+                          Foreground="{DynamicResource TextMuted}"
+                          Margin="0,0,8,0"
+                          VerticalAlignment="Center" />
+
+                <!-- Search TextBox -->
+                <TextBox Grid.Column="1"
+                         Name="SearchInput"
+                         Text="{Binding Query, Mode=TwoWay}"
+                         Watermark="Search conversations and messages..."
+                         BorderThickness="0"
+                         Background="Transparent"
+                         FontSize="14"
+                         VerticalAlignment="Center" />
+
+                <!-- Loading Indicator -->
+                <ProgressBar Grid.Column="2"
+                             IsIndeterminate="True"
+                             Width="16" Height="16"
+                             IsVisible="{Binding IsSearching}"
+                             Margin="8,0,0,0"
+                             VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <!-- ============================================================== -->
+        <!-- Row 1: Filter Tabs                                              -->
+        <!-- ============================================================== -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="8,4">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <!-- All Tab -->
+                <Button Classes="filter-tab"
+                        Classes.active="{Binding FilterType, Converter={x:Static ObjectConverters.IsNull}}"
+                        Content="All"
+                        Command="{Binding SetFilterCommand}"
+                        CommandParameter="" />
+
+                <!-- Conversations Tab -->
+                <Button Classes="filter-tab"
+                        Content="Conversations"
+                        Command="{Binding SetFilterCommand}"
+                        CommandParameter="Conversation" />
+
+                <!-- Messages Tab -->
+                <Button Classes="filter-tab"
+                        Content="Messages"
+                        Command="{Binding SetFilterCommand}"
+                        CommandParameter="Message" />
+            </StackPanel>
+        </Border>
+
+        <!-- ============================================================== -->
+        <!-- Row 2: Results (Grouped)                                        -->
+        <!-- ============================================================== -->
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <!-- Conversations Group -->
+                <StackPanel IsVisible="{Binding ConversationResults.Count}">
+                    <TextBlock Classes="group-header" Text="Conversations" />
+                    <ItemsControl ItemsSource="{Binding ConversationResults}"
+                                  ItemTemplate="{StaticResource SearchResultTemplate}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Messages Group -->
+                <StackPanel IsVisible="{Binding MessageResults.Count}">
+                    <TextBlock Classes="group-header" Text="Messages" />
+                    <ItemsControl ItemsSource="{Binding MessageResults}"
+                                  ItemTemplate="{StaticResource SearchResultTemplate}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Empty State -->
+                <StackPanel IsVisible="{Binding !ConversationResults.Count}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Margin="0,40">
+                    <TextBlock Text="No results found"
+                               Foreground="{DynamicResource TextMuted}"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               IsVisible="{Binding SearchStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    <TextBlock Text="Type to search..."
+                               Foreground="{DynamicResource TextMuted}"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               IsVisible="{Binding !Query.Length}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ============================================================== -->
+        <!-- Row 3: Status Bar                                               -->
+        <!-- ============================================================== -->
+        <Border Grid.Row="3"
+                Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Status Text -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding SearchStatus}"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextMuted}"
+                           VerticalAlignment="Center" />
+
+                <!-- Keyboard Hints -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Background="{DynamicResource ControlBackground}"
+                                CornerRadius="2"
+                                Padding="4,2">
+                            <TextBlock Text="Enter"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" />
+                        </Border>
+                        <TextBlock Text="select"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Background="{DynamicResource ControlBackground}"
+                                CornerRadius="2"
+                                Padding="4,2">
+                            <TextBlock Text="Esc"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource TextMuted}" />
+                        </Border>
+                        <TextBlock Text="close"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</Window>

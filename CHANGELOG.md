@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.5e] - 2026-01-14
+
+Search UI components with spotlight-style dialog. See [detailed notes](docs/changelog/v0.2.5e.md).
+
+### Added
+
+- **Search Dialog** - Spotlight-style search UI (Ctrl+K)
+  - SearchViewModel with 300ms debounced search
+  - SearchDialog with borderless window styling (600x500)
+  - Filter tabs (All, Conversations, Messages)
+  - Keyboard navigation (Up/Down arrows with wrap-around)
+  - Enter to select result, Escape to close
+  - Grouped results by type (conversations then messages)
+  - Status bar showing result count and search timing
+  - ISearchService integration for FTS5 search
+  - Comprehensive unit tests (31 test cases)
+  - Full XML documentation and logging with timing
+
+### Technical Details
+
+- 300ms debounce using System.Timers.Timer
+- CancellationTokenSource for search cancellation
+- ObservableCollection for grouped results
+- Transient ViewModel (fresh per dialog instance)
+- IDisposable pattern for timer cleanup
+- Ctrl+K keybinding in MainWindow.axaml
+
 ## [0.2.5d] - 2026-01-14
 
 Migration service for version upgrades. See [detailed notes](docs/changelog/v0.2.5d.md).

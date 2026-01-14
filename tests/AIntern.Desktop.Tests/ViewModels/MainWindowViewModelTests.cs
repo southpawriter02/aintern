@@ -34,6 +34,7 @@ public class MainWindowViewModelTests : IDisposable
     private readonly Mock<IConversationService> _mockConversationService;
     private readonly Mock<ISettingsService> _mockSettingsService;
     private readonly Mock<ISystemPromptService> _mockSystemPromptService;
+    private readonly Mock<ISearchService> _mockSearchService;
     private readonly TestDispatcher _dispatcher;
     private readonly Mock<ILogger<MainWindowViewModel>> _mockLogger;
 
@@ -51,6 +52,7 @@ public class MainWindowViewModelTests : IDisposable
         _mockConversationService = new Mock<IConversationService>();
         _mockSettingsService = new Mock<ISettingsService>();
         _mockSystemPromptService = new Mock<ISystemPromptService>();
+        _mockSearchService = new Mock<ISearchService>();
         _dispatcher = new TestDispatcher();
         _mockLogger = new Mock<ILogger<MainWindowViewModel>>();
 
@@ -118,6 +120,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockLlmService.Object,
             _mockSettingsService.Object,
             _mockSystemPromptService.Object,
+            _mockSearchService.Object,
             _dispatcher,
             _mockLogger.Object);
 
@@ -148,6 +151,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockLlmService.Object,
             _mockSettingsService.Object,
             _mockSystemPromptService.Object,
+            _mockSearchService.Object,
             _dispatcher,
             _mockLogger.Object));
     }
@@ -167,6 +171,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockLlmService.Object,
             _mockSettingsService.Object,
             _mockSystemPromptService.Object,
+            _mockSearchService.Object,
             _dispatcher,
             _mockLogger.Object));
     }

@@ -58,6 +58,7 @@ public static class ServiceCollectionExtensions
     /// <item><see cref="InferenceSettingsViewModel"/> - Singleton (maintains state)</item>
     /// <item><see cref="SystemPromptEditorViewModel"/> - Transient (per editor window)</item>
     /// <item><see cref="SystemPromptSelectorViewModel"/> - Singleton (shared state)</item>
+    /// <item><see cref="SearchViewModel"/> - Transient (per search dialog, v0.2.5e)</item>
     /// </list>
     /// </para>
     /// </remarks>
@@ -225,6 +226,12 @@ public static class ServiceCollectionExtensions
         // Subscribes to ISystemPromptService events for automatic synchronization.
         // Added in v0.2.4c.
         services.AddSingleton<SystemPromptSelectorViewModel>();
+
+        // Search: spotlight-style search dialog ViewModel with debounced search.
+        // Transient so each dialog gets its own instance with fresh state.
+        // Uses ISearchService for FTS5 search operations.
+        // Added in v0.2.5e.
+        services.AddTransient<SearchViewModel>();
 
         return services;
     }

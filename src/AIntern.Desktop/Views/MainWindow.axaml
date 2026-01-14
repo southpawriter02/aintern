@@ -1,7 +1,7 @@
 <!--
     MainWindow.axaml - Main Application Window
 
-    Version: v0.2.3e
+    Version: v0.2.5e
 
     Layout:
     - SplitView with collapsible sidebar pane
@@ -14,6 +14,7 @@
     - Ctrl+S: Save current conversation
     - Ctrl+B: Toggle sidebar visibility
     - Ctrl+F: Focus search box
+    - Ctrl+K: Open search dialog (v0.2.5e)
 -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -39,6 +40,8 @@
         <KeyBinding Gesture="Ctrl+B" Command="{Binding ToggleSidebarCommand}" />
         <!-- Ctrl+F: Focus search box in conversation list -->
         <KeyBinding Gesture="Ctrl+F" Command="{Binding FocusSearchCommand}" />
+        <!-- Ctrl+K: Open search dialog (v0.2.5e) -->
+        <KeyBinding Gesture="Ctrl+K" Command="{Binding OpenSearchCommand}" />
     </Window.KeyBindings>
 
     <Grid RowDefinitions="*, Auto">
