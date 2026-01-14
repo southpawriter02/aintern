@@ -1,0 +1,192 @@
+<!--
+    ExportDialog.axaml - Export Conversation Dialog
+
+    Version: v0.2.5f
+    Created: 2026-01-14
+
+    This dialog provides an export interface with:
+    - Format selection (Markdown, JSON, PlainText, HTML)
+    - Option checkboxes (timestamps, system prompt, metadata, token counts)
+    - Live preview of export output
+    - Export and Cancel buttons
+
+    Keyboard Shortcuts:
+    - Escape: Close without exporting
+
+    Bound to: ExportViewModel (v0.2.5f)
+-->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AIntern.Desktop.ViewModels"
+        xmlns:converters="using:AIntern.Desktop.Converters"
+        mc:Ignorable="d" d:DesignWidth="550" d:DesignHeight="500"
+        x:Class="AIntern.Desktop.Views.ExportDialog"
+        x:DataType="vm:ExportViewModel"
+        Title="Export Conversation"
+        Width="550" Height="500"
+        MinWidth="400" MinHeight="400"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource WindowBackground}">
+
+    <!-- ================================================================== -->
+    <!-- Window Key Bindings                                                 -->
+    <!-- ================================================================== -->
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Escape" Command="{Binding CancelCommand}" />
+    </Window.KeyBindings>
+
+    <!-- ================================================================== -->
+    <!-- Window Resources                                                    -->
+    <!-- ================================================================== -->
+    <Window.Resources>
+        <converters:EnumBoolConverter x:Key="EnumBoolConverter" />
+    </Window.Resources>
+
+    <!-- ================================================================== -->
+    <!-- Window Styles                                                       -->
+    <!-- ================================================================== -->
+    <Window.Styles>
+        <!-- Section Header Style -->
+        <Style Selector="TextBlock.section-header">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <!-- Preview Border Style -->
+        <Style Selector="Border.preview-border">
+            <Setter Property="Background" Value="{DynamicResource SidebarBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+
+        <!-- Accent Button Style -->
+        <Style Selector="Button.accent">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.accent:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentBrushHover}" />
+        </Style>
+    </Window.Styles>
+
+    <!-- ================================================================== -->
+    <!-- Main Content - 2-row Grid (Content + Buttons)                       -->
+    <!-- ================================================================== -->
+    <Grid RowDefinitions="*,Auto" Margin="20">
+
+        <!-- ============================================================== -->
+        <!-- Row 0: Scrollable Content                                       -->
+        <!-- ============================================================== -->
+        <ScrollViewer Grid.Row="0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="20">
+
+                <!-- ====================================================== -->
+                <!-- Format Selection Section                                -->
+                <!-- ====================================================== -->
+                <StackPanel>
+                    <TextBlock Classes="section-header" Text="Format" />
+                    <StackPanel Spacing="6">
+                        <RadioButton Content="Markdown (.md)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat,
+                                                 Converter={StaticResource EnumBoolConverter},
+                                                 ConverterParameter=Markdown}" />
+                        <RadioButton Content="JSON (.json)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat,
+                                                 Converter={StaticResource EnumBoolConverter},
+                                                 ConverterParameter=Json}" />
+                        <RadioButton Content="Plain Text (.txt)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat,
+                                                 Converter={StaticResource EnumBoolConverter},
+                                                 ConverterParameter=PlainText}" />
+                        <RadioButton Content="HTML (.html)"
+                                     GroupName="Format"
+                                     IsChecked="{Binding SelectedFormat,
+                                                 Converter={StaticResource EnumBoolConverter},
+                                                 ConverterParameter=Html}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- ====================================================== -->
+                <!-- Options Section                                         -->
+                <!-- ====================================================== -->
+                <StackPanel>
+                    <TextBlock Classes="section-header" Text="Options" />
+                    <StackPanel Spacing="6">
+                        <CheckBox Content="Include timestamps"
+                                  IsChecked="{Binding IncludeTimestamps}" />
+                        <CheckBox Content="Include system prompt"
+                                  IsChecked="{Binding IncludeSystemPrompt}" />
+                        <CheckBox Content="Include metadata (dates)"
+                                  IsChecked="{Binding IncludeMetadata}" />
+                        <CheckBox Content="Include token counts"
+                                  IsChecked="{Binding IncludeTokenCounts}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- ====================================================== -->
+                <!-- Preview Section                                         -->
+                <!-- ====================================================== -->
+                <StackPanel>
+                    <TextBlock Classes="section-header" Text="Preview" />
+                    <Border Classes="preview-border"
+                            MinHeight="120"
+                            MaxHeight="180">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <TextBlock Text="{Binding Preview}"
+                                       FontFamily="Consolas, Menlo, Monaco, monospace"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextSecondary}"
+                                       TextWrapping="Wrap" />
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
+
+                <!-- ====================================================== -->
+                <!-- Error Message (shown if ErrorMessage is not empty)      -->
+                <!-- ====================================================== -->
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="{DynamicResource ErrorBrush}"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding ErrorMessage,
+                                       Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ============================================================== -->
+        <!-- Row 1: Action Buttons                                           -->
+        <!-- ============================================================== -->
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="12"
+                    Margin="0,20,0,0">
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    MinWidth="80"
+                    Padding="16,8" />
+            <Button Content="Export"
+                    Command="{Binding ExportCommand}"
+                    IsEnabled="{Binding !IsExporting}"
+                    Classes="accent"
+                    MinWidth="80"
+                    Padding="16,8" />
+        </StackPanel>
+
+    </Grid>
+
+</Window>

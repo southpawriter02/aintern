@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.5f] - 2026-01-14
+
+Export UI components with format selection and live preview. See [detailed notes](docs/changelog/v0.2.5f.md).
+
+### Added
+
+- **Export Dialog** - Export conversation UI (Ctrl+E)
+  - ExportViewModel with format selection, options, and live preview
+  - ExportDialog with 2-row grid layout (550x500)
+  - Format selection via RadioButtons (Markdown, JSON, PlainText, HTML)
+  - Option checkboxes (timestamps, system prompt, metadata, token counts)
+  - Live preview that updates when format or options change
+  - Native file save dialog via IStorageProvider
+  - Cancel button and Escape key to close without export
+  - Error handling with inline error message display
+  - IExportService integration for content generation
+  - Comprehensive unit tests (37 test cases)
+  - Full XML documentation and logging with timing
+
+- **EnumBoolConverter** - New converter for RadioButton ↔ enum binding
+  - Singleton pattern with Instance property
+  - Case-insensitive enum comparison
+  - Returns DoNothing when RadioButton unchecked
+  - Unit tests (14 test cases)
+
+### Technical Details
+
+- Manual ViewModel creation (requires runtime conversationId parameter)
+- CancellationTokenSource for preview cancellation
+- HasActiveConversation CanExecute check for OpenExportCommand
+- IDisposable pattern for CTS cleanup
+- Ctrl+E keybinding in MainWindow.axaml
+
 ## [0.2.5e] - 2026-01-14
 
 Search UI components with spotlight-style dialog. See [detailed notes](docs/changelog/v0.2.5e.md).

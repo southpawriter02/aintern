@@ -1,7 +1,7 @@
 <!--
     MainWindow.axaml - Main Application Window
 
-    Version: v0.2.5e
+    Version: v0.2.5f
 
     Layout:
     - SplitView with collapsible sidebar pane
@@ -15,6 +15,7 @@
     - Ctrl+B: Toggle sidebar visibility
     - Ctrl+F: Focus search box
     - Ctrl+K: Open search dialog (v0.2.5e)
+    - Ctrl+E: Open export dialog (v0.2.5f)
 -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -42,6 +43,8 @@
         <KeyBinding Gesture="Ctrl+F" Command="{Binding FocusSearchCommand}" />
         <!-- Ctrl+K: Open search dialog (v0.2.5e) -->
         <KeyBinding Gesture="Ctrl+K" Command="{Binding OpenSearchCommand}" />
+        <!-- Ctrl+E: Open export dialog (v0.2.5f) -->
+        <KeyBinding Gesture="Ctrl+E" Command="{Binding OpenExportCommand}" />
     </Window.KeyBindings>
 
     <Grid RowDefinitions="*, Auto">

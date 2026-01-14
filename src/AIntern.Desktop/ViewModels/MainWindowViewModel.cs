@@ -51,6 +51,13 @@ namespace AIntern.Desktop.ViewModels;
 /// <item>Requires <see cref="ISearchService"/> dependency for search ViewModel construction</item>
 /// </list>
 /// </para>
+/// <para>
+/// <b>v0.2.5f Additions:</b>
+/// <list type="bullet">
+/// <item><see cref="OpenExportCommand"/> - Opens the ExportDialog (Ctrl+E)</item>
+/// <item>Requires <see cref="IExportService"/> dependency for export ViewModel construction</item>
+/// </list>
+/// </para>
 /// </remarks>
 public partial class MainWindowViewModel : ViewModelBase
 {
@@ -61,6 +68,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly ISystemPromptService _systemPromptService;
     private readonly ISearchService _searchService;
+    private readonly IExportService _exportService;
     private readonly IDispatcher _dispatcher;
     private readonly ILogger<MainWindowViewModel>? _logger;
 
@@ -179,6 +187,12 @@ public partial class MainWindowViewModel : ViewModelBase
     ///   <item>Added <paramref name="searchService"/> for search dialog construction</item>
     /// </list>
     /// </para>
+    /// <para>
+    /// <b>v0.2.5f Changes:</b>
+    /// <list type="bullet">
+    ///   <item>Added <paramref name="exportService"/> for export dialog construction</item>
+    /// </list>
+    /// </para>
     /// </remarks>
     public MainWindowViewModel(
         ChatViewModel chatViewModel,
@@ -189,6 +203,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ISettingsService settingsService,
         ISystemPromptService systemPromptService,
         ISearchService searchService,
+        IExportService exportService,
         IDispatcher dispatcher,
         ILogger<MainWindowViewModel>? logger = null)
     {
@@ -207,6 +222,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _systemPromptService = systemPromptService ?? throw new ArgumentNullException(nameof(systemPromptService));
         _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
+        _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
         _logger?.LogDebug("[INFO] Child ViewModels and services assigned");
@@ -561,6 +577,95 @@ public partial class MainWindowViewModel : ViewModelBase
             _logger?.LogDebug("[EXIT] OpenSearchAsync - {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
+
+    /// <summary>
+    /// Opens the Export dialog as a modal dialog.
+    /// </summary>
+    /// <returns>A task representing the async dialog operation.</returns>
+    /// <remarks>
+    /// <para>
+    /// This command is invoked via Ctrl+E keyboard shortcut from the main window.
+    /// The export dialog provides:
+    /// <list type="bullet">
+    ///   <item>Format selection (Markdown, JSON, PlainText, HTML)</item>
+    ///   <item>Option toggles (timestamps, system prompt, metadata, token counts)</item>
+    ///   <item>Live preview of export output</item>
+    ///   <item>File save dialog integration</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// The command is only enabled when a conversation is selected. When the export
+    /// is complete, the dialog closes automatically.
+    /// </para>
+    /// <para>Added in v0.2.5f.</para>
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(HasActiveConversation))]
+    private async Task OpenExportAsync()
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] OpenExportAsync");
+
+        try
+        {
+            if (_mainWindow == null)
+            {
+                _logger?.LogWarning("[WARN] Main window reference not set - cannot show export dialog");
+                return;
+            }
+
+            var conversationId = ConversationListViewModel.SelectedConversation?.Id;
+            if (conversationId is null)
+            {
+                _logger?.LogDebug("[SKIP] No conversation selected");
+                return;
+            }
+
+            // Create a new export ViewModel for this dialog instance.
+            // The ViewModel is transient - each dialog gets its own instance.
+            var exportViewModel = new ExportViewModel(
+                _exportService,
+                _mainWindow.StorageProvider,
+                conversationId.Value,
+                _logger != null
+                    ? Microsoft.Extensions.Logging.LoggerFactory.Create(b => { }).CreateLogger<ExportViewModel>()
+                    : null);
+
+            // Create and show the export dialog as a modal.
+            var exportDialog = new ExportDialog
+            {
+                DataContext = exportViewModel
+            };
+
+            _logger?.LogDebug("[INFO] Showing ExportDialog as modal dialog for conversation: {Id}", conversationId.Value);
+            await exportDialog.ShowDialog(_mainWindow);
+
+            _logger?.LogDebug("[INFO] ExportDialog closed");
+
+            // Dispose the ViewModel to clean up resources.
+            exportViewModel.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "[ERROR] OpenExportAsync failed: {Message}", ex.Message);
+            SetError($"Failed to open export: {ex.Message}");
+        }
+        finally
+        {
+            sw.Stop();
+            _logger?.LogDebug("[EXIT] OpenExportAsync - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether a conversation is currently selected.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Used as the CanExecute condition for <see cref="OpenExportCommand"/>.
+    /// </para>
+    /// <para>Added in v0.2.5f.</para>
+    /// </remarks>
+    private bool HasActiveConversation => ConversationListViewModel.SelectedConversation is not null;
 
     #endregion
 

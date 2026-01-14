@@ -59,6 +59,7 @@ public static class ServiceCollectionExtensions
     /// <item><see cref="SystemPromptEditorViewModel"/> - Transient (per editor window)</item>
     /// <item><see cref="SystemPromptSelectorViewModel"/> - Singleton (shared state)</item>
     /// <item><see cref="SearchViewModel"/> - Transient (per search dialog, v0.2.5e)</item>
+    /// <item><see cref="ExportViewModel"/> - Created manually (requires runtime conversationId, v0.2.5f)</item>
     /// </list>
     /// </para>
     /// </remarks>
