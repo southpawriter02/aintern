@@ -179,6 +179,18 @@ public sealed class AppSettings
     /// <remarks>Added in v0.3.1f.</remarks>
     public int EditorFontSize { get; set; } = 14;
 
+    /// <summary>
+    /// Gets or sets whether to convert tabs to spaces when typing.
+    /// </summary>
+    /// <remarks>Added in v0.3.3d.</remarks>
+    public bool ConvertTabsToSpaces { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the column position for the column ruler (0 = disabled).
+    /// </summary>
+    /// <remarks>Added in v0.3.3d.</remarks>
+    public int RulerColumn { get; set; } = 0;
+
     #endregion
 
     #region Window State
