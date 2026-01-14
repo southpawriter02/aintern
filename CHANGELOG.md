@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.5c] - 2026-01-14
+
+Export service layer for conversation export. See [detailed notes](docs/changelog/v0.2.5c.md).
+
+### Added
+
+- **Export Service** - Service layer for conversation export operations
+  - IExportService interface with ExportAsync, GeneratePreviewAsync, GetFileExtension, GetMimeType
+  - ExportService implementation with 4 format exporters
+  - ExportFormat enum (Markdown, Json, PlainText, Html)
+  - ExportOptions model with configurable options (timestamps, system prompt, metadata, token counts)
+  - ExportResult model with success/content/filename/mime type
+  - Markdown export with headers, bold roles, horizontal separators
+  - JSON export with structured messages array
+  - PlainText export with title underline and [HH:mm] timestamps
+  - HTML export with embedded dark theme CSS (responsive)
+  - SanitizeFileName utility with [GeneratedRegex] for safe cross-platform filenames
+  - GeneratePreviewAsync for truncated UI previews
+  - Comprehensive unit tests (34 test cases)
+  - Full XML documentation and logging with timing
+
+### Technical Details
+
+- Factory pattern for DI registration (singleton with scoped repository)
+- Source-generated regex for filename sanitization performance
+- Dark theme HTML with color-coded message roles (cyan/purple/gold)
+- ExportOptions static factories: Default (full) and Minimal (content only)
+
 ## [0.2.5b] - 2026-01-14
 
 Search service layer for full-text search. See [detailed notes](docs/changelog/v0.2.5b.md).

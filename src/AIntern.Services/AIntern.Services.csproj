@@ -4,6 +4,11 @@
     <RootNamespace>AIntern.Services</RootNamespace>
   </PropertyGroup>
 
+  <!-- Allow internal members to be visible to test assembly -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="AIntern.Services.Tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\AIntern.Core\AIntern.Core.csproj" />
     <ProjectReference Include="..\AIntern.Data\AIntern.Data.csproj" />

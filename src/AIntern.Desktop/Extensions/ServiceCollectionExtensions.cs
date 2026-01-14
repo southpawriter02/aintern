@@ -44,6 +44,7 @@ public static class ServiceCollectionExtensions
     /// <item><see cref="IInferenceSettingsService"/> - Inference parameters and presets</item>
     /// <item><see cref="ISystemPromptService"/> - System prompt management (v0.2.4b)</item>
     /// <item><see cref="ISearchService"/> - Full-text search with suggestions (v0.2.5b)</item>
+    /// <item><see cref="IExportService"/> - Conversation export to multiple formats (v0.2.5c)</item>
     /// </list>
     /// </para>
     /// <para>
@@ -145,6 +146,19 @@ public static class ServiceCollectionExtensions
             return new SearchService(
                 scope.ServiceProvider.GetRequiredService<AInternDbContext>(),
                 sp.GetRequiredService<ILogger<SearchService>>());
+        });
+
+        // Export: provides conversation export to multiple formats.
+        // Uses a factory to resolve scoped repository dependency.
+        // The service supports Markdown, JSON, PlainText, and HTML formats.
+        // Added in v0.2.5c.
+        services.AddSingleton<IExportService>(sp =>
+        {
+            // Create a scope to resolve scoped services (repositories).
+            var scope = sp.CreateScope();
+            return new ExportService(
+                scope.ServiceProvider.GetRequiredService<IConversationRepository>(),
+                sp.GetRequiredService<ILogger<ExportService>>());
         });
 
         // LLM: manages model loading, inference, and resource cleanup.
