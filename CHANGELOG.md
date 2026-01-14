@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.3c] - 2026-01-14
+
+Syntax Highlighting Service. See [detailed notes](docs/changelog/v0.3.3c.md).
+
+### Added
+
+- SyntaxHighlightingService with TextMate integration
+- Support for 46+ programming languages
+- 7 built-in themes (DarkPlus, LightPlus, Monokai, Solarized, HighContrast)
+- AvaloniaEdit.TextMate package dependency
+
+### Unit Tests
+
+- 46 new tests for SyntaxHighlightingService
+
 ## [0.3.3b] - 2026-01-14
 
 Editor Panel ViewModel. See [detailed notes](docs/changelog/v0.3.3b.md).
