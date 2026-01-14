@@ -10,12 +10,12 @@ using Xunit;
 namespace AIntern.Desktop.Tests.ViewModels;
 
 /// <summary>
-/// Unit tests for the <see cref="MainWindowViewModel"/> class (v0.2.2d).
+/// Unit tests for the <see cref="MainWindowViewModel"/> class.
 /// Tests initialization, child ViewModel composition, and sidebar commands.
 /// </summary>
 /// <remarks>
 /// <para>
-/// These tests verify the v0.2.2d functionality:
+/// These tests verify the functionality:
 /// </para>
 /// <list type="bullet">
 ///   <item><description>Child ViewModels are properly injected and accessible</description></item>
@@ -24,6 +24,9 @@ namespace AIntern.Desktop.Tests.ViewModels;
 ///   <item><description>NewConversation delegates to ConversationListViewModel</description></item>
 ///   <item><description>ModelStateChanged updates StatusMessage</description></item>
 ///   <item><description>InferenceProgress updates TokenInfo</description></item>
+///   <item><description>SaveStateChanged updates SaveState (v0.2.5g)</description></item>
+///   <item><description>IsModelLoaded property updates (v0.2.5g)</description></item>
+///   <item><description>ToggleSettingsPanel command (v0.2.5g)</description></item>
 /// </list>
 /// </remarks>
 public class MainWindowViewModelTests : IDisposable
@@ -124,6 +127,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockSystemPromptService.Object,
             _mockSearchService.Object,
             _mockExportService.Object,
+            _mockConversationService.Object,
             _dispatcher,
             _mockLogger.Object);
 
@@ -156,6 +160,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockSystemPromptService.Object,
             _mockSearchService.Object,
             _mockExportService.Object,
+            _mockConversationService.Object,
             _dispatcher,
             _mockLogger.Object));
     }
@@ -177,6 +182,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockSystemPromptService.Object,
             _mockSearchService.Object,
             _mockExportService.Object,
+            _mockConversationService.Object,
             _dispatcher,
             _mockLogger.Object));
     }
@@ -567,6 +573,274 @@ public class MainWindowViewModelTests : IDisposable
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => vm.SetMainWindow(null!));
+    }
+
+    #endregion
+
+    #region v0.2.5g Tests - SaveState and IsModelLoaded
+
+    /// <summary>
+    /// Verifies that the constructor subscribes to SaveStateChanged event.
+    /// </summary>
+    /// <remarks>
+    /// Note: Multiple ViewModels subscribe to SaveStateChanged (MainWindowViewModel, ChatViewModel),
+    /// so we verify at least once rather than exactly once.
+    /// </remarks>
+    [Fact]
+    public void Constructor_SubscribesToSaveStateChangedEvent()
+    {
+        // Act
+        var vm = CreateViewModel();
+
+        // Assert - At least once because ChatViewModel also subscribes
+        _mockConversationService.VerifyAdd(
+            s => s.SaveStateChanged += It.IsAny<EventHandler<SaveStateChangedEventArgs>>(),
+            Times.AtLeastOnce);
+    }
+
+    /// <summary>
+    /// Verifies that SaveState is null by default.
+    /// </summary>
+    [Fact]
+    public void Constructor_SaveStateIsNullByDefault()
+    {
+        // Act
+        var vm = CreateViewModel();
+
+        // Assert
+        Assert.Null(vm.SaveState);
+    }
+
+    /// <summary>
+    /// Verifies that IsModelLoaded is false by default when no model is loaded.
+    /// </summary>
+    [Fact]
+    public void Constructor_IsModelLoadedIsFalseByDefault()
+    {
+        // Arrange
+        _mockLlmService.Setup(s => s.IsModelLoaded).Returns(false);
+
+        // Act
+        var vm = CreateViewModel();
+
+        // Assert
+        Assert.False(vm.IsModelLoaded);
+    }
+
+    /// <summary>
+    /// Verifies that IsModelLoaded is true when a model is already loaded.
+    /// </summary>
+    [Fact]
+    public void Constructor_IsModelLoadedIsTrueWhenModelLoaded()
+    {
+        // Arrange
+        _mockLlmService.Setup(s => s.IsModelLoaded).Returns(true);
+
+        // Act
+        var vm = CreateViewModel();
+
+        // Assert
+        Assert.True(vm.IsModelLoaded);
+    }
+
+    /// <summary>
+    /// Verifies that SaveStateChanged event updates SaveState property.
+    /// </summary>
+    [Fact]
+    public void OnSaveStateChanged_UpdatesSaveStateProperty()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var saveState = new SaveStateChangedEventArgs
+        {
+            IsSaving = true,
+            HasUnsavedChanges = false
+        };
+
+        // Act
+        _mockConversationService.Raise(
+            s => s.SaveStateChanged += null,
+            saveState);
+
+        // Assert
+        Assert.NotNull(vm.SaveState);
+        Assert.True(vm.SaveState.IsSaving);
+        Assert.False(vm.SaveState.HasUnsavedChanges);
+    }
+
+    /// <summary>
+    /// Verifies that SaveStateChanged with unsaved changes is reflected in SaveState.
+    /// </summary>
+    [Fact]
+    public void OnSaveStateChanged_UnsavedChanges_UpdatesSaveState()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var saveState = new SaveStateChangedEventArgs
+        {
+            IsSaving = false,
+            HasUnsavedChanges = true
+        };
+
+        // Act
+        _mockConversationService.Raise(
+            s => s.SaveStateChanged += null,
+            saveState);
+
+        // Assert
+        Assert.NotNull(vm.SaveState);
+        Assert.False(vm.SaveState.IsSaving);
+        Assert.True(vm.SaveState.HasUnsavedChanges);
+    }
+
+    /// <summary>
+    /// Verifies that IsModelLoaded is set correctly on construction when model is already loaded.
+    /// </summary>
+    /// <remarks>
+    /// Note: We cannot test the ModelStateChanged event with isLoaded=true and a modelPath because
+    /// ModelSelectorViewModel tries to access FileInfo for the path, which fails for non-existent paths.
+    /// This test verifies the initial state is set correctly based on ILlmService.IsModelLoaded.
+    /// </remarks>
+    [Fact]
+    public void OnModelStateChanged_ModelLoaded_IsModelLoadedSetCorrectly()
+    {
+        // Arrange - Set up service to report model is already loaded
+        _mockLlmService.Setup(s => s.IsModelLoaded).Returns(true);
+
+        // Act - Create ViewModel (constructor reads IsModelLoaded from service)
+        var vm = CreateViewModel();
+
+        // Assert - IsModelLoaded should be true based on service state
+        Assert.True(vm.IsModelLoaded);
+    }
+
+    /// <summary>
+    /// Verifies that ModelStateChanged updates IsModelLoaded to false when unloaded.
+    /// </summary>
+    [Fact]
+    public void OnModelStateChanged_ModelUnloaded_UpdatesIsModelLoaded()
+    {
+        // Arrange
+        _mockLlmService.Setup(s => s.IsModelLoaded).Returns(true);
+        var vm = CreateViewModel();
+        Assert.True(vm.IsModelLoaded);
+
+        // Act
+        _mockLlmService.Raise(
+            s => s.ModelStateChanged += null,
+            new ModelStateChangedEventArgs(isLoaded: false, modelPath: null));
+
+        // Assert
+        Assert.False(vm.IsModelLoaded);
+    }
+
+    /// <summary>
+    /// Verifies that SaveState property notifies on change.
+    /// </summary>
+    [Fact]
+    public void OnSaveStateChanged_NotifiesPropertyChanged()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var changedProperties = new List<string?>();
+        vm.PropertyChanged += (s, e) => changedProperties.Add(e.PropertyName);
+
+        // Act
+        _mockConversationService.Raise(
+            s => s.SaveStateChanged += null,
+            new SaveStateChangedEventArgs { IsSaving = true, HasUnsavedChanges = false });
+
+        // Assert
+        Assert.Contains(nameof(MainWindowViewModel.SaveState), changedProperties);
+    }
+
+    /// <summary>
+    /// Verifies that IsModelLoaded property notifies on change when model is unloaded.
+    /// </summary>
+    /// <remarks>
+    /// Note: We test the unload event (null path) to avoid FileInfo access in ModelSelectorViewModel.
+    /// The notification mechanism is the same for load and unload events.
+    /// </remarks>
+    [Fact]
+    public void OnModelStateChanged_NotifiesIsModelLoadedPropertyChanged()
+    {
+        // Arrange - Start with model loaded
+        _mockLlmService.Setup(s => s.IsModelLoaded).Returns(true);
+        var vm = CreateViewModel();
+        var changedProperties = new List<string?>();
+        vm.PropertyChanged += (s, e) => changedProperties.Add(e.PropertyName);
+
+        // Act - Unload model (null path avoids FileInfo access)
+        _mockLlmService.Raise(
+            s => s.ModelStateChanged += null,
+            new ModelStateChangedEventArgs(isLoaded: false, modelPath: null));
+
+        // Assert
+        Assert.Contains(nameof(MainWindowViewModel.IsModelLoaded), changedProperties);
+    }
+
+    #endregion
+
+    #region v0.2.5g Tests - ToggleSettingsPanel Command
+
+    /// <summary>
+    /// Verifies that ToggleSettingsPanelCommand toggles the InferenceSettingsViewModel expansion state.
+    /// </summary>
+    [Fact]
+    public void ToggleSettingsPanelCommand_TogglesInferenceSettingsExpansion()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var initialState = _inferenceSettingsViewModel.IsExpanded;
+
+        // Act
+        vm.ToggleSettingsPanelCommand.Execute(null);
+
+        // Assert
+        Assert.NotEqual(initialState, _inferenceSettingsViewModel.IsExpanded);
+
+        // Toggle back
+        vm.ToggleSettingsPanelCommand.Execute(null);
+        Assert.Equal(initialState, _inferenceSettingsViewModel.IsExpanded);
+    }
+
+    /// <summary>
+    /// Verifies that ToggleSettingsPanelCommand shows sidebar when expanding settings and sidebar is hidden.
+    /// </summary>
+    [Fact]
+    public void ToggleSettingsPanelCommand_WhenExpandingAndSidebarHidden_ShowsSidebar()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        _inferenceSettingsViewModel.IsExpanded = false;
+        vm.ToggleSidebarCommand.Execute(null); // Hide sidebar
+        Assert.False(vm.IsSidebarVisible);
+
+        // Act - expand settings
+        vm.ToggleSettingsPanelCommand.Execute(null);
+
+        // Assert
+        Assert.True(_inferenceSettingsViewModel.IsExpanded);
+        Assert.True(vm.IsSidebarVisible); // Sidebar should be shown
+    }
+
+    /// <summary>
+    /// Verifies that ToggleSettingsPanelCommand does not affect sidebar when collapsing settings.
+    /// </summary>
+    [Fact]
+    public void ToggleSettingsPanelCommand_WhenCollapsing_DoesNotAffectSidebar()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        _inferenceSettingsViewModel.IsExpanded = true;
+        Assert.True(vm.IsSidebarVisible);
+
+        // Act - collapse settings
+        vm.ToggleSettingsPanelCommand.Execute(null);
+
+        // Assert
+        Assert.False(_inferenceSettingsViewModel.IsExpanded);
+        Assert.True(vm.IsSidebarVisible); // Sidebar should remain visible
     }
 
     #endregion

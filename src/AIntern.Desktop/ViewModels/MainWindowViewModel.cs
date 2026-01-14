@@ -58,6 +58,15 @@ namespace AIntern.Desktop.ViewModels;
 /// <item>Requires <see cref="IExportService"/> dependency for export ViewModel construction</item>
 /// </list>
 /// </para>
+/// <para>
+/// <b>v0.2.5g Additions:</b>
+/// <list type="bullet">
+/// <item><see cref="SaveState"/> - Tracks conversation save state for status bar display</item>
+/// <item><see cref="IsModelLoaded"/> - Exposes model load state for status bar color</item>
+/// <item><see cref="ToggleSettingsPanelCommand"/> - Expands/collapses inference settings (Ctrl+,)</item>
+/// <item>Subscribes to <see cref="IConversationService.SaveStateChanged"/> for save indicators</item>
+/// </list>
+/// </para>
 /// </remarks>
 public partial class MainWindowViewModel : ViewModelBase
 {
@@ -69,6 +78,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ISystemPromptService _systemPromptService;
     private readonly ISearchService _searchService;
     private readonly IExportService _exportService;
+    private readonly IConversationService _conversationService;
     private readonly IDispatcher _dispatcher;
     private readonly ILogger<MainWindowViewModel>? _logger;
 
@@ -150,6 +160,34 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private double _sidebarWidth = 280;
 
+    /// <summary>
+    /// Gets or sets the current save state for status bar display.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Updated via <see cref="IConversationService.SaveStateChanged"/> event.
+    /// Used with <see cref="Converters.SaveStatusTextConverter"/> and
+    /// <see cref="Converters.SaveStatusColorConverter"/> for status bar display.
+    /// </para>
+    /// <para>Added in v0.2.5g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private SaveStateChangedEventArgs? _saveState;
+
+    /// <summary>
+    /// Gets or sets whether a model is currently loaded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Updated via <see cref="ILlmService.ModelStateChanged"/> event.
+    /// Used with <see cref="Converters.BoolToAccentColorConverter"/> for
+    /// status bar model name color.
+    /// </para>
+    /// <para>Added in v0.2.5g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private bool _isModelLoaded;
+
     #endregion
 
     #region Constructor
@@ -165,6 +203,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <param name="settingsService">The settings service for loading configuration.</param>
     /// <param name="systemPromptService">The system prompt service for editor ViewModel (v0.2.4e).</param>
     /// <param name="searchService">The search service for search dialog ViewModel (v0.2.5e).</param>
+    /// <param name="conversationService">The conversation service for save state events (v0.2.5g).</param>
     /// <param name="dispatcher">The dispatcher for UI thread operations (v0.2.4e).</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <remarks>
@@ -193,6 +232,12 @@ public partial class MainWindowViewModel : ViewModelBase
     ///   <item>Added <paramref name="exportService"/> for export dialog construction</item>
     /// </list>
     /// </para>
+    /// <para>
+    /// <b>v0.2.5g Changes:</b>
+    /// <list type="bullet">
+    ///   <item>Added <paramref name="conversationService"/> for save state events</item>
+    /// </list>
+    /// </para>
     /// </remarks>
     public MainWindowViewModel(
         ChatViewModel chatViewModel,
@@ -204,6 +249,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ISystemPromptService systemPromptService,
         ISearchService searchService,
         IExportService exportService,
+        IConversationService conversationService,
         IDispatcher dispatcher,
         ILogger<MainWindowViewModel>? logger = null)
     {
@@ -223,6 +269,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _systemPromptService = systemPromptService ?? throw new ArgumentNullException(nameof(systemPromptService));
         _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
         _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
+        _conversationService = conversationService ?? throw new ArgumentNullException(nameof(conversationService));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
         _logger?.LogDebug("[INFO] Child ViewModels and services assigned");
@@ -233,7 +280,13 @@ public partial class MainWindowViewModel : ViewModelBase
         // Subscribe to inference progress for token statistics
         _llmService.InferenceProgress += OnInferenceProgress;
 
-        _logger?.LogDebug("[INFO] Subscribed to ILlmService events");
+        // v0.2.5g: Subscribe to save state changes for status bar indicator
+        _conversationService.SaveStateChanged += OnSaveStateChanged;
+
+        // v0.2.5g: Initialize model loaded state
+        IsModelLoaded = _llmService.IsModelLoaded;
+
+        _logger?.LogDebug("[INFO] Subscribed to ILlmService and IConversationService events");
         _logger?.LogDebug("[INIT] MainWindowViewModel construction completed - {ElapsedMs}ms", sw.ElapsedMilliseconds);
     }
 
@@ -667,6 +720,37 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </remarks>
     private bool HasActiveConversation => ConversationListViewModel.SelectedConversation is not null;
 
+    /// <summary>
+    /// Toggles the expansion state of the inference settings panel.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Bound to Ctrl+, keyboard shortcut and clickable temperature in status bar.
+    /// Expands the settings panel in the sidebar to show inference parameters.
+    /// </para>
+    /// <para>Added in v0.2.5g.</para>
+    /// </remarks>
+    [RelayCommand]
+    private void ToggleSettingsPanel()
+    {
+        var sw = Stopwatch.StartNew();
+        _logger?.LogDebug("[ENTER] ToggleSettingsPanel - Current: {IsExpanded}",
+            InferenceSettingsViewModel.IsExpanded);
+
+        InferenceSettingsViewModel.IsExpanded = !InferenceSettingsViewModel.IsExpanded;
+
+        // Ensure sidebar is visible when expanding settings
+        if (InferenceSettingsViewModel.IsExpanded && !IsSidebarVisible)
+        {
+            IsSidebarVisible = true;
+            _logger?.LogDebug("[INFO] Sidebar opened to show settings panel");
+        }
+
+        _logger?.LogInformation("[INFO] Settings panel toggled to: {IsExpanded}",
+            InferenceSettingsViewModel.IsExpanded);
+        _logger?.LogDebug("[EXIT] ToggleSettingsPanel - {ElapsedMs}ms", sw.ElapsedMilliseconds);
+    }
+
     #endregion
 
     #region Event Handlers
@@ -681,6 +765,9 @@ public partial class MainWindowViewModel : ViewModelBase
         _logger?.LogDebug("[EVENT] OnModelStateChanged - IsLoaded: {IsLoaded}, ModelName: {ModelName}",
             e.IsLoaded, e.ModelName);
 
+        // v0.2.5g: Update model loaded state for status bar color binding
+        IsModelLoaded = e.IsLoaded;
+
         // Update status message based on whether model is loaded
         StatusMessage = e.IsLoaded
             ? $"Model: {e.ModelName}"
@@ -693,6 +780,24 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _logger?.LogInformation("[INFO] Status updated: {StatusMessage}", StatusMessage);
+    }
+
+    /// <summary>
+    /// Handles save state change events to update the status bar indicator.
+    /// </summary>
+    /// <param name="sender">The event source.</param>
+    /// <param name="e">Event arguments containing save state details.</param>
+    /// <remarks>
+    /// <para>Added in v0.2.5g.</para>
+    /// </remarks>
+    private void OnSaveStateChanged(object? sender, SaveStateChangedEventArgs e)
+    {
+        _logger?.LogDebug("[EVENT] OnSaveStateChanged - IsSaving: {IsSaving}, HasUnsavedChanges: {HasUnsavedChanges}",
+            e.IsSaving, e.HasUnsavedChanges);
+
+        SaveState = e;
+
+        _logger?.LogDebug("[INFO] Save state updated");
     }
 
     /// <summary>

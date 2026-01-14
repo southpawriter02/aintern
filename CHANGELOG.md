@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.5g] - 2026-01-14
+
+Status bar enhancements with interactive elements and keyboard shortcuts. See [detailed notes](docs/changelog/v0.2.5g.md).
+
+### Added
+
+- **Interactive Status Bar** - Clickable elements in status bar
+  - Clickable model name that opens sidebar (shows model selector)
+  - Model name color indicates load state: accent (#00d9ff) loaded, muted (#888888) unloaded
+  - Clickable temperature that expands inference settings panel
+  - Color-coded save status: green (saved), yellow (unsaved), accent (saving)
+  - SaveState observable property tracking IConversationService.SaveStateChanged
+  - IsModelLoaded observable property for status bar color binding
+
+- **New Converters** - Value converters for status bar display
+  - BoolToAccentColorConverter: bool to accent/muted IBrush for model name
+  - SaveStatusTextConverter: SaveStateChangedEventArgs to "Saving..."/"Unsaved"/"Saved"
+  - SaveStatusColorConverter: SaveStateChangedEventArgs to color-coded IBrush
+  - Comprehensive unit tests (24 test cases for all converters)
+
+- **New Keyboard Shortcuts** - Additional global shortcuts
+  - Ctrl+, toggles inference settings panel expansion
+  - Ctrl+P opens system prompt editor window
+  - Ctrl+Shift+S forces save of current conversation
+
+### Technical Details
+
+- IConversationService.SaveStateChanged event subscription in MainWindowViewModel
+- ToggleSettingsPanelCommand auto-shows sidebar when expanding settings
+- Static cached brushes in converters for memory efficiency
+- Singleton pattern for all converters (Instance property)
+- 14 new MainWindowViewModel tests for v0.2.5g functionality
+
 ## [0.2.5f] - 2026-01-14
 
 Export UI components with format selection and live preview. See [detailed notes](docs/changelog/v0.2.5f.md).

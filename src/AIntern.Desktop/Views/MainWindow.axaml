@@ -1,7 +1,7 @@
 <!--
     MainWindow.axaml - Main Application Window
 
-    Version: v0.2.5f
+    Version: v0.2.5g
 
     Layout:
     - SplitView with collapsible sidebar pane
@@ -16,11 +16,15 @@
     - Ctrl+F: Focus search box
     - Ctrl+K: Open search dialog (v0.2.5e)
     - Ctrl+E: Open export dialog (v0.2.5f)
+    - Ctrl+,: Toggle inference settings panel (v0.2.5g)
+    - Ctrl+P: Open system prompt editor (v0.2.5g)
+    - Ctrl+Shift+S: Force save (v0.2.5g)
 -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:AIntern.Desktop.ViewModels"
         xmlns:views="using:AIntern.Desktop.Views"
+        xmlns:converters="using:AIntern.Desktop.Converters"
         x:Class="AIntern.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="The Senior Intern"
@@ -45,6 +49,12 @@
         <KeyBinding Gesture="Ctrl+K" Command="{Binding OpenSearchCommand}" />
         <!-- Ctrl+E: Open export dialog (v0.2.5f) -->
         <KeyBinding Gesture="Ctrl+E" Command="{Binding OpenExportCommand}" />
+        <!-- Ctrl+,: Toggle inference settings panel (v0.2.5g) -->
+        <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding ToggleSettingsPanelCommand}" />
+        <!-- Ctrl+P: Open system prompt editor (v0.2.5g) -->
+        <KeyBinding Gesture="Ctrl+P" Command="{Binding OpenSystemPromptEditorCommand}" />
+        <!-- Ctrl+Shift+S: Force save (v0.2.5g) -->
+        <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding ChatViewModel.SaveCommand}" />
     </Window.KeyBindings>
 
     <Grid RowDefinitions="*, Auto">
@@ -135,26 +145,37 @@
         </SplitView>
 
         <!--
-            Status Bar
-            Shows model state, preset info, token statistics, and generation progress.
+            Status Bar (v0.2.5g)
+            Shows model state, preset info, token statistics, save state, and generation progress.
+            Clickable elements: Model name opens model selector, Temperature opens settings panel.
         -->
         <Border Grid.Row="1"
                 Background="{DynamicResource StatusBarBackground}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="12,6">
-            <Grid ColumnDefinitions="*, Auto, Auto, Auto, Auto, Auto">
+            <Grid ColumnDefinitions="Auto, Auto, Auto, Auto, Auto, *, Auto">
                 <!--
-                    Status Message
-                    Shows "No model loaded" or "Model: {name}"
+                    Model Name (v0.2.5g)
+                    Clickable button that shows the model name with accent/muted coloring.
+                    Color indicates model load state: accent when loaded, muted when not.
+                    Click opens the model selector by expanding the sidebar.
                 -->
-                <TextBlock Text="{Binding StatusMessage}"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextSecondary}" />
+                <Button Grid.Column="0"
+                        Command="{Binding ToggleSidebarCommand}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        Cursor="Hand"
+                        ToolTip.Tip="Click to open model selector (Ctrl+B)">
+                    <TextBlock Text="{Binding StatusMessage}"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding IsModelLoaded, Converter={x:Static converters:BoolToAccentColorConverter.Instance}}" />
+                </Button>
 
                 <!--
                     Preset Indicator (v0.2.3e)
-                    Shows "Preset: {name}" with the active preset name
+                    Shows "Preset: {name}" with the active preset name.
                 -->
                 <TextBlock Grid.Column="1"
                            Text="{Binding InferenceSettingsViewModel.SelectedPreset.Name, StringFormat='Preset: {0}', FallbackValue='Preset: None'}"
@@ -164,30 +185,38 @@
                            Margin="16,0,0,0" />
 
                 <!--
-                    Temperature Indicator (v0.2.3e)
-                    Shows "T:0.70" for quick reference to temperature setting
+                    Temperature Indicator (v0.2.5g)
+                    Clickable button that shows "T:0.70" for quick reference.
+                    Click expands the inference settings panel.
                 -->
-                <TextBlock Grid.Column="2"
-                           Text="{Binding InferenceSettingsViewModel.Temperature, StringFormat='T:{0:F2}'}"
-                           FontSize="11"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextMuted}"
-                           Margin="16,0,0,0" />
+                <Button Grid.Column="2"
+                        Command="{Binding ToggleSettingsPanelCommand}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="0"
+                        Margin="16,0,0,0"
+                        Cursor="Hand"
+                        ToolTip.Tip="Click to open settings (Ctrl+,)">
+                    <TextBlock Text="{Binding InferenceSettingsViewModel.Temperature, StringFormat='T:{0:F2}'}"
+                               FontSize="11"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextMuted}" />
+                </Button>
 
                 <!--
-                    Save Status Indicator
-                    Shows "Saving...", "Saved", or "Save failed"
+                    Save Status Indicator (v0.2.5g)
+                    Color-coded display: Saved (green), Unsaved (yellow), Saving (accent).
+                    Uses converters for text and color based on SaveStateChangedEventArgs.
                 -->
                 <TextBlock Grid.Column="3"
-                           Text="{Binding ChatViewModel.SaveStatus}"
+                           Text="{Binding SaveState, Converter={x:Static converters:SaveStatusTextConverter.Instance}}"
                            VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextMuted}"
-                           Margin="16,0"
-                           IsVisible="{Binding ChatViewModel.SaveStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                           Foreground="{Binding SaveState, Converter={x:Static converters:SaveStatusColorConverter.Instance}}"
+                           Margin="16,0" />
 
                 <!--
                     Token Statistics
-                    Shows "Tokens: X (Y.Y tok/s)" during generation
+                    Shows "Tokens: X (Y.Y tok/s)" during generation.
                 -->
                 <TextBlock Grid.Column="4"
                            Text="{Binding TokenInfo}"
@@ -196,10 +225,14 @@
                            Margin="16,0" />
 
                 <!--
-                    Progress Indicator
-                    Indeterminate progress bar shown during generation
+                    Spacer column to push progress indicator to the right
                 -->
-                <ProgressBar Grid.Column="5"
+
+                <!--
+                    Progress Indicator
+                    Indeterminate progress bar shown during generation.
+                -->
+                <ProgressBar Grid.Column="6"
                              IsVisible="{Binding ChatViewModel.IsGenerating}"
                              IsIndeterminate="True"
                              Width="80"
