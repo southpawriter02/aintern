@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.5d] - 2026-01-14
+
+Migration service for version upgrades. See [detailed notes](docs/changelog/v0.2.5d.md).
+
+### Added
+
+- **Migration Service** - Automatic migration from v0.1.0 to v0.2.0
+  - IMigrationService interface with MigrateIfNeededAsync, GetCurrentVersionAsync, IsMigrationRequiredAsync
+  - MigrationService implementation with automatic detection and backup
+  - MigrationResult record with Success, FromVersion, ToVersion, MigrationSteps, ErrorMessage
+  - LegacySettings model for v0.1.0 settings.json format
+  - AppVersionEntity for persistent version tracking in database
+  - AppVersionConfiguration with descending index on MigratedAt
+  - Automatic backup of settings.json to settings.v1.json.bak before migration
+  - Version stamping in AppVersions table after successful migration
+  - Startup integration in App.axaml.cs (runs after DatabaseInitializer)
+  - Comprehensive unit tests (26 test cases)
+  - Full XML documentation and logging with timing
+
+### Technical Details
+
+- Singleton service with scoped dependencies (factory pattern for DbContext)
+- CurrentVersion (0.2.0) and LegacyVersion (0.1.0) constants
+- Idempotent migration (safe to run multiple times)
+- Graceful error handling (app continues even if migration fails)
+
 ## [0.2.5c] - 2026-01-14
 
 Export service layer for conversation export. See [detailed notes](docs/changelog/v0.2.5c.md).

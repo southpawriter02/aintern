@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
     /// <item><see cref="ISystemPromptService"/> - System prompt management (v0.2.4b)</item>
     /// <item><see cref="ISearchService"/> - Full-text search with suggestions (v0.2.5b)</item>
     /// <item><see cref="IExportService"/> - Conversation export to multiple formats (v0.2.5c)</item>
+    /// <item><see cref="IMigrationService"/> - Version migration and legacy settings import (v0.2.5d)</item>
     /// </list>
     /// </para>
     /// <para>
@@ -159,6 +160,20 @@ public static class ServiceCollectionExtensions
             return new ExportService(
                 scope.ServiceProvider.GetRequiredService<IConversationRepository>(),
                 sp.GetRequiredService<ILogger<ExportService>>());
+        });
+
+        // Migration: provides version migration and legacy settings import.
+        // Uses a factory to resolve scoped DbContext dependency.
+        // The service handles v0.1.0 → v0.2.0 migrations automatically.
+        // Added in v0.2.5d.
+        services.AddSingleton<IMigrationService>(sp =>
+        {
+            // Create a scope to resolve scoped services (DbContext).
+            var scope = sp.CreateScope();
+            return new MigrationService(
+                scope.ServiceProvider.GetRequiredService<AInternDbContext>(),
+                scope.ServiceProvider.GetRequiredService<DatabasePathResolver>(),
+                sp.GetRequiredService<ILogger<MigrationService>>());
         });
 
         // LLM: manages model loading, inference, and resource cleanup.

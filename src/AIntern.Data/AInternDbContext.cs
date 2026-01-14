@@ -326,6 +326,18 @@ public class AInternDbContext : DbContext
     /// </remarks>
     public DbSet<InferencePresetEntity> InferencePresets => Set<InferencePresetEntity>();
 
+    /// <summary>
+    /// Gets the set of application version records for migration tracking.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Application versions track migration history. Each record represents a version
+    /// the database was migrated to. The most recent record indicates the current version.
+    /// </para>
+    /// <para>Added in v0.2.5d.</para>
+    /// </remarks>
+    public DbSet<AppVersionEntity> AppVersions => Set<AppVersionEntity>();
+
     #endregion
 
     #region DbContext Overrides
@@ -365,7 +377,8 @@ public class AInternDbContext : DbContext
                 ConversationConfiguration.TableName,
                 MessageConfiguration.TableName,
                 SystemPromptConfiguration.TableName,
-                InferencePresetConfiguration.TableName
+                InferencePresetConfiguration.TableName,
+                AppVersionConfiguration.TableName
             }));
     }
 

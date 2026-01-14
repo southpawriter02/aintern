@@ -91,6 +91,10 @@ public partial class App : Application
     /// (system prompts, inference presets) exists.
     /// </para>
     /// <para>
+    /// After database initialization, the migration service is called to handle any
+    /// version-specific migrations (e.g., importing legacy settings from v0.1.0).
+    /// </para>
+    /// <para>
     /// If initialization fails, the error is logged but the application continues.
     /// This prevents the app from crashing due to database issues while still
     /// making the problem visible in logs for debugging.
@@ -110,6 +114,24 @@ public partial class App : Application
             await initializer.InitializeAsync();
 
             logger.LogInformation("Database initialization completed successfully");
+
+            // Run migration if needed (handles v0.1.0 → v0.2.0 settings import).
+            // Added in v0.2.5d.
+            var migrationService = Services.GetRequiredService<IMigrationService>();
+            var migrationResult = await migrationService.MigrateIfNeededAsync();
+
+            if (!migrationResult.Success)
+            {
+                logger.LogWarning(
+                    "Migration completed with issues: {Error}",
+                    migrationResult.ErrorMessage);
+            }
+            else if (migrationResult.MigrationSteps.Count > 1)
+            {
+                logger.LogInformation(
+                    "Migration completed: {Steps}",
+                    string.Join(" → ", migrationResult.MigrationSteps));
+            }
         }
         catch (DatabaseInitializationException ex)
         {

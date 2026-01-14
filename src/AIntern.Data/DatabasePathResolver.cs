@@ -56,7 +56,7 @@ namespace AIntern.Data;
 /// Console.WriteLine($"Database: {resolver.DatabasePath}");
 /// </code>
 /// </example>
-public sealed class DatabasePathResolver
+public class DatabasePathResolver
 {
     #region Constants
 
@@ -220,13 +220,30 @@ public sealed class DatabasePathResolver
     /// Thrown when an I/O error occurs while creating the data directory.
     /// </exception>
     public DatabasePathResolver(ILogger<DatabasePathResolver> logger)
+        : this(logger, null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DatabasePathResolver"/> class with a custom app data directory.
+    /// </summary>
+    /// <param name="logger">The logger instance for diagnostic output.</param>
+    /// <param name="customAppDataDirectory">
+    /// An optional custom app data directory path. If null, the platform-specific directory is used.
+    /// This parameter is primarily for testing purposes.
+    /// </param>
+    /// <remarks>
+    /// This constructor allows overriding the app data directory for testing scenarios
+    /// where you need to use a temporary directory instead of the real app data location.
+    /// </remarks>
+    protected DatabasePathResolver(ILogger<DatabasePathResolver>? logger, string? customAppDataDirectory)
     {
         _logger = logger ?? NullLogger<DatabasePathResolver>.Instance;
 
         _logger.LogDebug("Initializing DatabasePathResolver");
 
-        // Determine platform-specific base directory
-        AppDataDirectory = GetPlatformDataDirectory();
+        // Use custom directory if provided, otherwise determine platform-specific base directory
+        AppDataDirectory = customAppDataDirectory ?? GetPlatformDataDirectory();
         _logger.LogInformation("Resolved application data directory: {AppDataDirectory}", AppDataDirectory);
 
         // Build paths for subdirectories and database
