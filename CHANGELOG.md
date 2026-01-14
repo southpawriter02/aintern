@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.2a] - 2026-01-14
+
+File tree item ViewModel. See [detailed notes](docs/changelog/v0.3.2a.md).
+
+### Added
+
+- **FileTreeItemViewModel** - Observable properties, lazy loading, inline rename, filtering
+- **IFileTreeItemParent** - Interface for parent callbacks
+- **FileIconProvider** - Extension-based icon key resolution (50+ mappings)
+- **Icon Features** - Special folder icons (src, test, docs), special file icons (README, package.json)
+
+### Technical Details
+
+- 30 new unit tests covering factory, properties, rename, filtering, icons
+- Recursive filter application with auto-expand for matches
+
 ## [0.3.1f] - 2026-01-14
 
 Repository layer enhancements. See [detailed notes](docs/changelog/v0.3.1f.md).
