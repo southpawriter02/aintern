@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.2.5b] - 2026-01-14
+
+Search service layer for full-text search. See [detailed notes](docs/changelog/v0.2.5b.md).
+
+### Added
+
+- **Search Service** - Service layer for full-text search operations
+  - ISearchService interface with SearchAsync, RebuildIndexAsync, GetSuggestionsAsync
+  - SearchService implementation wrapping AInternDbContext FTS5 operations
+  - Recent search tracking for autocomplete suggestions (max 20)
+  - Thread-safe in-memory suggestion cache
+  - Case-insensitive prefix matching for suggestions
+  - Comprehensive unit tests (25 test cases)
+  - Full XML documentation and logging with timing
+
+### Technical Details
+
+- Thin wrapper pattern over existing DbContext FTS5 methods
+- Factory pattern for DI registration (singleton with scoped DbContext)
+- In-memory recent search cache for session-scoped suggestions
+- Duplicate detection moves searches to most recent position
+
 ## [0.2.5a] - 2026-01-13
 
 FTS5 search infrastructure for full-text search. See [detailed notes](docs/changelog/v0.2.5a.md).

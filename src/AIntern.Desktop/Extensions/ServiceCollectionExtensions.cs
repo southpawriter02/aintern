@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
     /// <item><see cref="IConversationService"/> - Conversation state management</item>
     /// <item><see cref="IInferenceSettingsService"/> - Inference parameters and presets</item>
     /// <item><see cref="ISystemPromptService"/> - System prompt management (v0.2.4b)</item>
+    /// <item><see cref="ISearchService"/> - Full-text search with suggestions (v0.2.5b)</item>
     /// </list>
     /// </para>
     /// <para>
@@ -131,6 +132,19 @@ public static class ServiceCollectionExtensions
                 scope.ServiceProvider.GetRequiredService<ISystemPromptRepository>(),
                 sp.GetRequiredService<ISettingsService>(),
                 sp.GetRequiredService<ILogger<SystemPromptService>>());
+        });
+
+        // Search: provides full-text search with recent search suggestions.
+        // Uses a factory to resolve scoped DbContext dependency.
+        // The service wraps FTS5 search operations from AInternDbContext.
+        // Added in v0.2.5b.
+        services.AddSingleton<ISearchService>(sp =>
+        {
+            // Create a scope to resolve scoped services (DbContext).
+            var scope = sp.CreateScope();
+            return new SearchService(
+                scope.ServiceProvider.GetRequiredService<AInternDbContext>(),
+                sp.GetRequiredService<ILogger<SearchService>>());
         });
 
         // LLM: manages model loading, inference, and resource cleanup.
