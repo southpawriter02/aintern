@@ -310,4 +310,14 @@
         </Style>
     </ControlTheme>
 
+    <!-- ================================================================== -->
+    <!-- Editor Tab Bar Styles (v0.3.3e)                                    -->
+    <!-- Note: See App.axaml Styles section for Button.editor-tab styles   -->
+    <!-- ================================================================== -->
+
+    <!-- Tab Bar Colors -->
+    <SolidColorBrush x:Key="TabBarBackgroundBrush" Color="#252526" />
+    <SolidColorBrush x:Key="TabActiveBackgroundBrush" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="TabHoverBackgroundBrush" Color="#2D2D2D" />
+
 </ResourceDictionary>

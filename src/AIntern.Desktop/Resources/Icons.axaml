@@ -164,4 +164,29 @@
     -->
     <StreamGeometry x:Key="PromptIcon">M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 11H7V9h2v2zm4 0h-2V9h2v2zm4 0h-2V9h2v2z</StreamGeometry>
 
+    <!-- ================================================================== -->
+    <!-- Editor Panel Icons (v0.3.3e)                                       -->
+    <!-- ================================================================== -->
+
+    <!--
+        FileCodeIcon - Used for empty state illustration in editor panel
+        Document with code brackets representing source files
+        ViewBox: 0 0 24 24
+    -->
+    <StreamGeometry x:Key="FileCodeIcon">M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-2 16l-4-4 1.41-1.41L12 15.17l2.59-2.58L16 14l-4 4zm0-7l-4-4 1.41-1.41L12 8.17l2.59-2.58L16 7l-4 4zm0-5V3.5L17.5 9H12z</StreamGeometry>
+
+    <!--
+        FileIcon - Default file icon for unknown file types
+        Simple document outline
+        ViewBox: 0 0 24 24
+    -->
+    <StreamGeometry x:Key="FileIcon">M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L17.5 9H13z</StreamGeometry>
+
+    <!--
+        TerminalIcon - Used for shell script file icons in tabs
+        Terminal/console window
+        ViewBox: 0 0 24 24
+    -->
+    <StreamGeometry x:Key="TerminalIcon">M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z</StreamGeometry>
+
 </ResourceDictionary>

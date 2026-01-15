@@ -5,6 +5,36 @@
 
     <Application.Styles>
         <FluentTheme />
+        
+        <!-- Editor Tab Bar Styles (v0.3.3e) -->
+        <Style Selector="Button.editor-tab">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="MinHeight" Value="35" />
+        </Style>
+        <Style Selector="Button.editor-tab:pointerover">
+            <Setter Property="Background" Value="{DynamicResource TabHoverBackgroundBrush}" />
+        </Style>
+        <Style Selector="Button.editor-tab.active">
+            <Setter Property="Background" Value="{DynamicResource TabActiveBackgroundBrush}" />
+        </Style>
+        <Style Selector="Button.editor-tab.active /template/ ContentPresenter">
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.tab-close-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+        <Style Selector="Button.tab-close-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+            <Setter Property="Opacity" Value="1" />
+        </Style>
     </Application.Styles>
 
     <Application.Resources>

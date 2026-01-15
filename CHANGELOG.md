@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.3e] - 2026-01-14
+
+Editor Panel UI. See [detailed notes](docs/changelog/v0.3.3e.md).
+
+### Added
+
+- EditorPanel.axaml and EditorPanel.axaml.cs view implementation
+- LanguageToIconConverter for mapping languages to icons
+- Tab bar with tab switching, close, and context menu
+- Empty state display with "No file open" message
+- Keyboard shortcuts (Ctrl+S, Ctrl+W, Ctrl+G, Ctrl+F, Ctrl+H, Ctrl+Tab)
+- TextEditor integration with syntax highlighting and caret tracking
+- FileCodeIcon and TerminalIcon geometry resources
+- Tab bar styles in App.axaml
+
+### Unit Tests
+
+- 40 new tests for LanguageToIconConverter
+
 ## [0.3.3d] - 2026-01-14
 
 Editor Configuration. See [detailed notes](docs/changelog/v0.3.3d.md).
