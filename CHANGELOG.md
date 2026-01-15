@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.3f] - 2026-01-14
+
+Find & Replace. See [detailed notes](docs/changelog/v0.3.3f.md).
+
+### Added
+
+- EditorSearchManager static utility class
+- OpenFind/OpenReplace with selection-based auto-fill
+- FindNext/FindPrevious navigation methods
+- F3 and Shift+F3 keyboard shortcuts
+- Escape to close search panel
+
+### Unit Tests
+
+- 15 new tests for EditorSearchManager
+
 ## [0.3.3e] - 2026-01-14
 
 Editor Panel UI. See [detailed notes](docs/changelog/v0.3.3e.md).

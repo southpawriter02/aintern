@@ -25,11 +25,12 @@ using Microsoft.Extensions.Logging;
 ///   <item><description>Tab switching and document binding</description></item>
 ///   <item><description>Syntax highlighting via SyntaxHighlightingService</description></item>
 ///   <item><description>Editor configuration via EditorConfiguration</description></item>
-///   <item><description>Keyboard shortcuts (Ctrl+S, Ctrl+W, Ctrl+Tab, etc.)</description></item>
+///   <item><description>Keyboard shortcuts (Ctrl+S, Ctrl+W, Ctrl+Tab, F3, etc.)</description></item>
 ///   <item><description>Caret position updates for status bar</description></item>
 ///   <item><description>ViewModel event handling (undo, redo, find, replace, go-to-line)</description></item>
+///   <item><description>Find/Replace via EditorSearchManager (v0.3.3f)</description></item>
 /// </list>
-/// <para>Added in v0.3.3e.</para>
+/// <para>Added in v0.3.3e. Updated in v0.3.3f with EditorSearchManager.</para>
 /// </remarks>
 public partial class EditorPanel : UserControl
 {
@@ -39,7 +40,6 @@ public partial class EditorPanel : UserControl
     private SyntaxHighlightingService? _syntaxService;
     private IDisposable? _settingsBinding;
     private ILogger<EditorPanel>? _logger;
-    private SearchPanel? _searchPanel;
 
     #endregion
 
@@ -84,8 +84,8 @@ public partial class EditorPanel : UserControl
         // Initialize syntax highlighting (no language yet)
         _syntaxService.ApplyHighlighting(Editor, null);
 
-        // Install search panel
-        _searchPanel = SearchPanel.Install(Editor);
+        // Configure search manager logger (v0.3.3f)
+        EditorSearchManager.SetLogger(_logger);
 
         _logger?.LogInformation("[INIT] EditorPanel initialized successfully");
     }
@@ -234,23 +234,22 @@ public partial class EditorPanel : UserControl
 
     /// <summary>
     /// Handles find request from ViewModel.
+    /// Uses EditorSearchManager for selection-based auto-fill (v0.3.3f).
     /// </summary>
     private void OnFindRequested(object? sender, EventArgs e)
     {
-        _logger?.LogDebug("[CMD] Find panel opened");
-        _searchPanel ??= SearchPanel.Install(Editor);
-        _searchPanel.Open();
+        _logger?.LogDebug("[CMD] Find panel opened via EditorSearchManager");
+        EditorSearchManager.OpenFind(Editor);
     }
 
     /// <summary>
     /// Handles replace request from ViewModel.
+    /// Uses EditorSearchManager for selection-based auto-fill (v0.3.3f).
     /// </summary>
     private void OnReplaceRequested(object? sender, EventArgs e)
     {
-        _logger?.LogDebug("[CMD] Replace panel opened");
-        _searchPanel ??= SearchPanel.Install(Editor);
-        _searchPanel.Open();
-        _searchPanel.IsReplaceMode = true;
+        _logger?.LogDebug("[CMD] Replace panel opened via EditorSearchManager");
+        EditorSearchManager.OpenReplace(Editor);
     }
 
     /// <summary>
@@ -278,6 +277,32 @@ public partial class EditorPanel : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+
+        // F3 / Shift+F3 for find next/previous (v0.3.3f)
+        if (e.Key == Key.F3)
+        {
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+            {
+                EditorSearchManager.FindPrevious(Editor);
+                _logger?.LogDebug("[KEY] Shift+F3 - Find Previous");
+            }
+            else
+            {
+                EditorSearchManager.FindNext(Editor);
+                _logger?.LogDebug("[KEY] F3 - Find Next");
+            }
+            e.Handled = true;
+            return;
+        }
+
+        // Escape to close search panel (v0.3.3f)
+        if (e.Key == Key.Escape && EditorSearchManager.IsOpen(Editor))
+        {
+            EditorSearchManager.Close(Editor);
+            _logger?.LogDebug("[KEY] Escape - Close Search");
+            e.Handled = true;
+            return;
+        }
 
         if (e.KeyModifiers == KeyModifiers.Control)
         {
@@ -313,13 +338,13 @@ public partial class EditorPanel : UserControl
                     e.Handled = true;
                     _logger?.LogDebug("[KEY] Ctrl+H - Replace");
                     break;
+
+                case Key.Tab:
+                    _viewModel?.NextTabCommand.Execute(null);
+                    e.Handled = true;
+                    _logger?.LogDebug("[KEY] Ctrl+Tab - Next Tab");
+                    break;
             }
-        }
-        else if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.Tab)
-        {
-            _viewModel?.NextTabCommand.Execute(null);
-            e.Handled = true;
-            _logger?.LogDebug("[KEY] Ctrl+Tab - Next Tab");
         }
         else if (e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift) && e.Key == Key.Tab)
         {
@@ -344,6 +369,9 @@ public partial class EditorPanel : UserControl
 
         _settingsBinding?.Dispose();
         _syntaxService?.RemoveHighlighting(Editor);
+
+        // Uninstall search panel (v0.3.3f)
+        EditorSearchManager.Uninstall(Editor);
 
         // Unsubscribe from caret events
         Editor.TextArea.Caret.PositionChanged -= OnCaretPositionChanged;
