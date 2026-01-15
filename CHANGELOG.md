@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.4d] - 2026-01-15
+
+Chat Context Bar UI. See [detailed notes](docs/changelog/v0.3.4d.md).
+
+### Added
+
+- ChatContextBar user control with context pill layout
+- ChatContextBarViewModel with token tracking and commands
+- TokenCountConverter for formatting token counts
+- Context bar theme resources (pills, badges, warnings)
+- Icons: AttachmentIcon, CloseIcon, SelectionIcon, ClipboardIcon
+- Token limit warning and error states
+
+### Unit Tests
+
+- 21 tests for TokenCountConverter and ChatContextBarViewModel
+
 ## [0.3.4c] - 2026-01-15
 
 File Context ViewModel. See [detailed notes](docs/changelog/v0.3.4c.md).

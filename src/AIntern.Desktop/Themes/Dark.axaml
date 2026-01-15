@@ -44,6 +44,32 @@
     <SolidColorBrush x:Key="TreeViewItemSelectedBackground" Color="#45475A" />
     <SolidColorBrush x:Key="TreeViewItemHoverBackground" Color="#313244" />
 
+    <!-- ============================================================== -->
+    <!-- Context Bar Colors (v0.3.4d)                                   -->
+    <!-- ============================================================== -->
+    <SolidColorBrush x:Key="ContextBarBackgroundBrush" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="ContextPillBackgroundBrush" Color="#2D2D2D" />
+    <SolidColorBrush x:Key="ContextPillBorderBrush" Color="#3E3E3E" />
+    <SolidColorBrush x:Key="ContextPillHoverBrush" Color="#383838" />
+    <SolidColorBrush x:Key="SelectionAccentBrush" Color="#569CD6" />
+    <SolidColorBrush x:Key="CloseButtonHoverBrush" Color="#4E4E4E" />
+
+    <!-- Badge Colors -->
+    <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="#3E3E3E" />
+    <SolidColorBrush x:Key="BadgeForegroundBrush" Color="#CCCCCC" />
+
+    <!-- Token Limit Warning/Error Colors -->
+    <SolidColorBrush x:Key="TokenWarningBrush" Color="#DDB700" />
+    <SolidColorBrush x:Key="TokenWarningBackgroundBrush" Color="#332D00" />
+    <SolidColorBrush x:Key="TokenErrorBrush" Color="#F14C4C" />
+    <SolidColorBrush x:Key="TokenErrorBackgroundBrush" Color="#331111" />
+
+    <!-- Text Brushes (aliases for context bar) -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#CCCCCC" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#AAAAAA" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#808080" />
+
+
     <!-- Button Styles -->
     <ControlTheme x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
