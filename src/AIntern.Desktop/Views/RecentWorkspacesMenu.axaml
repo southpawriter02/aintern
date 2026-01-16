@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="300"
+             x:Class="AIntern.Desktop.Views.RecentWorkspacesMenu"
+             x:DataType="vm:RecentWorkspacesViewModel">
+
+    <Border Background="{DynamicResource MenuBackgroundBrush}"
+            BorderBrush="{DynamicResource MenuBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            MinWidth="300"
+            MaxWidth="400">
+
+        <StackPanel>
+            <!-- Recent Workspaces List -->
+            <ItemsControl ItemsSource="{Binding Workspaces}"
+                          IsVisible="{Binding HasWorkspaces}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RecentWorkspaceItemViewModel">
+                        <Button Classes="menu-item"
+                                Command="{Binding $parent[UserControl].((vm:RecentWorkspacesViewModel)DataContext).OpenWorkspaceCommand}"
+                                CommandParameter="{Binding}">
+                            <Grid ColumnDefinitions="Auto, *, Auto, Auto">
+                                <!-- Folder Icon -->
+                                <PathIcon Grid.Column="0"
+                                          Data="{StaticResource FolderIcon}"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource FolderIconBrush}"
+                                          Margin="0,0,10,0" />
+
+                                <!-- Name and Path -->
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontWeight="SemiBold" />
+                                        <PathIcon Data="{StaticResource PinIcon}"
+                                                  Width="10" Height="10"
+                                                  IsVisible="{Binding IsPinned}"
+                                                  Foreground="{DynamicResource AccentBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding DisplayPath}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <!-- Time Ago -->
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding TimeAgo}"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0" />
+
+                                <!-- Actions -->
+                                <StackPanel Grid.Column="3"
+                                            Orientation="Horizontal"
+                                            Spacing="2">
+                                    <Button Classes="icon-button-small"
+                                            Command="{Binding $parent[UserControl].((vm:RecentWorkspacesViewModel)DataContext).TogglePinCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{Binding PinTooltip}">
+                                        <PathIcon Data="{StaticResource PinIcon}"
+                                                  Width="12" Height="12" />
+                                    </Button>
+                                    <Button Classes="icon-button-small"
+                                            Command="{Binding $parent[UserControl].((vm:RecentWorkspacesViewModel)DataContext).RemoveCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="Remove from recent">
+                                        <PathIcon Data="{StaticResource ClearIcon}"
+                                                  Width="10" Height="10" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Empty State -->
+            <TextBlock Text="No recent workspaces"
+                       IsVisible="{Binding !HasWorkspaces}"
+                       HorizontalAlignment="Center"
+                       Padding="16"
+                       Foreground="{DynamicResource TextMutedBrush}" />
+
+            <!-- Separator -->
+            <Separator IsVisible="{Binding HasWorkspaces}" />
+
+            <!-- Clear All -->
+            <Button Classes="menu-item"
+                    Command="{Binding ClearAllCommand}"
+                    IsVisible="{Binding HasWorkspaces}"
+                    HorizontalContentAlignment="Center">
+                <TextBlock Text="Clear Recent Workspaces"
+                           Foreground="{DynamicResource TextMutedBrush}" />
+            </Button>
+        </StackPanel>
+    </Border>
+</UserControl>

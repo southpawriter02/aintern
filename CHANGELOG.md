@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.5e] - 2026-01-15
+
+Recent Workspaces Menu. See [detailed notes](docs/changelog/v0.3.5e.md).
+
+### Added
+
+- RecentWorkspaceItemViewModel with path shortening (~) and relative time formatting
+- RecentWorkspacesViewModel with load, pin, remove, clear commands
+- RecentWorkspacesMenu.axaml popup menu with workspace items
+- Menu colors and icon-button-small styles
+
 ## [0.3.5d] - 2026-01-15
 
 Enhanced Status Bar. See [detailed notes](docs/changelog/v0.3.5d.md).

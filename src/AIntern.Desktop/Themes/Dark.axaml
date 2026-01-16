@@ -99,6 +99,14 @@
     <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="White" />
     <SolidColorBrush x:Key="WarningBrush" Color="#FFD166" />
 
+    <!-- ============================================================== -->
+    <!-- Menu Colors (v0.3.5e)                                          -->
+    <!-- ============================================================== -->
+    <SolidColorBrush x:Key="MenuBackgroundBrush" Color="#2D2D2D" />
+    <SolidColorBrush x:Key="MenuBorderBrush" Color="#3F3F3F" />
+    <SolidColorBrush x:Key="MenuItemHoverBrush" Color="#3C3C3C" />
+    <SolidColorBrush x:Key="IconButtonHoverBrush" Color="#505050" />
+
     <!-- Button Styles -->
     <ControlTheme x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
