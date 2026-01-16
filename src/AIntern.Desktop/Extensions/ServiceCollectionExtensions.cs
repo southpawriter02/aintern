@@ -6,6 +6,7 @@ using AIntern.Data.Repositories;
 using AIntern.Desktop.Services;
 using AIntern.Desktop.ViewModels;
 using AIntern.Services;
+using AIntern.Services.Factories;
 using Serilog;
 
 namespace AIntern.Desktop.Extensions;
@@ -229,6 +230,12 @@ public static class ServiceCollectionExtensions
         // Uses ILanguageDetectionService for extension mapping.
         // Added in v0.4.1e.
         services.AddSingleton<IFilePathInferenceService, FilePathInferenceService>();
+
+        // Streaming Parser: extracts code blocks during LLM streaming.
+        // Transient because each streaming session needs its own instance.
+        // Added in v0.4.1f.
+        services.AddTransient<IStreamingCodeBlockParser, StreamingCodeBlockParser>();
+        services.AddSingleton<IStreamingParserFactory, StreamingParserFactory>();
 
         // Keyboard Shortcuts: centralized shortcut management (v0.3.5g).
         services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();

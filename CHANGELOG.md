@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.1f] - 2026-01-16
+
+Streaming Parser for Code Block Extraction. See [detailed notes](docs/changelog/v0.4.1f.md).
+
+### Added
+
+- `IStreamingCodeBlockParser` interface for incremental parsing
+- `StreamingCodeBlockParser` state machine implementation
+- `PartialCodeBlock` model for in-progress blocks
+- `StreamingParserState` enum (Text, FenceOpening, CodeContent, FenceClosing)
+- `FenceType` enum (Backtick, Tilde)
+- Streaming events (BlockStarted, ContentAdded, BlockCompleted)
+- `IStreamingParserFactory` and `StreamingParserFactory`
+- Support for lang:path fence syntax
+- Support for extended fences (4+ backticks) and tilde fences
+- Comprehensive unit tests (30)
+
 ## [0.4.1e] - 2026-01-16
 
 File Path Inference Service. See [detailed notes](docs/changelog/v0.4.1e.md).
