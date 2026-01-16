@@ -1,0 +1,186 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:converters="using:AIntern.Desktop.Converters"
+             x:Class="AIntern.Desktop.Controls.ApplyProgressOverlay"
+             x:DataType="vm:ApplyProgressViewModel"
+             IsVisible="{Binding IsVisible}"
+             AutomationProperties.Name="Apply progress overlay">
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    APPLY PROGRESS OVERLAY (v0.4.4g)
+    Semi-transparent overlay with progress feedback during batch operations.
+    ═══════════════════════════════════════════════════════════════════════════
+    -->
+
+    <UserControl.Resources>
+        <converters:PhaseToIconConverter x:Key="PhaseToIconConverter" />
+        <converters:PhaseToTitleConverter x:Key="PhaseToTitleConverter" />
+        <converters:PhaseToBrushConverter x:Key="PhaseToBrushConverter" />
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- Backdrop style -->
+        <Style Selector="Border.progress-backdrop">
+            <Setter Property="Background" Value="#CC000000" />
+        </Style>
+
+        <!-- Modal card style -->
+        <Style Selector="Border.progress-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackground}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="32" />
+            <Setter Property="MinWidth" Value="400" />
+            <Setter Property="MaxWidth" Value="500" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="BoxShadow" Value="0 8 32 0 #80000000" />
+        </Style>
+
+        <!-- Phase icon style -->
+        <Style Selector="PathIcon.phase-icon">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,0,16" />
+        </Style>
+
+        <!-- Phase title style -->
+        <Style Selector="TextBlock.phase-title">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <!-- Current file style -->
+        <Style Selector="TextBlock.current-file">
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="MaxWidth" Value="350" />
+            <Setter Property="Margin" Value="0,0,0,16" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <!-- Error message style -->
+        <Style Selector="TextBlock.error-message">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorForeground}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="MaxWidth" Value="350" />
+            <Setter Property="Margin" Value="0,0,0,16" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <!-- Progress bar container style -->
+        <Style Selector="Grid.progress-bar-container">
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+
+        <!-- Progress bar style -->
+        <Style Selector="ProgressBar.apply-progress">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="100" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        </Style>
+
+        <!-- Progress percentage text style -->
+        <Style Selector="TextBlock.progress-percent">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="12,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- File count style -->
+        <Style Selector="TextBlock.file-count">
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <!-- Cancel button style -->
+        <Style Selector="Button.cancel-progress">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector="Button.cancel-progress:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Backdrop -->
+    <Border Classes="progress-backdrop"
+            KeyboardNavigation.TabNavigation="Cycle">
+
+        <!-- Modal Card -->
+        <Border Classes="progress-card">
+            <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto">
+
+                <!-- Row 0: Phase Icon -->
+                <PathIcon Grid.Row="0"
+                          Classes="phase-icon"
+                          Data="{Binding Phase, Converter={StaticResource PhaseToIconConverter}}"
+                          Foreground="{Binding Phase, Converter={StaticResource PhaseToBrushConverter}}" />
+
+                <!-- Row 1: Phase Title -->
+                <TextBlock Grid.Row="1"
+                           Classes="phase-title"
+                           Text="{Binding Phase, Converter={StaticResource PhaseToTitleConverter}}" />
+
+                <!-- Row 2: Current File -->
+                <TextBlock Grid.Row="2"
+                           Classes="current-file"
+                           Text="{Binding CurrentFile}"
+                           IsVisible="{Binding CurrentFile, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                <!-- Row 2 Alt: Error Message -->
+                <TextBlock Grid.Row="2"
+                           Classes="error-message"
+                           Text="{Binding ErrorMessage}"
+                           IsVisible="{Binding HasError}" />
+
+                <!-- Row 3: Progress Bar + Percentage -->
+                <Grid Grid.Row="3"
+                      Classes="progress-bar-container"
+                      ColumnDefinitions="*, Auto"
+                      IsVisible="{Binding !IsIndeterminate}">
+                    <ProgressBar Classes="apply-progress"
+                                 Value="{Binding ProgressPercent}" />
+                    <TextBlock Grid.Column="1"
+                               Classes="progress-percent"
+                               Text="{Binding ProgressPercentText}" />
+                </Grid>
+
+                <!-- Row 3 Alt: Indeterminate Progress -->
+                <ProgressBar Grid.Row="3"
+                             Classes="apply-progress"
+                             IsIndeterminate="True"
+                             IsVisible="{Binding IsIndeterminate}"
+                             Margin="0,0,0,8" />
+
+                <!-- Row 4: File Count -->
+                <TextBlock Grid.Row="4"
+                           Classes="file-count"
+                           Text="{Binding FileCountText}"
+                           IsVisible="{Binding FileCountText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                <!-- Row 5: Cancel Button -->
+                <Button Grid.Row="5"
+                        Classes="cancel-progress"
+                        Content="Cancel"
+                        Command="{Binding CancelCommand}"
+                        IsVisible="{Binding ShowCancelButton}"
+                        Margin="0,16,0,0"
+                        AutomationProperties.Name="Cancel file operation" />
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>
