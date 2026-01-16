@@ -1,0 +1,271 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AIntern.Desktop.ViewModels"
+        xmlns:views="using:AIntern.Desktop.Views"
+        xmlns:converters="using:AIntern.Desktop.Converters"
+        mc:Ignorable="d"
+        d:DesignWidth="1000" d:DesignHeight="700"
+        x:Class="AIntern.Desktop.Views.BatchPreviewDialog"
+        x:DataType="vm:BatchPreviewDialogViewModel"
+        Title="Preview All Changes"
+        Width="1000" Height="700"
+        MinWidth="800" MinHeight="500"
+        MaxWidth="1400" MaxHeight="900"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True"
+        ShowInTaskbar="False"
+        SystemDecorations="Full">
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    BATCH PREVIEW DIALOG (v0.4.4f)
+    Modal dialog for previewing all file changes before applying.
+    ═══════════════════════════════════════════════════════════════════════════
+    -->
+
+    <Window.Resources>
+        <converters:IncrementConverter x:Key="IncrementConverter" />
+        <converters:IconNameConverter x:Key="IconNameConverter" />
+    </Window.Resources>
+
+    <Window.Styles>
+        <!-- File Tab Button -->
+        <Style Selector="Button.file-tab">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.file-tab:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        </Style>
+        <Style Selector="Button.file-tab.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        </Style>
+
+        <!-- NEW Badge -->
+        <Style Selector="Border.new-badge">
+            <Setter Property="Background" Value="{DynamicResource SuccessBackground}" />
+            <Setter Property="Padding" Value="4,1" />
+            <Setter Property="CornerRadius" Value="3" />
+        </Style>
+
+        <!-- Stats Text -->
+        <Style Selector="TextBlock.added-text">
+            <Setter Property="Foreground" Value="{DynamicResource DiffAddedForeground}" />
+        </Style>
+        <Style Selector="TextBlock.removed-text">
+            <Setter Property="Foreground" Value="{DynamicResource DiffRemovedForeground}" />
+        </Style>
+        <Style Selector="TextBlock.modified-text">
+            <Setter Property="Foreground" Value="{DynamicResource DiffModifiedForeground}" />
+        </Style>
+
+        <!-- Navigation Button -->
+        <Style Selector="Button.nav-button">
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="MinWidth" Value="100" />
+        </Style>
+
+        <!-- Accent Button -->
+        <Style Selector="Button.accent">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.accent:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto, *, Auto">
+
+        <!-- Row 0: Header with Stats and File Tabs -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBackground}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,12">
+            <Grid RowDefinitions="Auto, Auto">
+
+                <!-- Summary Statistics -->
+                <StackPanel Orientation="Horizontal"
+                            Spacing="16"
+                            Margin="0,0,0,12">
+                    <TextBlock FontSize="14" FontWeight="SemiBold"
+                               Text="{Binding TotalFiles, StringFormat='{}{0} files to create'}" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Classes="added-text"
+                                   Text="{Binding NewFiles, StringFormat='{}{0} new'}" />
+                        <TextBlock Text="•"
+                                   Foreground="{DynamicResource TextMuted}" />
+                        <TextBlock Classes="modified-text"
+                                   Text="{Binding ModifiedFiles, StringFormat='{}{0} modified'}" />
+                    </StackPanel>
+
+                    <!-- Total Lines Changed -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="8"
+                                IsVisible="{Binding HasModifiedFiles}">
+                        <TextBlock Text="•"
+                                   Foreground="{DynamicResource TextMuted}" />
+                        <TextBlock Classes="added-text"
+                                   Text="{Binding TotalAddedLines, StringFormat='+{0}'}" />
+                        <TextBlock Classes="removed-text"
+                                   Text="{Binding TotalRemovedLines, StringFormat='-{0}'}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- File Tabs -->
+                <ScrollViewer Grid.Row="1"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding DiffPreviews}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:DiffPreviewViewModel}">
+                                <Button Classes="file-tab"
+                                        Command="{ReflectionBinding $parent[Window].DataContext.SelectPreviewCommand}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip.Tip="{Binding FilePath}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <!-- File Icon -->
+                                        <PathIcon Data="{Binding FileIcon, Converter={StaticResource IconNameConverter}}"
+                                                  Width="14" Height="14"
+                                                  Foreground="{DynamicResource TextMuted}" />
+
+                                        <!-- File Name -->
+                                        <TextBlock Text="{Binding DisplayName}"
+                                                   MaxWidth="120"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <!-- NEW Badge (for new files) -->
+                                        <Border Classes="new-badge"
+                                                IsVisible="{Binding IsNewFile}">
+                                            <TextBlock Text="NEW"
+                                                       FontSize="9"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource SuccessForeground}" />
+                                        </Border>
+
+                                        <!-- Change Stats (for modified files) -->
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="4"
+                                                    IsVisible="{Binding !IsNewFile}">
+                                            <TextBlock Classes="added-text"
+                                                       Text="{Binding AddedLines, StringFormat='+{0}'}"
+                                                       FontSize="11" />
+                                            <TextBlock Classes="removed-text"
+                                                       Text="{Binding RemovedLines, StringFormat='-{0}'}"
+                                                       FontSize="11" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Row 1: Diff Content -->
+        <Border Grid.Row="1"
+                Background="{DynamicResource WindowBackground}">
+            <Panel>
+                <!-- Diff Viewer: Use ContentControl to handle nullable binding -->
+                <ContentControl Content="{Binding SelectedPreview.DiffViewModel}"
+                                IsVisible="{Binding SelectedPreview, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate DataType="{x:Type vm:DiffViewerViewModel}">
+                            <views:DiffViewerPanel />
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+
+                <!-- Empty State (no selection) -->
+                <StackPanel VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            IsVisible="{Binding SelectedPreview, Converter={x:Static ObjectConverters.IsNull}}">
+                    <PathIcon Data="{StaticResource FileIcon}"
+                              Width="48" Height="48"
+                              Foreground="{DynamicResource TextMuted}"
+                              Margin="0,0,0,16" />
+                    <TextBlock Text="Select a file to preview"
+                               Foreground="{DynamicResource TextMuted}"
+                               FontSize="14" />
+                </StackPanel>
+            </Panel>
+        </Border>
+
+        <!-- Row 2: Footer with Navigation and Actions -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SurfaceBackground}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,12">
+            <Grid ColumnDefinitions="Auto, *, Auto">
+
+                <!-- Navigation Controls -->
+                <StackPanel Orientation="Horizontal"
+                            Spacing="8"
+                            IsVisible="{Binding HasMultipleFiles}">
+                    <Button Content="← Previous"
+                            Command="{Binding PreviousFileCommand}"
+                            Classes="nav-button"
+                            ToolTip.Tip="Previous file (Left Arrow)" />
+                    <Button Content="Next →"
+                            Command="{Binding NextFileCommand}"
+                            Classes="nav-button"
+                            ToolTip.Tip="Next file (Right Arrow)" />
+
+                    <TextBlock VerticalAlignment="Center"
+                               Margin="12,0,0,0"
+                               Foreground="{DynamicResource TextMuted}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="File {0} of {1}">
+                                <Binding Path="SelectedIndex"
+                                         Converter="{StaticResource IncrementConverter}" />
+                                <Binding Path="TotalFiles" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Keyboard Hint (when single file) -->
+                <TextBlock Grid.Column="0"
+                           IsVisible="{Binding !HasMultipleFiles}"
+                           Text="Press Enter to create or Escape to cancel"
+                           Foreground="{DynamicResource TextMuted}"
+                           VerticalAlignment="Center" />
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            IsCancel="True"
+                            ToolTip.Tip="Cancel (Escape)"
+                            Padding="16,8" />
+                    <Button Content="Create All Files"
+                            Command="{Binding ApplyAllCommand}"
+                            IsDefault="True"
+                            Classes="accent"
+                            ToolTip.Tip="Create all files (Enter)"
+                            Padding="16,8" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

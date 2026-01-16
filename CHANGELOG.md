@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.4f] - 2026-01-16
+
+Batch Preview. See [detailed notes](docs/changelog/v0.4.4f.md).
+
+### Added
+
+- `BatchPreviewDialog` for previewing all changes before applying
+- `BatchPreviewDialogViewModel` for dialog state and navigation
+- `DiffPreviewViewModel` for individual file diff display
+- `ReferenceEqualsConverter` for selection state binding
+- 18 new unit tests
+
 ## [0.4.4e] - 2026-01-16
 
 Proposal Panel. See [detailed notes](docs/changelog/v0.4.4e.md).
