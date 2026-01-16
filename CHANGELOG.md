@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.4h] - 2026-01-15
+
+Message History Integration. See [detailed notes](docs/changelog/v0.3.4h.md).
+
+### Added
+
+- AttachedContexts property to ChatMessage model
+- Context display properties to ChatMessageViewModel (HasAttachedContexts, AttachedContextCount, TotalAttachedTokens)
+- ToggleContextExpandedCommand for expand/collapse in message bubbles
+- AttachedContextsJson property to MessageEntity for database persistence
+- JSON serialization/deserialization in DatabaseConversationService
+
+### Unit Tests
+
+- 7 tests for ChatMessage and ChatMessageViewModel context functionality
+
 ## [0.3.4g] - 2026-01-15
 
 File Explorer Integration. See [detailed notes](docs/changelog/v0.3.4g.md).

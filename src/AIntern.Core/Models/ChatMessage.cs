@@ -89,4 +89,25 @@ public sealed class ChatMessage
     /// Starts at 1 for the first message in a conversation.
     /// </remarks>
     public int SequenceNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the file contexts attached to this message.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Attached contexts are code snippets or files that provide additional
+    /// information for the LLM when generating responses. They are stored
+    /// with the message for historical display and context reconstruction.
+    /// </para>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    public IReadOnlyList<FileContext> AttachedContexts { get; init; } = Array.Empty<FileContext>();
+
+    /// <summary>
+    /// Gets whether this message has attached contexts.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    public bool HasAttachedContexts => AttachedContexts.Count > 0;
 }

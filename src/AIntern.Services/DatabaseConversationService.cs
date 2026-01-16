@@ -1,6 +1,7 @@
 namespace AIntern.Services;
 
 using System.Diagnostics;
+using System.Text.Json;
 using System.Timers;
 using AIntern.Core.Entities;
 using AIntern.Core.Events;
@@ -736,6 +737,12 @@ public sealed class DatabaseConversationService : IConversationService, IDisposa
     /// </summary>
     private static ChatMessage MapMessageToDomain(MessageEntity entity)
     {
+        // v0.3.4h: Deserialize attached contexts from JSON
+        var attachedContexts = string.IsNullOrEmpty(entity.AttachedContextsJson)
+            ? Array.Empty<FileContext>()
+            : JsonSerializer.Deserialize<FileContext[]>(entity.AttachedContextsJson)
+                ?? Array.Empty<FileContext>();
+
         return new ChatMessage
         {
             Id = entity.Id,
@@ -747,7 +754,8 @@ public sealed class DatabaseConversationService : IConversationService, IDisposa
             GenerationTime = entity.GenerationTimeMs.HasValue
                 ? TimeSpan.FromMilliseconds(entity.GenerationTimeMs.Value)
                 : null,
-            SequenceNumber = entity.SequenceNumber
+            SequenceNumber = entity.SequenceNumber,
+            AttachedContexts = attachedContexts
         };
     }
 
@@ -756,6 +764,11 @@ public sealed class DatabaseConversationService : IConversationService, IDisposa
     /// </summary>
     private static MessageEntity MapMessageToEntity(ChatMessage message, Guid conversationId)
     {
+        // v0.3.4h: Serialize attached contexts to JSON
+        string? attachedContextsJson = message.HasAttachedContexts
+            ? JsonSerializer.Serialize(message.AttachedContexts)
+            : null;
+
         return new MessageEntity
         {
             Id = message.Id,
@@ -768,7 +781,8 @@ public sealed class DatabaseConversationService : IConversationService, IDisposa
             GenerationTimeMs = message.GenerationTime.HasValue
                 ? (int)message.GenerationTime.Value.TotalMilliseconds
                 : null,
-            SequenceNumber = message.SequenceNumber
+            SequenceNumber = message.SequenceNumber,
+            AttachedContextsJson = attachedContextsJson
         };
     }
 

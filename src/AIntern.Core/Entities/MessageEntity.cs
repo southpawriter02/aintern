@@ -91,6 +91,16 @@ public sealed class MessageEntity
     /// </remarks>
     public string Content { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Gets or sets the JSON-serialized attached file contexts.
+    /// </summary>
+    /// <remarks>
+    /// <para>Stores attached FileContext objects as a JSON array.</para>
+    /// <para>Null if no contexts are attached.</para>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    public string? AttachedContextsJson { get; set; }
+
     #endregion
 
     #region Ordering

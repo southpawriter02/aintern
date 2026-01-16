@@ -1,4 +1,6 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using AIntern.Core.Models;
 
 namespace AIntern.Desktop.ViewModels;
@@ -64,6 +66,24 @@ public partial class ChatMessageViewModel : ViewModelBase
     [ObservableProperty]
     private TimeSpan? _generationTime;
 
+    /// <summary>
+    /// Gets or sets the file contexts attached to this message.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private ObservableCollection<FileContextViewModel> _attachedContexts = new();
+
+    /// <summary>
+    /// Gets or sets whether the attached context list is expanded.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private bool _isContextExpanded;
+
     #endregion
 
     #region Computed Properties
@@ -128,6 +148,30 @@ public partial class ChatMessageViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Gets whether this message has attached contexts.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    public bool HasAttachedContexts => AttachedContexts.Count > 0;
+
+    /// <summary>
+    /// Gets the number of attached contexts.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    public int AttachedContextCount => AttachedContexts.Count;
+
+    /// <summary>
+    /// Gets the total estimated tokens across all attached contexts.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    public int TotalAttachedTokens => AttachedContexts.Sum(c => c.EstimatedTokens);
+
     #endregion
 
     #region Constructors
@@ -161,6 +205,12 @@ public partial class ChatMessageViewModel : ViewModelBase
         // Copy performance statistics
         TokenCount = message.TokenCount;
         GenerationTime = message.GenerationTime;
+
+        // v0.3.4h: Convert attached contexts to ViewModels
+        foreach (var ctx in message.AttachedContexts)
+        {
+            AttachedContexts.Add(FileContextViewModel.FromFileContext(ctx));
+        }
     }
 
     #endregion
@@ -217,8 +267,22 @@ public partial class ChatMessageViewModel : ViewModelBase
         Timestamp = Timestamp,
         IsComplete = !IsStreaming,  // Invert IsStreaming to get IsComplete
         TokenCount = TokenCount,
-        GenerationTime = GenerationTime
+        GenerationTime = GenerationTime,
+        // v0.3.4h: Include attached contexts
+        AttachedContexts = AttachedContexts.Select(c => c.ToFileContext()).ToList()
     };
+
+    /// <summary>
+    /// Toggles the expanded state of the attached contexts.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.3.4h.</para>
+    /// </remarks>
+    [RelayCommand]
+    private void ToggleContextExpanded()
+    {
+        IsContextExpanded = !IsContextExpanded;
+    }
 
     #endregion
 }
