@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.2g] - 2026-01-16
+
+Diff Navigation. See [detailed notes](docs/changelog/v0.4.2g.md).
+
+### Added
+
+- `DiffNavigationService` for hunk position tracking
+- Keyboard shortcuts: Ctrl+↑/↓ (nav), Ctrl+Enter (apply), Ctrl+Home/End (first/last), Ctrl+I/W (toggles), Escape (reject)
+- Focus management for DiffViewerPanel
+- 19 unit tests for navigation service
+
 ## [0.4.2f] - 2026-01-16
 
 Diff Line Rendering. See [detailed notes](docs/changelog/v0.4.2f.md).

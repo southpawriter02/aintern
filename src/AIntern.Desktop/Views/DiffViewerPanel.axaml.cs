@@ -1,24 +1,26 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Microsoft.Extensions.Logging;
 using AIntern.Desktop.ViewModels;
 
 namespace AIntern.Desktop.Views;
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
-// │ DIFF VIEWER PANEL CODE-BEHIND (v0.4.2e)                                  │
-// │ Implements synchronized scrolling and hunk navigation.                   │
+// │ DIFF VIEWER PANEL CODE-BEHIND (v0.4.2e, v0.4.2g)                         │
+// │ Implements synchronized scrolling, hunk navigation, and keyboard input.  │
 // └─────────────────────────────────────────────────────────────────────────┘
 
 /// <summary>
 /// Side-by-side diff viewer panel with synchronized scrolling between panels.
 /// </summary>
 /// <remarks>
-/// <para>Added in v0.4.2e.</para>
+/// <para>Added in v0.4.2e, enhanced in v0.4.2g.</para>
 /// <para>
 /// This code-behind handles:
 /// - Bidirectional synchronized scrolling between Original and Proposed panels
 /// - Hunk navigation via ViewModel events
+/// - Keyboard shortcuts for navigation and actions (v0.4.2g)
 /// - Proper cleanup when DataContext changes
 /// </para>
 /// </remarks>
@@ -29,10 +31,6 @@ public partial class DiffViewerPanel : UserControl
     /// <summary>
     /// Guard flag to prevent infinite scroll synchronization loops.
     /// </summary>
-    /// <remarks>
-    /// When Panel A scrolls, it updates Panel B. If we don't guard,
-    /// Panel B's scroll change would update Panel A, creating an infinite loop.
-    /// </remarks>
     private bool _isSyncingScroll;
 
     /// <summary>
@@ -47,7 +45,10 @@ public partial class DiffViewerPanel : UserControl
     {
         InitializeComponent();
 
-        _logger?.LogDebug("DiffViewerPanel initialized");
+        // v0.4.2g: Ensure the control can receive keyboard focus
+        Focusable = true;
+
+        _logger?.LogDebug("DiffViewerPanel initialized with Focusable=true");
     }
 
     /// <summary>
@@ -92,6 +93,138 @@ public partial class DiffViewerPanel : UserControl
             vm.HunkNavigationRequested += OnHunkNavigationRequested;
             _subscribedViewModel = vm;
             _logger?.LogTrace("Subscribed to DiffViewerViewModel.HunkNavigationRequested");
+
+            // v0.4.2g: Request focus when ViewModel is set
+            Focus();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Keyboard Handler (v0.4.2g)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Handles keyboard input for navigation and action shortcuts.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.2g.</para>
+    /// <para>
+    /// Supported shortcuts:
+    /// - Ctrl+↑: Previous hunk
+    /// - Ctrl+↓: Next hunk
+    /// - Ctrl+Enter: Apply changes
+    /// - Ctrl+Home: First hunk
+    /// - Ctrl+End: Last hunk
+    /// - Ctrl+I: Toggle inline changes
+    /// - Ctrl+W: Toggle word wrap
+    /// - Escape: Close/reject diff
+    /// </para>
+    /// </remarks>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        if (DataContext is not DiffViewerViewModel vm)
+        {
+            return;
+        }
+
+        var modifiers = e.KeyModifiers;
+        var key = e.Key;
+
+        _logger?.LogTrace("KeyDown: {Key} with modifiers {Modifiers}", key, modifiers);
+
+        // Handle Ctrl+Key combinations
+        if (modifiers.HasFlag(KeyModifiers.Control))
+        {
+            switch (key)
+            {
+                case Key.Up:
+                    // Navigate to previous hunk
+                    if (vm.PreviousHunkCommand.CanExecute(null))
+                    {
+                        vm.PreviousHunkCommand.Execute(null);
+                        _logger?.LogDebug("Keyboard: Ctrl+Up → Previous hunk");
+                    }
+                    e.Handled = true;
+                    break;
+
+                case Key.Down:
+                    // Navigate to next hunk
+                    if (vm.NextHunkCommand.CanExecute(null))
+                    {
+                        vm.NextHunkCommand.Execute(null);
+                        _logger?.LogDebug("Keyboard: Ctrl+Down → Next hunk");
+                    }
+                    e.Handled = true;
+                    break;
+
+                case Key.Enter:
+                    // Apply the proposed changes
+                    if (vm.RequestApplyCommand.CanExecute(null))
+                    {
+                        vm.RequestApplyCommand.Execute(null);
+                        _logger?.LogDebug("Keyboard: Ctrl+Enter → Apply changes");
+                    }
+                    e.Handled = true;
+                    break;
+
+                case Key.I:
+                    // Toggle inline change highlighting
+                    vm.ShowInlineChanges = !vm.ShowInlineChanges;
+                    _logger?.LogDebug("Keyboard: Ctrl+I → Toggle inline changes: {Value}",
+                        vm.ShowInlineChanges);
+                    e.Handled = true;
+                    break;
+
+                case Key.W:
+                    // Toggle word wrap
+                    vm.WordWrap = !vm.WordWrap;
+                    _logger?.LogDebug("Keyboard: Ctrl+W → Toggle word wrap: {Value}",
+                        vm.WordWrap);
+                    e.Handled = true;
+                    break;
+
+                case Key.Home:
+                    // Navigate to first hunk
+                    if (vm.Hunks.Count > 0 && vm.GoToHunkCommand.CanExecute(0))
+                    {
+                        vm.GoToHunkCommand.Execute(0);
+                        _logger?.LogDebug("Keyboard: Ctrl+Home → First hunk");
+                    }
+                    e.Handled = true;
+                    break;
+
+                case Key.End:
+                    // Navigate to last hunk
+                    if (vm.Hunks.Count > 0)
+                    {
+                        var lastIndex = vm.Hunks.Count - 1;
+                        if (vm.GoToHunkCommand.CanExecute(lastIndex))
+                        {
+                            vm.GoToHunkCommand.Execute(lastIndex);
+                            _logger?.LogDebug("Keyboard: Ctrl+End → Last hunk");
+                        }
+                    }
+                    e.Handled = true;
+                    break;
+            }
+        }
+        // Handle non-modified keys
+        else if (modifiers == KeyModifiers.None)
+        {
+            switch (key)
+            {
+                case Key.Escape:
+                    // Close/reject the diff viewer
+                    if (vm.RequestRejectCommand.CanExecute(null))
+                    {
+                        vm.RequestRejectCommand.Execute(null);
+                        _logger?.LogDebug("Keyboard: Escape → Reject/close");
+                    }
+                    e.Handled = true;
+                    break;
+            }
         }
     }
 
@@ -198,3 +331,4 @@ public partial class DiffViewerPanel : UserControl
         }
     }
 }
+
