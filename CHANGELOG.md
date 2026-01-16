@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.1a] - 2026-01-15
+
+Core Models for Code Block Extraction. See [detailed notes](docs/changelog/v0.4.1a.md).
+
+### Added
+
+- `CodeBlock` model for extracted code blocks
+- `CodeBlockType` enum (CompleteFile, Snippet, Example, Command, Output, Config)
+- `CodeBlockStatus` enum (Pending, Applied, Rejected, Skipped, Conflict, Error)
+- `TextRange` record struct for character positions
+- `LineRange` record struct for line ranges
+- `CodeProposal` model for grouping related blocks
+- `ProposalStatus` enum for tracking proposal states
+- Comprehensive unit tests (20+)
+
 ## [0.3.5h] - 2026-01-15
 
 Startup Integration. See [detailed notes](docs/changelog/v0.3.5h.md).
