@@ -225,6 +225,11 @@ public static class ServiceCollectionExtensions
         // Added in v0.4.1d.
         services.AddSingleton<IBlockClassificationService, BlockClassificationService>();
 
+        // File Path Inference: infers target paths for code blocks.
+        // Uses ILanguageDetectionService for extension mapping.
+        // Added in v0.4.1e.
+        services.AddSingleton<IFilePathInferenceService, FilePathInferenceService>();
+
         // Keyboard Shortcuts: centralized shortcut management (v0.3.5g).
         services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
 

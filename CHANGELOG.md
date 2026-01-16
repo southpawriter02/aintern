@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.1e] - 2026-01-16
+
+File Path Inference Service. See [detailed notes](docs/changelog/v0.4.1e.md).
+
+### Added
+
+- `IFilePathInferenceService` interface with 6-strategy cascade
+- `FilePathInferenceService` for inferring target paths
+- `PathInferenceResult` model with confidence scoring
+- `InferenceStrategy` enum (ExplicitPath, SingleContext, LanguageMatch, TypeNameMatch, ContentSimilarity, GeneratedNew)
+- `TypeNameExtractor` helper with patterns for 6 languages
+- Path inference events (PathInferred, InferenceAmbiguous, InferenceFailed)
+- Comprehensive unit tests (91)
+
 ## [0.4.1d] - 2026-01-16
 
 Block Classification Service. See [detailed notes](docs/changelog/v0.4.1d.md).
