@@ -1,53 +1,144 @@
 namespace AIntern.Core.Interfaces;
 
+using AIntern.Core.Models;
+
 // ┌─────────────────────────────────────────────────────────────────────────┐
-// │ BACKUP SERVICE INTERFACE (v0.4.3b)                                       │
-// │ Service for managing file backups for undo support.                      │
+// │ BACKUP SERVICE INTERFACE (v0.4.3c)                                       │
+// │ Service for managing file backups to support undo operations.            │
 // └─────────────────────────────────────────────────────────────────────────┘
 
 /// <summary>
-/// Service for managing file backups for undo support.
+/// Service for managing file backups to support undo operations.
 /// </summary>
 /// <remarks>
-/// <para>Added in v0.4.3b.</para>
+/// <para>Added in v0.4.3b, expanded in v0.4.3c.</para>
 /// </remarks>
 public interface IBackupService
 {
+    // ═══════════════════════════════════════════════════════════════════════
+    // Properties
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Gets the directory where backups are stored.
+    /// </summary>
+    string BackupDirectory { get; }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Backup Operations
+    // ═══════════════════════════════════════════════════════════════════════
+
     /// <summary>
     /// Create a backup of a file.
     /// </summary>
-    /// <param name="filePath">The absolute path to the file to backup.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>The path to the backup file, or null if backup failed.</returns>
     Task<string?> CreateBackupAsync(string filePath, CancellationToken ct = default);
 
     /// <summary>
-    /// Restore a file from backup.
+    /// Create a backup with a pre-computed content hash.
     /// </summary>
-    /// <param name="backupPath">The path to the backup file.</param>
-    /// <param name="targetPath">The path to restore to.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>True if restore succeeded.</returns>
+    Task<string?> CreateBackupWithHashAsync(string filePath, string contentHash, CancellationToken ct = default);
+
+    /// <summary>
+    /// Create an incremental backup only if content has changed.
+    /// </summary>
+    Task<string?> CreateIncrementalBackupAsync(string filePath, CancellationToken ct = default);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Restore Operations
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Restore a file from a specific backup.
+    /// </summary>
     Task<bool> RestoreBackupAsync(string backupPath, string targetPath, CancellationToken ct = default);
 
     /// <summary>
-    /// Delete a backup file.
+    /// Restore a file from its most recent backup.
     /// </summary>
-    /// <param name="backupPath">The path to the backup file.</param>
-    /// <returns>True if deletion succeeded.</returns>
+    Task<bool> RestoreLatestBackupAsync(string originalPath, CancellationToken ct = default);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Delete Operations
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Delete a specific backup file and its metadata.
+    /// </summary>
     bool DeleteBackup(string backupPath);
+
+    /// <summary>
+    /// Delete all backups for a specific file.
+    /// </summary>
+    Task<int> DeleteAllBackupsForFileAsync(string originalPath, CancellationToken ct = default);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Query Operations
+    // ═══════════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Check if a backup exists.
     /// </summary>
-    /// <param name="backupPath">The path to the backup file.</param>
-    /// <returns>True if the backup exists.</returns>
     bool BackupExists(string backupPath);
 
     /// <summary>
-    /// Clean up expired backups.
+    /// Get all backups for a specific file.
     /// </summary>
-    /// <param name="maxAge">Maximum age of backups to keep.</param>
-    /// <returns>Number of backups deleted.</returns>
+    IReadOnlyList<BackupInfo> GetBackupsForFile(string originalPath);
+
+    /// <summary>
+    /// Get all backups in the backup directory.
+    /// </summary>
+    IReadOnlyList<BackupInfo> GetAllBackups();
+
+    /// <summary>
+    /// Get information about a specific backup.
+    /// </summary>
+    BackupInfo? GetBackupInfo(string backupPath);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Cleanup Operations
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Clean up backups older than the specified age.
+    /// </summary>
     int CleanupExpiredBackups(TimeSpan maxAge);
+
+    /// <summary>
+    /// Clean up backups to stay under storage limit.
+    /// </summary>
+    Task<int> CleanupByStorageLimitAsync(long maxStorageBytes, CancellationToken ct = default);
+
+    /// <summary>
+    /// Clean up orphaned backups (missing or corrupted metadata).
+    /// </summary>
+    Task<int> CleanupOrphanedBackupsAsync(CancellationToken ct = default);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Storage Operations
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Get total size of all backup files.
+    /// </summary>
+    long GetTotalBackupSize();
+
+    /// <summary>
+    /// Get storage information and health status.
+    /// </summary>
+    BackupStorageInfo GetStorageInfo();
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Integrity Operations
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Verify integrity of a specific backup.
+    /// </summary>
+    Task<bool> VerifyBackupIntegrityAsync(string backupPath, CancellationToken ct = default);
+
+    /// <summary>
+    /// Verify integrity of all backups.
+    /// </summary>
+    Task<IReadOnlyList<string>> VerifyAllBackupsAsync(CancellationToken ct = default);
 }
