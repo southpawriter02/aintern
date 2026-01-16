@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.2f] - 2026-01-16
+
+Diff Line Rendering. See [detailed notes](docs/changelog/v0.4.2f.md).
+
+### Added
+
+- `DiffHunkControl` with header stats and side-aware line rendering
+- `DiffLineControl` with gutter, content, and inline segment highlighting
+- `InlineSegmentConverter` for inline change styling
+- CSS-class-based conditional styling (`.added`, `.removed`, `.modified`, `.placeholder`)
+- Additional color resources for hunk headers and gutters
+
 ## [0.4.2e] - 2026-01-16
 
 Side-by-Side Diff View. See [detailed notes](docs/changelog/v0.4.2e.md).

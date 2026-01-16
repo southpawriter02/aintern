@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:controls="using:AIntern.Desktop.Controls"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="200"
+             x:Class="AIntern.Desktop.Controls.DiffHunkControl"
+             x:DataType="vm:DiffHunkViewModel">
+    <!--
+        DiffHunkControl - Renders a diff hunk with header and lines (v0.4.2f)
+        
+        Layout:
+        ┌───────────────────────────────────────────────────────────────┐
+        │ @@ -10,5 +12,7 @@                              +3 -1         │
+        ├───────────────────────────────────────────────────────────────┤
+        │ 10 | context line                                             │
+        │ 11 | removed line                                             │
+        │    | [placeholder]                                            │
+        │ 12 | added line                                               │
+        └───────────────────────────────────────────────────────────────┘
+    -->
+
+    <UserControl.Styles>
+        <!-- Hunk header styling -->
+        <Style Selector="Border.hunk-header">
+            <Setter Property="Background" Value="{DynamicResource DiffHunkHeaderBackground}" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="CornerRadius" Value="4,4,0,0" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="diff-hunk"
+            Margin="4,4,4,8"
+            CornerRadius="4"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1">
+        <Grid RowDefinitions="Auto, Auto">
+            <!-- Hunk Header -->
+            <Border Grid.Row="0" Classes="hunk-header">
+                <Grid ColumnDefinitions="*, Auto">
+                    <!-- Header text (e.g., "@@ -10,5 +12,7 @@") -->
+                    <TextBlock Text="{Binding Header}"
+                               FontFamily="Cascadia Code, Consolas, monospace"
+                               FontSize="11"
+                               Foreground="{DynamicResource DiffHunkHeaderForeground}"
+                               VerticalAlignment="Center" />
+
+                    <!-- Stats display -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                        <!-- Added count -->
+                        <TextBlock Text="{Binding AddedCount, StringFormat='+{0}'}"
+                                   Foreground="{DynamicResource DiffAddedForeground}"
+                                   FontFamily="Cascadia Code, Consolas, monospace"
+                                   FontSize="11"
+                                   FontWeight="SemiBold" />
+                        <!-- Removed count -->
+                        <TextBlock Text="{Binding RemovedCount, StringFormat='-{0}'}"
+                                   Foreground="{DynamicResource DiffRemovedForeground}"
+                                   FontFamily="Cascadia Code, Consolas, monospace"
+                                   FontSize="11"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Lines container - ItemsSource is set in code-behind based on Side -->
+            <ItemsControl Grid.Row="1"
+                          x:Name="LinesContainer">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:DiffLineViewModel}">
+                        <controls:DiffLineControl />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </Border>
+</UserControl>

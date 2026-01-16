@@ -430,4 +430,9 @@
     <SolidColorBrush x:Key="NewFileBadgeBackground" Color="#2D5D2D" />
     <SolidColorBrush x:Key="NewFileBadgeForeground" Color="#89D185" />
 
+    <!-- Hunk and Line Colors (v0.4.2f) -->
+    <SolidColorBrush x:Key="DiffHunkHeaderBackground" Color="#2D2D30" />
+    <SolidColorBrush x:Key="DiffHunkHeaderForeground" Color="#808080" />
+    <SolidColorBrush x:Key="DiffGutterForeground" Color="#6E6E6E" />
+
 </ResourceDictionary>

@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:converters="using:AIntern.Desktop.Converters"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="24"
+             x:Class="AIntern.Desktop.Controls.DiffLineControl"
+             x:DataType="vm:DiffLineViewModel">
+    <!--
+        DiffLineControl - Renders a single diff line (v0.4.2f)
+        
+        Layout:
+        ┌────────────┬──────────────────────────────────────────────────┐
+        │    42      │ const message = 'Hello World!';                  │
+        │  (gutter)  │ (content with optional inline segments)          │
+        └────────────┴──────────────────────────────────────────────────┘
+        
+        CSS classes applied based on line type:
+        - added: green background (line was added)
+        - removed: red background (line was removed)
+        - modified: amber background (line was modified)
+        - placeholder: dimmed (empty alignment line)
+    -->
+
+    <UserControl.Styles>
+        <!-- Line type background colors -->
+        <Style Selector="Grid.added">
+            <Setter Property="Background" Value="{DynamicResource DiffAddedBackground}" />
+        </Style>
+        <Style Selector="Grid.removed">
+            <Setter Property="Background" Value="{DynamicResource DiffRemovedBackground}" />
+        </Style>
+        <Style Selector="Grid.modified">
+            <Setter Property="Background" Value="{DynamicResource DiffModifiedBackground}" />
+        </Style>
+        <Style Selector="Grid.placeholder">
+            <Setter Property="Background" Value="{DynamicResource DiffPlaceholderBackground}" />
+        </Style>
+
+        <!-- Gutter styling for different line types -->
+        <Style Selector="Grid.added Border.line-gutter">
+            <Setter Property="Background" Value="{DynamicResource DiffAddedBackground}" />
+        </Style>
+        <Style Selector="Grid.removed Border.line-gutter">
+            <Setter Property="Background" Value="{DynamicResource DiffRemovedBackground}" />
+        </Style>
+        <Style Selector="Grid.modified Border.line-gutter">
+            <Setter Property="Background" Value="{DynamicResource DiffModifiedBackground}" />
+        </Style>
+
+        <!-- Inline segment highlighting -->
+        <Style Selector="TextBlock.inline-changed">
+            <Setter Property="Background" Value="{DynamicResource DiffInlineAddedBackground}" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.Resources>
+        <converters:InlineSegmentConverter x:Key="InlineSegmentConverter" />
+    </UserControl.Resources>
+
+    <Grid ColumnDefinitions="48, *" MinHeight="20"
+          Classes.added="{Binding IsAdded}"
+          Classes.removed="{Binding IsRemoved}"
+          Classes.modified="{Binding IsModified}"
+          Classes.placeholder="{Binding IsPlaceholder}">
+
+        <!-- Line Number Gutter -->
+        <Border Grid.Column="0" Classes="line-gutter">
+            <TextBlock Text="{Binding LineNumberDisplay}"
+                       HorizontalAlignment="Right"
+                       Padding="0,0,8,0"
+                       FontFamily="Cascadia Code, Consolas, monospace"
+                       FontSize="12"
+                       Foreground="{DynamicResource DiffGutterForeground}"
+                       IsVisible="{Binding !IsPlaceholder}" />
+        </Border>
+
+        <!-- Line Content -->
+        <Border Grid.Column="1" Classes="line-content" Padding="8,1">
+            <Panel>
+                <!-- Placeholder (empty line for alignment) -->
+                <Rectangle Fill="{DynamicResource DiffPlaceholderBackground}"
+                           Height="18"
+                           HorizontalAlignment="Stretch"
+                           IsVisible="{Binding IsPlaceholder}" />
+
+                <!-- Regular content (no inline changes) -->
+                <SelectableTextBlock Text="{Binding Content}"
+                                     FontFamily="Cascadia Code, Consolas, monospace"
+                                     FontSize="13"
+                                     IsVisible="{Binding !HasInlineSegments}" />
+
+                <!-- Content with inline changes -->
+                <ItemsControl ItemsSource="{Binding InlineSegments}"
+                              IsVisible="{Binding HasInlineSegments}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Text}"
+                                       FontFamily="Cascadia Code, Consolas, monospace"
+                                       FontSize="13"
+                                       Classes.inline-changed="{Binding IsChanged}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Panel>
+        </Border>
+    </Grid>
+</UserControl>

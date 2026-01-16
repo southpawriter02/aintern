@@ -3,7 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:controls="using:AIntern.Desktop.Controls"
              xmlns:converters="using:AIntern.Desktop.Converters"
+             xmlns:models="using:AIntern.Core.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="AIntern.Desktop.Views.DiffViewerPanel"
              x:DataType="vm:DiffViewerViewModel">
@@ -180,38 +182,8 @@
                                   VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Hunks}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <!-- Placeholder: DiffHunkControl will be created in v0.4.2f -->
-                                    <Border Margin="0,4"
-                                            Padding="8"
-                                            Background="{DynamicResource ControlBackground}"
-                                            CornerRadius="4">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Header}"
-                                                       FontFamily="Cascadia Code, Consolas, monospace"
-                                                       FontSize="11"
-                                                       Foreground="{DynamicResource TextMuted}" />
-                                            <ItemsControl ItemsSource="{Binding OriginalLines}" Margin="0,4,0,0">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid ColumnDefinitions="40, *">
-                                                            <TextBlock Grid.Column="0"
-                                                                       Text="{Binding LineNumberDisplay}"
-                                                                       FontFamily="Cascadia Code, Consolas, monospace"
-                                                                       FontSize="11"
-                                                                       Foreground="{DynamicResource TextMuted}"
-                                                                       HorizontalAlignment="Right"
-                                                                       Margin="0,0,8,0" />
-                                                            <TextBlock Grid.Column="1"
-                                                                       Text="{Binding Content}"
-                                                                       FontFamily="Cascadia Code, Consolas, monospace"
-                                                                       FontSize="12" />
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </Border>
+                                <DataTemplate DataType="{x:Type vm:DiffHunkViewModel}">
+                                    <controls:DiffHunkControl Side="Original" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -243,38 +215,8 @@
                                   VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding Hunks}">
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <!-- Placeholder: DiffHunkControl will be created in v0.4.2f -->
-                                    <Border Margin="0,4"
-                                            Padding="8"
-                                            Background="{DynamicResource ControlBackground}"
-                                            CornerRadius="4">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Header}"
-                                                       FontFamily="Cascadia Code, Consolas, monospace"
-                                                       FontSize="11"
-                                                       Foreground="{DynamicResource TextMuted}" />
-                                            <ItemsControl ItemsSource="{Binding ProposedLines}" Margin="0,4,0,0">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid ColumnDefinitions="40, *">
-                                                            <TextBlock Grid.Column="0"
-                                                                       Text="{Binding LineNumberDisplay}"
-                                                                       FontFamily="Cascadia Code, Consolas, monospace"
-                                                                       FontSize="11"
-                                                                       Foreground="{DynamicResource TextMuted}"
-                                                                       HorizontalAlignment="Right"
-                                                                       Margin="0,0,8,0" />
-                                                            <TextBlock Grid.Column="1"
-                                                                       Text="{Binding Content}"
-                                                                       FontFamily="Cascadia Code, Consolas, monospace"
-                                                                       FontSize="12" />
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </Border>
+                                <DataTemplate DataType="{x:Type vm:DiffHunkViewModel}">
+                                    <controls:DiffHunkControl Side="Proposed" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
