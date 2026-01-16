@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.3d] - 2026-01-16
+
+Undo System. See [detailed notes](docs/changelog/v0.4.3d.md).
+
+### Added
+
+- `UndoState`, `UndoOptions`, `UndoEvents` models
+- `IUndoManager` interface with undo, query, timer operations
+- `UndoManager` with time-windowed expiration and events
+- Pause/resume/extend countdown functionality
+- 23 unit tests for undo manager
+
 ## [0.4.3c] - 2026-01-16
 
 Backup System. See [detailed notes](docs/changelog/v0.4.3c.md).
