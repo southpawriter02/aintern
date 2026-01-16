@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.3a] - 2026-01-16
+
+Core Models (Apply Changes). See [detailed notes](docs/changelog/v0.4.3a.md).
+
+### Added
+
+- `ApplyOptions` configuration record with presets (Default, Silent, Batch)
+- `ApplyResult` class with factory methods for success/failure states
+- `FileChangeRecord` for undo tracking with time calculations
+- Event args for file change notifications
+- `LineEndingStyle` enum with detection support
+- 41 unit tests for apply models
+
 ## [0.4.2h] - 2026-01-16
 
 Theming & Polish. See [detailed notes](docs/changelog/v0.4.2h.md).
