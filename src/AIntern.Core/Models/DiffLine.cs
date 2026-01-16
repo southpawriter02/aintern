@@ -43,7 +43,8 @@ public sealed class DiffLine
     /// Inline character-level changes within this line.
     /// Only populated for Modified lines to show exactly what changed.
     /// </summary>
-    public IReadOnlyList<InlineChange>? InlineChanges { get; init; }
+    /// <remarks>Updated in v0.4.2c to allow post-initialization update.</remarks>
+    public IReadOnlyList<InlineChange>? InlineChanges { get; set; }
 
     /// <summary>
     /// The paired line for modified lines.

@@ -226,9 +226,13 @@ public static class ServiceCollectionExtensions
         // Added in v0.4.1d.
         services.AddSingleton<IBlockClassificationService, BlockClassificationService>();
 
+        // Inline Diff: computes character-level inline diffs for modified lines.
+        // Added in v0.4.2c.
+        services.AddSingleton<IInlineDiffService, InlineDiffService>();
+
         // Diff Engine: computes line-level diffs for code changes.
         // Uses DiffPlex library for diff computation.
-        // Added in v0.4.2b.
+        // Added in v0.4.2b, updated v0.4.2c with inline diff integration.
         services.AddSingleton<IDiffService, DiffService>();
 
         // File Path Inference: infers target paths for code blocks.

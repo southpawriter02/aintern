@@ -8,8 +8,9 @@ using AIntern.Core.Interfaces;
 using AIntern.Core.Models;
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
-// │ DIFF SERVICE (v0.4.2b)                                                   │
+// │ DIFF SERVICE (v0.4.2b, updated v0.4.2c)                                  │
 // │ Computes diffs between text content using DiffPlex.                      │
+// │ v0.4.2c: Added inline diff integration.                                 │
 // └─────────────────────────────────────────────────────────────────────────┘
 
 /// <summary>
@@ -26,6 +27,7 @@ using AIntern.Core.Models;
 public sealed class DiffService : IDiffService
 {
     private readonly IFileSystemService _fileSystemService;
+    private readonly IInlineDiffService _inlineDiffService;
     private readonly ILogger<DiffService>? _logger;
     private readonly DiffOptions _defaultOptions;
 
@@ -36,14 +38,17 @@ public sealed class DiffService : IDiffService
     /// Initializes a new instance of the DiffService.
     /// </summary>
     /// <param name="fileSystemService">File system service for reading original files.</param>
+    /// <param name="inlineDiffService">Optional inline diff service. If null, creates a default instance.</param>
     /// <param name="logger">Optional logger for diagnostic output.</param>
     /// <param name="defaultOptions">Default diff options to use when not specified.</param>
     public DiffService(
         IFileSystemService fileSystemService,
+        IInlineDiffService? inlineDiffService = null,
         ILogger<DiffService>? logger = null,
         DiffOptions? defaultOptions = null)
     {
         _fileSystemService = fileSystemService ?? throw new ArgumentNullException(nameof(fileSystemService));
+        _inlineDiffService = inlineDiffService ?? new InlineDiffService();
         _logger = logger;
         _defaultOptions = defaultOptions ?? DiffOptions.Default;
 
@@ -106,6 +111,12 @@ public sealed class DiffService : IDiffService
 
         // Convert to our model with hunks
         var hunks = BuildHunks(diffModel, options);
+
+        // Compute inline diffs for modified line pairs (v0.4.2c)
+        if (options.ComputeInlineDiffs)
+        {
+            ComputeInlineDiffs(hunks, options);
+        }
 
         // Calculate statistics
         var stats = ComputeStats(hunks);
@@ -330,6 +341,34 @@ public sealed class DiffService : IDiffService
         {
             var origPiece = i < originalLines.Count ? originalLines[i] : null;
             var propPiece = i < proposedLines.Count ? proposedLines[i] : null;
+
+            // Check for modification: both sides have content but it differs
+            // This creates adjacent Removed → Added lines for inline diff detection
+            bool isModification = origPiece?.Type == ChangeType.Deleted && 
+                                  propPiece?.Type == ChangeType.Inserted;
+
+            if (isModification)
+            {
+                // Start or continue a hunk
+                if (!inHunk)
+                {
+                    inHunk = true;
+                    hunkOrigStart = Math.Max(1, (origPiece?.Position ?? 1) - options.ContextLines);
+                    hunkPropStart = Math.Max(1, (propPiece?.Position ?? 1) - options.ContextLines);
+                    AddLeadingContext(currentHunkLines, originalLines, proposedLines, i, options.ContextLines);
+                }
+
+                // Add BOTH lines: Removed first, then Added (for inline diff pairing)
+                currentHunkLines.Add(DiffLine.Removed(
+                    origPiece!.Position ?? i + 1, 
+                    origPiece.Text ?? string.Empty));
+                currentHunkLines.Add(DiffLine.Added(
+                    propPiece!.Position ?? i + 1, 
+                    propPiece.Text ?? string.Empty));
+                
+                unchangedRun = 0;
+                continue;
+            }
 
             var lineType = DetermineLineType(origPiece, propPiece);
             var diffLine = CreateDiffLine(origPiece, propPiece, lineType);
@@ -585,5 +624,181 @@ public sealed class DiffService : IDiffService
     private static string[] SplitLines(string text)
     {
         return text.Split('\n');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Private Helper Methods - Inline Diff (v0.4.2c)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Computes inline character-level diffs for modified line pairs within hunks.
+    /// </summary>
+    /// <param name="hunks">The diff hunks to process.</param>
+    /// <param name="options">Diff options including inline diff settings.</param>
+    /// <remarks>
+    /// This method identifies adjacent Removed/Added line pairs that represent
+    /// modifications (rather than pure insertions/deletions) and computes
+    /// character-level changes for them.
+    /// </remarks>
+    private void ComputeInlineDiffs(List<DiffHunk> hunks, DiffOptions options)
+    {
+        int pairsProcessed = 0;
+
+        foreach (var hunk in hunks)
+        {
+            // Work with a mutable copy of lines
+            var lines = hunk.Lines.ToList();
+
+            for (int i = 0; i < lines.Count - 1; i++)
+            {
+                var current = lines[i];
+                var next = lines[i + 1];
+
+                // Look for Removed → Added pairs that likely represent modifications
+                // This pattern indicates a line was changed rather than purely added or removed
+                if (current.Type == DiffLineType.Removed &&
+                    next.Type == DiffLineType.Added)
+                {
+                    // Check if lines are similar enough to warrant inline diff
+                    if (ShouldComputeInlineDiff(current.Content, next.Content, options))
+                    {
+                        var inlineChanges = _inlineDiffService.ComputeInlineChanges(
+                            current.Content,
+                            next.Content);
+
+                        if (inlineChanges.Count > 0)
+                        {
+                            // Update both lines with the computed inline changes
+                            current.InlineChanges = inlineChanges;
+                            next.InlineChanges = inlineChanges;
+
+                            // Link the paired lines for synchronized rendering
+                            current.PairedLine = next;
+                            next.PairedLine = current;
+
+                            pairsProcessed++;
+
+                            _logger?.LogTrace(
+                                "Computed inline diff for line pair at index {Index}: {ChangeCount} changes",
+                                i, inlineChanges.Count);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (pairsProcessed > 0)
+        {
+            _logger?.LogDebug("Processed {Count} inline diff pairs", pairsProcessed);
+        }
+    }
+
+    /// <summary>
+    /// Determines whether inline diff should be computed for a line pair.
+    /// </summary>
+    /// <param name="original">The original line content.</param>
+    /// <param name="proposed">The proposed line content.</param>
+    /// <param name="options">Diff options with thresholds.</param>
+    /// <returns>True if inline diff should be computed; false otherwise.</returns>
+    /// <remarks>
+    /// Inline diffs are skipped for:
+    /// <list type="bullet">
+    /// <item><description>Very long lines (exceeds MaxInlineDiffLineLength)</description></item>
+    /// <item><description>Very dissimilar lines (similarity below InlineDiffSimilarityThreshold)</description></item>
+    /// </list>
+    /// The similarity threshold prevents computing inline diffs for lines
+    /// that are so different they would produce confusing results.
+    /// </remarks>
+    private static bool ShouldComputeInlineDiff(
+        string original,
+        string proposed,
+        DiffOptions options)
+    {
+        // Skip very long lines to avoid performance issues and visual clutter
+        if (original.Length > options.MaxInlineDiffLineLength ||
+            proposed.Length > options.MaxInlineDiffLineLength)
+        {
+            return false;
+        }
+
+        // Skip if lines are too different (inline diff would be confusing)
+        var similarity = ComputeSimilarity(original, proposed);
+
+        return similarity >= options.InlineDiffSimilarityThreshold;
+    }
+
+    /// <summary>
+    /// Computes similarity ratio between two strings using Levenshtein distance.
+    /// </summary>
+    /// <param name="a">First string.</param>
+    /// <param name="b">Second string.</param>
+    /// <returns>Similarity ratio from 0.0 (completely different) to 1.0 (identical).</returns>
+    internal static double ComputeSimilarity(string a, string b)
+    {
+        // Handle edge cases
+        if (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b))
+            return 1.0;
+        if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b))
+            return 0.0;
+
+        int maxLen = Math.Max(a.Length, b.Length);
+        int distance = LevenshteinDistance(a, b);
+
+        // Convert distance to similarity ratio
+        return 1.0 - ((double)distance / maxLen);
+    }
+
+    /// <summary>
+    /// Computes the Levenshtein (edit) distance between two strings.
+    /// </summary>
+    /// <param name="a">First string.</param>
+    /// <param name="b">Second string.</param>
+    /// <returns>The minimum number of single-character edits to transform a into b.</returns>
+    /// <remarks>
+    /// Uses the space-optimized single-row algorithm with O(min(m,n)) space complexity
+    /// and O(m*n) time complexity where m and n are the string lengths.
+    /// </remarks>
+    internal static int LevenshteinDistance(string a, string b)
+    {
+        // Optimization: ensure 'b' is the shorter string for better space efficiency
+        if (a.Length < b.Length)
+        {
+            (a, b) = (b, a);
+        }
+
+        var costs = new int[b.Length + 1];
+
+        // Initialize base case: transforming empty string to b[0..j]
+        for (int i = 0; i <= b.Length; i++)
+        {
+            costs[i] = i;
+        }
+
+        // Fill in the distance matrix row by row
+        for (int i = 1; i <= a.Length; i++)
+        {
+            int previousCost = costs[0];
+            costs[0] = i;
+
+            for (int j = 1; j <= b.Length; j++)
+            {
+                int currentCost = costs[j];
+
+                // Cost is 0 if characters match, 1 otherwise
+                int substitutionCost = a[i - 1] == b[j - 1] ? 0 : 1;
+
+                // Minimum of insertion, deletion, or substitution
+                costs[j] = Math.Min(
+                    Math.Min(
+                        costs[j - 1] + 1,      // Insertion
+                        costs[j] + 1),          // Deletion
+                    previousCost + substitutionCost  // Substitution
+                );
+
+                previousCost = currentCost;
+            }
+        }
+
+        return costs[b.Length];
     }
 }

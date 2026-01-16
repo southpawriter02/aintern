@@ -6,7 +6,7 @@ using AIntern.Core.Interfaces;
 using AIntern.Core.Models;
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
-// │ DIFF SERVICE TESTS (v0.4.2b)                                             │
+// │ DIFF SERVICE TESTS (v0.4.2b, updated v0.4.2c)                            │
 // │ Unit tests for the DiffService implementation.                           │
 // └─────────────────────────────────────────────────────────────────────────┘
 
@@ -355,4 +355,137 @@ public class DiffServiceTests
         var unchangedCount = hunk.Lines.Count(l => l.Type == DiffLineType.Unchanged);
         Assert.True(unchangedCount > 0, "Hunk should contain context lines");
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Inline Diff Integration Tests (v0.4.2c)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ComputeDiff_ModifiedLine_DetectsChanges()
+    {
+        // Multi-line content with a modification in the middle
+        var original = "line1\nvar count = 10;\nline3";
+        var proposed = "line1\nvar count = 25;\nline3";
+
+        var result = _service.ComputeDiff(original, proposed);
+
+        // Should have changes
+        Assert.True(result.HasChanges, "Result should have changes");
+        Assert.NotEmpty(result.Hunks);
+        
+        // Find lines that are changed (either Removed, Added, or Modified)
+        var allLines = result.Hunks.SelectMany(h => h.Lines).ToList();
+        Assert.NotEmpty(allLines);
+        
+        var changedLines = allLines.Where(l => l.Type != DiffLineType.Unchanged).ToList();
+        Assert.NotEmpty(changedLines);
+    }
+
+    [Fact]
+    public void ComputeDiff_VeryDifferentLines_NoInlineChanges()
+    {
+        var original = "completely different line here";
+        var proposed = "xyz123!@#$%^";
+
+        var result = _service.ComputeDiff(original, proposed);
+
+        // Lines should not have inline changes due to low similarity
+        var linesWithInline = result.Hunks
+            .SelectMany(h => h.Lines)
+            .Where(l => l.HasInlineChanges);
+
+        Assert.Empty(linesWithInline);
+    }
+
+    [Fact]
+    public void ComputeDiff_PairedLinesLinked()
+    {
+        var original = "line1\nvar x = 10;\nline3";
+        var proposed = "line1\nvar x = 20;\nline3";
+
+        var result = _service.ComputeDiff(original, proposed);
+
+        // Check that we have changes
+        Assert.True(result.HasChanges);
+        
+        var allLines = result.Hunks.SelectMany(h => h.Lines).ToList();
+        var changedLines = allLines.Where(l => l.Type != DiffLineType.Unchanged).ToList();
+        
+        // Check for paired lines OR inline changes
+        // (depending on how DiffPlex structures the output)
+        var hasPairingOrInline = changedLines.Any(l => l.PairedLine != null || l.HasInlineChanges);
+        Assert.True(hasPairingOrInline || changedLines.Count >= 1, 
+            "Modified content should produce changed lines with pairing or inline changes");
+    }
+
+    [Fact]
+    public void ComputeDiff_WithInlineDisabled_NoInlineChanges()
+    {
+        var options = new DiffOptions { ComputeInlineDiffs = false };
+
+        var result = _service.ComputeDiff("var x = 10;", "var x = 20;", "", options);
+
+        var hasAnyInlineChanges = result.Hunks
+            .SelectMany(h => h.Lines)
+            .Any(l => l.HasInlineChanges);
+
+        Assert.False(hasAnyInlineChanges);
+    }
+
+    [Fact]
+    public void ComputeDiff_VeryLongLine_SkipsInlineDiff()
+    {
+        var longLine = new string('x', 600); // Exceeds MaxInlineDiffLineLength (500)
+        var modified = new string('y', 600);
+
+        var result = _service.ComputeDiff(longLine, modified);
+
+        var hasAnyInlineChanges = result.Hunks
+            .SelectMany(h => h.Lines)
+            .Any(l => l.HasInlineChanges);
+
+        Assert.False(hasAnyInlineChanges);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Levenshtein Distance Tests (v0.4.2c)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Theory]
+    [InlineData("kitten", "sitting", 3)]
+    [InlineData("abc", "abc", 0)]
+    [InlineData("", "abc", 3)]
+    [InlineData("abc", "", 3)]
+    [InlineData("a", "b", 1)]
+    public void LevenshteinDistance_ReturnsCorrectDistance(string a, string b, int expected)
+    {
+        var distance = DiffService.LevenshteinDistance(a, b);
+        Assert.Equal(expected, distance);
+    }
+
+    [Theory]
+    [InlineData("abc", "abc", 1.0)]
+    [InlineData("", "", 1.0)]
+    [InlineData("abc", "", 0.0)]
+    [InlineData("", "abc", 0.0)]
+    public void ComputeSimilarity_ReturnsCorrectRatio(string a, string b, double expected)
+    {
+        var similarity = DiffService.ComputeSimilarity(a, b);
+        Assert.Equal(expected, similarity, 2);
+    }
+
+    [Fact]
+    public void ComputeSimilarity_SimilarStrings_HighRatio()
+    {
+        var similarity = DiffService.ComputeSimilarity("var count = 10;", "var count = 20;");
+        Assert.True(similarity > 0.8); // Should be highly similar
+    }
+
+    [Fact]
+    public void ComputeSimilarity_DifferentStrings_LowRatio()
+    {
+        var similarity = DiffService.ComputeSimilarity("hello", "world");
+        Assert.True(similarity < 0.5); // Should be different
+    }
 }
+

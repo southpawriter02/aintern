@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.2c] - 2026-01-16
+
+Inline Diff Service for Diff Engine. See [detailed notes](docs/changelog/v0.4.2c.md).
+
+### Added
+
+- `IInlineDiffService` interface for character-level diff computation
+- `InlineSegment` rendering model for text segments
+- `InlineDiffService` implementation using DiffPlex character diffs
+- Levenshtein distance similarity calculation
+- DiffService integration for inline diff computation
+- Comprehensive unit tests (20+)
+
 ## [0.4.2b] - 2026-01-16
 
 Diff Service for Diff Engine. See [detailed notes](docs/changelog/v0.4.2b.md).
