@@ -1,7 +1,11 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using AIntern.Core.Interfaces;
 using AIntern.Core.Models;
+using AIntern.Desktop.Messages;
 
 namespace AIntern.Desktop.ViewModels;
 
@@ -10,12 +14,19 @@ namespace AIntern.Desktop.ViewModels;
 /// Supports streaming content updates for assistant messages.
 /// </summary>
 /// <remarks>
+/// <para>
 /// This ViewModel wraps the <see cref="ChatMessage"/> domain model
 /// and adds UI-specific properties like <see cref="IsStreaming"/>.
+/// </para>
+/// <para>
+/// <b>v0.4.1g:</b> Added code block support with streaming integration.
+/// </para>
 /// </remarks>
 public partial class ChatMessageViewModel : ViewModelBase
 {
-    #region Observable Properties
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ OBSERVABLE PROPERTIES                                                    │
+    // └─────────────────────────────────────────────────────────────────────────┘
 
     /// <summary>
     /// Gets or sets the unique identifier for this message.
@@ -43,6 +54,7 @@ public partial class ChatMessageViewModel : ViewModelBase
     /// True while tokens are being generated, false when complete.
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowCodeActions))]
     private bool _isStreaming;
 
     /// <summary>
@@ -84,9 +96,79 @@ public partial class ChatMessageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isContextExpanded;
 
-    #endregion
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ CODE BLOCK PROPERTIES (v0.4.1g)                                          │
+    // └─────────────────────────────────────────────────────────────────────────┘
 
-    #region Computed Properties
+    /// <summary>
+    /// Collection of code blocks extracted from this message.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowCodeActions))]
+    private ObservableCollection<CodeBlockViewModel> _codeBlocks = new();
+
+    /// <summary>
+    /// Whether this message contains code blocks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowCodeActions))]
+    private bool _hasCodeBlocks;
+
+    /// <summary>
+    /// Whether this message contains applicable code blocks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowCodeActions))]
+    private bool _hasApplicableCode;
+
+    /// <summary>
+    /// Number of applicable code blocks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private int _applicableBlockCount;
+
+    /// <summary>
+    /// Total number of code blocks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private int _totalBlockCount;
+
+    /// <summary>
+    /// Number of blocks that have been applied.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private int _appliedBlockCount;
+
+    /// <summary>
+    /// The currently streaming code block, if any.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [ObservableProperty]
+    private CodeBlockViewModel? _currentStreamingBlock;
+
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ COMPUTED PROPERTIES                                                      │
+    // └─────────────────────────────────────────────────────────────────────────┘
 
     /// <summary>
     /// Gets whether this message is from the user.
@@ -172,9 +254,45 @@ public partial class ChatMessageViewModel : ViewModelBase
     /// </remarks>
     public int TotalAttachedTokens => AttachedContexts.Sum(c => c.EstimatedTokens);
 
-    #endregion
+    /// <summary>
+    /// Whether to show the code actions toolbar.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public bool ShowCodeActions =>
+        HasApplicableCode
+        && Role == MessageRole.Assistant
+        && !IsStreaming;
 
-    #region Constructors
+    /// <summary>
+    /// Progress text for applied blocks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public string ApplyProgressText
+    {
+        get
+        {
+            if (ApplicableBlockCount == 0) return "";
+            if (AppliedBlockCount == ApplicableBlockCount) return "All applied";
+            return $"{AppliedBlockCount}/{ApplicableBlockCount} applied";
+        }
+    }
+
+    /// <summary>
+    /// Whether all applicable blocks have been applied.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public bool IsFullyApplied =>
+        ApplicableBlockCount > 0 && AppliedBlockCount == ApplicableBlockCount;
+
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ CONSTRUCTORS                                                             │
+    // └─────────────────────────────────────────────────────────────────────────┘
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChatMessageViewModel"/> class
@@ -184,6 +302,7 @@ public partial class ChatMessageViewModel : ViewModelBase
     {
         Id = Guid.NewGuid();
         Timestamp = DateTime.UtcNow;
+        CodeBlocks.CollectionChanged += (_, _) => UpdateCodeBlockStats();
     }
 
     /// <summary>
@@ -191,7 +310,7 @@ public partial class ChatMessageViewModel : ViewModelBase
     /// from an existing <see cref="ChatMessage"/> domain model.
     /// </summary>
     /// <param name="message">The domain message to wrap.</param>
-    public ChatMessageViewModel(ChatMessage message)
+    public ChatMessageViewModel(ChatMessage message) : this()
     {
         // Copy all properties from domain model
         Id = message.Id;
@@ -213,9 +332,9 @@ public partial class ChatMessageViewModel : ViewModelBase
         }
     }
 
-    #endregion
-
-    #region Methods
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ CONTENT METHODS                                                          │
+    // └─────────────────────────────────────────────────────────────────────────┘
 
     /// <summary>
     /// Appends a token to the message content during streaming.
@@ -236,6 +355,8 @@ public partial class ChatMessageViewModel : ViewModelBase
     {
         // Remove streaming indicator
         IsStreaming = false;
+        CurrentStreamingBlock = null;
+        OnPropertyChanged(nameof(ShowCodeActions));
     }
 
     /// <summary>
@@ -246,6 +367,10 @@ public partial class ChatMessageViewModel : ViewModelBase
     {
         // Stop streaming indicator
         IsStreaming = false;
+
+        // Complete any streaming block
+        CurrentStreamingBlock?.CompleteStreaming(CurrentStreamingBlock.ToModel());
+        CurrentStreamingBlock = null;
         
         // Add cancellation marker if there's content and it doesn't already trail off
         if (!string.IsNullOrEmpty(Content) && !Content.EndsWith("..."))
@@ -284,5 +409,183 @@ public partial class ChatMessageViewModel : ViewModelBase
         IsContextExpanded = !IsContextExpanded;
     }
 
-    #endregion
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ CODE BLOCK PARSING (v0.4.1g)                                             │
+    // └─────────────────────────────────────────────────────────────────────────┘
+
+    /// <summary>
+    /// Parse code blocks from the message content (non-streaming).
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public void ParseCodeBlocks(
+        ICodeBlockParserService parser,
+        IReadOnlyList<string>? context = null)
+    {
+        if (Role != MessageRole.Assistant || string.IsNullOrEmpty(Content))
+            return;
+
+        var proposal = parser.CreateProposal(Content, Id, context);
+
+        CodeBlocks.Clear();
+        foreach (var block in proposal.CodeBlocks)
+        {
+            var vm = new CodeBlockViewModel(block)
+            {
+                MessageId = Id
+            };
+            vm.PropertyChanged += OnBlockPropertyChanged;
+            CodeBlocks.Add(vm);
+        }
+
+        UpdateCodeBlockStats();
+    }
+
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ STREAMING CODE BLOCK METHODS (v0.4.1g)                                   │
+    // └─────────────────────────────────────────────────────────────────────────┘
+
+    /// <summary>
+    /// Begin a new code block during streaming.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public CodeBlockViewModel BeginCodeBlock(PartialCodeBlock partial)
+    {
+        var vm = new CodeBlockViewModel(partial)
+        {
+            MessageId = Id,
+            IsStreaming = true
+        };
+        vm.PropertyChanged += OnBlockPropertyChanged;
+
+        CodeBlocks.Add(vm);
+        CurrentStreamingBlock = vm;
+        UpdateCodeBlockStats();
+
+        return vm;
+    }
+
+    /// <summary>
+    /// Update the currently streaming block with new content.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public void UpdateStreamingBlock(string content)
+    {
+        CurrentStreamingBlock?.AppendContent(content);
+    }
+
+    /// <summary>
+    /// Complete the current streaming block.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public void CompleteCurrentBlock(CodeBlock finalBlock)
+    {
+        if (CurrentStreamingBlock != null)
+        {
+            CurrentStreamingBlock.CompleteStreaming(finalBlock);
+            CurrentStreamingBlock = null;
+        }
+        UpdateCodeBlockStats();
+    }
+
+    /// <summary>
+    /// Get a code block by ID.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    public CodeBlockViewModel? GetCodeBlock(Guid blockId)
+    {
+        return CodeBlocks.FirstOrDefault(b => b.Id == blockId);
+    }
+
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ STATISTICS (v0.4.1g)                                                     │
+    // └─────────────────────────────────────────────────────────────────────────┘
+
+    private void UpdateCodeBlockStats()
+    {
+        TotalBlockCount = CodeBlocks.Count;
+
+        ApplicableBlockCount = CodeBlocks.Count(b =>
+            b.BlockType is CodeBlockType.CompleteFile or CodeBlockType.Snippet or CodeBlockType.Config
+            && b.HasTargetPath);
+
+        AppliedBlockCount = CodeBlocks.Count(b =>
+            b.Status == CodeBlockStatus.Applied);
+
+        HasCodeBlocks = TotalBlockCount > 0;
+        HasApplicableCode = ApplicableBlockCount > 0;
+
+        OnPropertyChanged(nameof(ApplyProgressText));
+        OnPropertyChanged(nameof(IsFullyApplied));
+        OnPropertyChanged(nameof(ShowCodeActions));
+    }
+
+    private void OnBlockPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(CodeBlockViewModel.Status))
+        {
+            UpdateCodeBlockStats();
+        }
+    }
+
+    // ┌─────────────────────────────────────────────────────────────────────────┐
+    // │ CODE BLOCK COMMANDS (v0.4.1g)                                            │
+    // └─────────────────────────────────────────────────────────────────────────┘
+
+    /// <summary>
+    /// Copy all code blocks to clipboard.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [RelayCommand]
+    private void CopyAllCode()
+    {
+        var allCode = string.Join("\n\n", CodeBlocks.Select(b => b.Content));
+        WeakReferenceMessenger.Default.Send(
+            new CopyToClipboardRequestMessage(allCode)
+            {
+                SourceDescription = $"All code blocks ({CodeBlocks.Count})"
+            });
+    }
+
+    /// <summary>
+    /// Apply all applicable code blocks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(HasApplicableCode))]
+    private void ApplyAllCode()
+    {
+        WeakReferenceMessenger.Default.Send(
+            new ApplyAllChangesRequestMessage(this) { SkipDiffPreview = false });
+    }
+
+    /// <summary>
+    /// Reject all applicable code blocks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Added in v0.4.1g.</para>
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(HasApplicableCode))]
+    private void RejectAllCode()
+    {
+        foreach (var block in CodeBlocks.Where(b =>
+            b.Status == CodeBlockStatus.Pending && b.IsApplicable))
+        {
+            block.Reject();
+        }
+        UpdateCodeBlockStats();
+    }
 }
+

@@ -240,6 +240,10 @@ public static class ServiceCollectionExtensions
         // Keyboard Shortcuts: centralized shortcut management (v0.3.5g).
         services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
 
+        // Clipboard Service: platform abstraction for clipboard operations.
+        // Added in v0.4.1g.
+        services.AddSingleton<IClipboardService, ClipboardService>();
+
         // ┌─────────────────────────────────────────────────────────────────┐
         // │ UI INFRASTRUCTURE                                                │
         // └─────────────────────────────────────────────────────────────────┘

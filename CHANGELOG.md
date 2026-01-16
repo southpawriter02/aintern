@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.1g] - 2026-01-16
+
+ViewModel Integration for Code Block Extraction. See [detailed notes](docs/changelog/v0.4.1g.md).
+
+### Added
+
+- `IClipboardService` interface and `ClipboardService` Avalonia implementation
+- `CodeBlockViewModel` with observable properties, commands, and streaming support
+- `CodeProposalViewModel` for block collections with aggregate statistics
+- `CodeBlockMessages` messaging types for inter-ViewModel communication
+- `Reviewing` and `Applying` statuses added to `CodeBlockStatus`
+- ChatMessageViewModel enhancements: code block collection, streaming methods
+- Comprehensive unit tests (50)
+
 ## [0.4.1f] - 2026-01-16
 
 Streaming Parser for Code Block Extraction. See [detailed notes](docs/changelog/v0.4.1f.md).

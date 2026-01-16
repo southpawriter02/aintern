@@ -47,6 +47,16 @@ public enum CodeBlockStatus
     Pending,
 
     /// <summary>
+    /// User is reviewing/viewing the diff (v0.4.1g).
+    /// </summary>
+    Reviewing,
+
+    /// <summary>
+    /// Apply operation in progress (v0.4.1g).
+    /// </summary>
+    Applying,
+
+    /// <summary>
     /// Successfully applied to target file.
     /// </summary>
     Applied,
