@@ -92,6 +92,13 @@
     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#2D2D30" />
     <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="#3C3C3C" />
 
+    <!-- ============================================================== -->
+    <!-- Status Bar Colors (v0.3.5d)                                    -->
+    <!-- ============================================================== -->
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#007ACC" />
+    <SolidColorBrush x:Key="StatusBarForegroundBrush" Color="White" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#FFD166" />
+
     <!-- Button Styles -->
     <ControlTheme x:Key="PrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />

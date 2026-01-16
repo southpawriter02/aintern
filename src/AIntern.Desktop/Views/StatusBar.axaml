@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="24"
+             x:Class="AIntern.Desktop.Views.StatusBar"
+             x:DataType="vm:StatusBarViewModel"
+             Height="24">
+
+    <Border Background="{DynamicResource StatusBarBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,1,0,0">
+
+        <Grid ColumnDefinitions="Auto, Auto, *, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
+
+            <!-- Workspace Name -->
+            <Button Grid.Column="0"
+                    Classes="status-item"
+                    Command="{Binding OpenWorkspaceCommand}"
+                    ToolTip.Tip="{Binding WorkspaceTooltip}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <PathIcon Data="{StaticResource FolderIcon}"
+                              Width="12" Height="12" />
+                    <TextBlock Text="{Binding WorkspaceName, FallbackValue='No folder'}"
+                               MaxWidth="150"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Button>
+
+            <!-- Active File -->
+            <Button Grid.Column="1"
+                    Classes="status-item"
+                    Command="{Binding RevealActiveFileCommand}"
+                    IsVisible="{Binding HasActiveFile}"
+                    ToolTip.Tip="{Binding FileTooltip}">
+                <TextBlock Text="{Binding ActiveFileName}"
+                           MaxWidth="150"
+                           TextTrimming="CharacterEllipsis" />
+            </Button>
+
+            <!-- Spacer -->
+            <Border Grid.Column="2" />
+
+            <!-- Language -->
+            <Button Grid.Column="3"
+                    Classes="status-item"
+                    Command="{Binding ChangeLanguageCommand}"
+                    IsVisible="{Binding HasActiveFile}"
+                    ToolTip.Tip="{Binding LanguageTooltip}">
+                <TextBlock Text="{Binding LanguageDisplayName, FallbackValue='Plain Text'}" />
+            </Button>
+
+            <!-- Cursor Position -->
+            <Button Grid.Column="4"
+                    Classes="status-item"
+                    Command="{Binding GoToLineCommand}"
+                    IsVisible="{Binding HasActiveFile}"
+                    ToolTip.Tip="{Binding CursorTooltip}">
+                <TextBlock Text="{Binding CursorDisplay}" />
+            </Button>
+
+            <!-- Encoding -->
+            <Button Grid.Column="5"
+                    Classes="status-item"
+                    Command="{Binding ChangeEncodingCommand}"
+                    IsVisible="{Binding HasActiveFile}"
+                    ToolTip.Tip="{Binding EncodingTooltip}">
+                <TextBlock Text="{Binding Encoding}" />
+            </Button>
+
+            <!-- Line Ending -->
+            <Button Grid.Column="6"
+                    Classes="status-item"
+                    Command="{Binding ChangeLineEndingCommand}"
+                    IsVisible="{Binding HasActiveFile}"
+                    ToolTip.Tip="{Binding LineEndingTooltip}">
+                <TextBlock Text="{Binding LineEnding}" />
+            </Button>
+
+            <!-- Unsaved Indicator -->
+            <Border Grid.Column="7"
+                    Classes="status-item"
+                    IsVisible="{Binding HasUnsavedChanges}"
+                    ToolTip.Tip="Unsaved changes">
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <Ellipse Width="6" Height="6"
+                             Fill="{DynamicResource WarningBrush}" />
+                    <TextBlock Text="{Binding UnsavedFilesCount}" />
+                </StackPanel>
+            </Border>
+
+            <!-- File Watcher Status -->
+            <Border Grid.Column="8"
+                    Classes="status-item"
+                    ToolTip.Tip="{Binding SyncTooltip}">
+                <PathIcon Data="{StaticResource SyncIcon}"
+                          Width="12" Height="12"
+                          Opacity="{Binding IsFileWatcherActive, Converter={StaticResource BoolToOpacityConverter}}" />
+            </Border>
+
+            <!-- Model Status -->
+            <Border Grid.Column="9"
+                    Classes="status-item"
+                    ToolTip.Tip="{Binding ModelTooltip}">
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <PathIcon Data="{StaticResource BrainIcon}"
+                              Width="12" Height="12" />
+                    <TextBlock Text="{Binding ModelName, FallbackValue='No model'}"
+                               MaxWidth="120"
+                               TextTrimming="CharacterEllipsis"
+                               IsVisible="{Binding IsModelLoaded}" />
+                    <ProgressBar IsIndeterminate="True"
+                                 Width="40"
+                                 Height="4"
+                                 IsVisible="{Binding IsModelLoading}" />
+                </StackPanel>
+            </Border>
+
+        </Grid>
+    </Border>
+</UserControl>

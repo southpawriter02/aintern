@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.3.5d] - 2026-01-15
+
+Enhanced Status Bar. See [detailed notes](docs/changelog/v0.3.5d.md).
+
+### Added
+
+- StatusBarViewModel with 10 segments (workspace, file, language, cursor, encoding, line-ending, unsaved, watcher, model)
+- StatusBar.axaml with interactive buttons and tooltips
+- BoolToOpacityConverter for file watcher indicator
+- SyncIcon, BrainIcon, FileCodeIcon
+- StatusBar theme colors and status-item styles
+
 ## [0.3.5c] - 2026-01-15
 
 Quick Open Dialog. See [detailed notes](docs/changelog/v0.3.5c.md).
