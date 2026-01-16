@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.4a] - 2026-01-16
+
+Multi-File Core Models. See [detailed notes](docs/changelog/v0.4.4a.md).
+
+### Added
+
+- `FileOperationType`, `FileOperationStatus`, `FileTreeProposalStatus` enums
+- `BatchApplyPhase`, `ValidationSeverity`, `ValidationIssueType` enums
+- `FileOperation` model with factory methods and computed properties
+- `FileTreeProposal` model with selection and query methods
+- `BatchApplyResult` and `BatchApplyProgress` for batch operations
+- `ValidationIssue` and `ProposalValidationResult` for validation
+- 83 unit tests
+
 ## [0.4.3i] - 2026-01-16
 
 Editor Integration. See [detailed notes](docs/changelog/v0.4.3i.md).
@@ -18,6 +32,7 @@ Editor Integration. See [detailed notes](docs/changelog/v0.4.3i.md).
 - `IEditorRefreshService` interface for coordinating editor refreshes
 - `EditorRefreshService` with event coalescing and suspension support
 - 22 unit tests
+
 
 ## [0.4.3h] - 2026-01-16
 
