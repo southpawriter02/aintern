@@ -1,0 +1,180 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:converters="using:AIntern.Desktop.Converters"
+             mc:Ignorable="d"
+             d:DesignWidth="400" d:DesignHeight="28"
+             x:Class="AIntern.Desktop.Controls.FileTreeItemControl"
+             x:DataType="vm:FileOperationItemViewModel">
+
+    <!--
+    ═══════════════════════════════════════════════════════════════════════════
+    FILE TREE ITEM CONTROL (v0.4.4e)
+    Individual tree item for the proposal panel, supporting files and directories.
+    ═══════════════════════════════════════════════════════════════════════════
+    -->
+
+    <UserControl.Resources>
+        <converters:IconNameConverter x:Key="IconNameConverter" />
+        <converters:SelectionStateToCheckStateConverter x:Key="SelectionStateConverter" />
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- Item Container -->
+        <Style Selector="Grid.tree-item">
+            <Setter Property="MinHeight" Value="28" />
+        </Style>
+        <Style Selector="Grid.tree-item:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+        </Style>
+
+        <!-- Checkbox for files -->
+        <Style Selector="CheckBox.file-checkbox">
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Tri-state checkbox for directories -->
+        <Style Selector="CheckBox.directory-checkbox">
+            <Setter Property="Margin" Value="0,0,4,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="IsThreeState" Value="True" />
+        </Style>
+
+        <!-- Icon -->
+        <Style Selector="PathIcon.item-icon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- File name -->
+        <Style Selector="TextBlock.item-name">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+        <Style Selector="TextBlock.item-name.has-error">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorForeground}" />
+        </Style>
+        <Style Selector="TextBlock.item-name.has-warning">
+            <Setter Property="Foreground" Value="{DynamicResource WarningForeground}" />
+        </Style>
+
+        <!-- Status indicators -->
+        <Style Selector="PathIcon.status-icon">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Language badge -->
+        <Style Selector="Border.language-badge">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="CornerRadius" Value="3" />
+        </Style>
+
+        <!-- New badge -->
+        <Style Selector="Border.new-badge">
+            <Setter Property="Background" Value="{DynamicResource SuccessBackground}" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="CornerRadius" Value="3" />
+        </Style>
+
+        <!-- Exists badge -->
+        <Style Selector="Border.exists-badge">
+            <Setter Property="Background" Value="{DynamicResource WarningBackground}" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="CornerRadius" Value="3" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid Classes="tree-item"
+          ColumnDefinitions="Auto, Auto, *, Auto, Auto"
+          ToolTip.Tip="{Binding Tooltip}">
+
+        <!-- Column 0: Checkbox -->
+        <Panel>
+            <!-- File checkbox (two-state) -->
+            <CheckBox Classes="file-checkbox"
+                      IsChecked="{Binding IsSelected}"
+                      IsVisible="{Binding IsFile}"
+                      IsEnabled="{Binding IsEnabled}" />
+
+            <!-- Directory checkbox (tri-state) -->
+            <CheckBox Classes="directory-checkbox"
+                      IsChecked="{Binding SelectionState, Converter={StaticResource SelectionStateConverter}}"
+                      IsVisible="{Binding IsDirectory}" />
+        </Panel>
+
+        <!-- Column 1: Icon -->
+        <PathIcon Grid.Column="1"
+                  Classes="item-icon"
+                  Data="{Binding Icon, Converter={StaticResource IconNameConverter}}"
+                  Foreground="{DynamicResource FileIconColor}" />
+
+        <!-- Column 2: Name -->
+        <TextBlock Grid.Column="2"
+                   Classes="item-name"
+                   Classes.has-error="{Binding HasError}"
+                   Classes.has-warning="{Binding HasWarning}"
+                   Text="{Binding Name}" />
+
+        <!-- Column 3: Language Badge -->
+        <Border Grid.Column="3"
+                Classes="language-badge"
+                IsVisible="{Binding Language, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Margin="8,0,0,0">
+            <TextBlock Text="{Binding Language}"
+                       FontSize="10"
+                       Foreground="{DynamicResource TextMuted}" />
+        </Border>
+
+        <!-- Column 4: Status Indicators -->
+        <StackPanel Grid.Column="4"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    Margin="8,0,0,0">
+
+            <!-- New Badge (for create operations) -->
+            <Border Classes="new-badge"
+                    IsVisible="{Binding IsNewFile}">
+                <TextBlock Text="new"
+                           FontSize="10"
+                           Foreground="{DynamicResource SuccessForeground}" />
+            </Border>
+
+            <!-- Exists Badge -->
+            <Border Classes="exists-badge"
+                    IsVisible="{Binding FileExists}">
+                <TextBlock Text="exists"
+                           FontSize="10"
+                           Foreground="{DynamicResource WarningForeground}" />
+            </Border>
+
+            <!-- Operation Status Icon -->
+            <PathIcon Classes="status-icon"
+                      Data="{Binding StatusIcon, Converter={StaticResource IconNameConverter}}"
+                      IsVisible="{Binding StatusIcon, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                      ToolTip.Tip="{Binding StatusText}" />
+
+            <!-- Warning Icon -->
+            <PathIcon Classes="status-icon"
+                      Data="{StaticResource WarningIcon}"
+                      Foreground="{DynamicResource WarningForeground}"
+                      IsVisible="{Binding HasWarning}"
+                      ToolTip.Tip="{Binding ValidationIssue.Message}" />
+
+            <!-- Error Icon -->
+            <PathIcon Classes="status-icon"
+                      Data="{StaticResource ErrorIcon}"
+                      Foreground="{DynamicResource ErrorForeground}"
+                      IsVisible="{Binding HasError}"
+                      ToolTip.Tip="{Binding ValidationIssue.Message}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.4e] - 2026-01-16
+
+Proposal Panel. See [detailed notes](docs/changelog/v0.4.4e.md).
+
+### Added
+
+- `FileTreeProposalPanel` control for multi-file proposal display
+- `FileTreeItemControl` for tree item display with checkboxes/badges
+- `IconNameConverter` for icon name to StreamGeometry
+- `SelectionStateToCheckStateConverter` for tri-state checkbox
+- `ValidationSeverityToBrushConverter` for severity colors
+- `ProposalPanelStyles.axaml` with icons and color resources
+
 ## [0.4.4d] - 2026-01-16
 
 Tree ViewModels. See [detailed notes](docs/changelog/v0.4.4d.md).
