@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.3g] - 2026-01-16
+
+Conflict Dialog. See [detailed notes](docs/changelog/v0.4.3g.md).
+
+### Added
+
+- `ConflictResolution` enum (Cancel, RefreshDiff, ForceApply)
+- `ConflictWarningDialogViewModel` with resolution commands
+- `ConflictWarningDialog.axaml` with warning UI and file info
+- Static `ShowAsync` factory methods
+- Keyboard shortcuts (Enter/Escape)
+- 14 unit tests for conflict dialog ViewModel
+
 ## [0.4.3f] - 2026-01-16
 
 Apply Dialog. See [detailed notes](docs/changelog/v0.4.3f.md).
