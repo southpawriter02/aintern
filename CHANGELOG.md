@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.3e] - 2026-01-16
+
+Conflict Detection. See [detailed notes](docs/changelog/v0.4.3e.md).
+
+### Added
+
+- `ConflictReason` enum and `ConflictInfo` model with factory methods
+- `IConflictDetector` interface with snapshot operations
+- `ConflictDetector` with SHA-256 content hashing and parallel checking
+- Detection for: content modified, file created, file deleted, permissions
+- 17 unit tests for conflict detector
+
 ## [0.4.3d] - 2026-01-16
 
 Undo System. See [detailed notes](docs/changelog/v0.4.3d.md).
