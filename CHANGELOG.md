@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.4b] - 2026-01-16
+
+File Tree Parser. See [detailed notes](docs/changelog/v0.4.4b.md).
+
+### Added
+
+- `TreeFormat` enum for tree format types
+- `TreeParseResult` record for parsing results
+- `ParsedTreeNode` class for tree node structure
+- `FileTreeParserOptions` for parser configuration
+- `IFileTreeParser` interface for parsing contracts
+- `FileTreeParser` service with regex-based parsing
+- 55 unit tests
+
 ## [0.4.4a] - 2026-01-16
 
 Multi-File Core Models. See [detailed notes](docs/changelog/v0.4.4a.md).
