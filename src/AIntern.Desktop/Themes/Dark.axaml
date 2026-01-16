@@ -388,4 +388,18 @@
     <SolidColorBrush x:Key="TabActiveBackgroundBrush" Color="#1E1E1E" />
     <SolidColorBrush x:Key="TabHoverBackgroundBrush" Color="#2D2D2D" />
 
+    <!-- ============================================================== -->
+    <!-- Code Block Colors (v0.4.1h)                                    -->
+    <!-- ============================================================== -->
+
+    <!-- Base Colors -->
+    <SolidColorBrush x:Key="CodeBlockBackground" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="CodeBlockBorder" Color="#3E3E3E" />
+    <SolidColorBrush x:Key="CodeBlockHeaderBackground" Color="#252526" />
+    <SolidColorBrush x:Key="CommandBlockBackground" Color="#1A1A2E" />
+    <SolidColorBrush x:Key="LanguageBadgeBackground" Color="#0E639C" />
+    <SolidColorBrush x:Key="LanguageBadgeForeground" Color="White" />
+    <SolidColorBrush x:Key="CodeForeground" Color="#D4D4D4" />
+    <SolidColorBrush x:Key="SurfaceBackground" Color="#2D2D30" />
+
 </ResourceDictionary>

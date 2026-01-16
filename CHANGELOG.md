@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.1h] - 2026-01-16
+
+UI Rendering for Code Block Extraction. See [detailed notes](docs/changelog/v0.4.1h.md).
+
+### Added
+
+- `CodeBlockControl` user control for individual code block rendering
+- Code block styles: `.code-block`, `.language-badge`, `.status-badge`, etc.
+- Value converters: `EnumEqualsConverter`, `GreaterThanOneConverter`, etc.
+- Icon resources: DiffIcon, CodeIcon, CheckIcon
+- Code block color palette in Dark.axaml
+- ChatMessageControl code blocks section with summary panel
+- Comprehensive unit tests (38)
+
 ## [0.4.1g] - 2026-01-16
 
 ViewModel Integration for Code Block Extraction. See [detailed notes](docs/changelog/v0.4.1g.md).

@@ -1,0 +1,155 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:conv="using:AIntern.Desktop.Converters"
+             x:Class="AIntern.Desktop.Controls.CodeBlockControl"
+             x:DataType="vm:CodeBlockViewModel">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         CodeBlockControl (v0.4.1h)
+         Renders a single code block extracted from LLM output.
+         Displays: language badge, file path, code content, action buttons.
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <UserControl.Resources>
+        <conv:EnumEqualsConverter x:Key="EnumEqualsConverter" />
+    </UserControl.Resources>
+
+    <Border Classes="code-block"
+            Classes.applicable="{Binding IsApplicable}"
+            Classes.example="{Binding IsExample}"
+            Classes.command="{Binding IsCommand}">
+
+        <Grid RowDefinitions="Auto, *, Auto">
+
+            <!-- ═════════════════════════════════════════════════════════ -->
+            <!-- Row 0: Header                                             -->
+            <!-- ═════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="0" Classes="code-block-header">
+                <Grid ColumnDefinitions="Auto, Auto, *, Auto, Auto, Auto">
+
+                    <!-- Language Badge -->
+                    <Border Grid.Column="0"
+                            Classes="language-badge"
+                            IsVisible="{Binding DisplayLanguage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="{Binding DisplayLanguage}" />
+                    </Border>
+
+                    <!-- Block Type Indicator (for non-applicable blocks) -->
+                    <TextBlock Grid.Column="1"
+                               Margin="8,0,0,0"
+                               FontSize="10"
+                               Foreground="{DynamicResource TextMuted}"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding IsExample}">
+                        <TextBlock.Text>
+                            <Binding Path="BlockType" StringFormat="({0})" />
+                        </TextBlock.Text>
+                    </TextBlock>
+
+                    <!-- File Path -->
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding TargetFilePath}"
+                               Classes="file-path"
+                               Margin="8,0"
+                               VerticalAlignment="Center"
+                               MaxWidth="300"
+                               ToolTip.Tip="{Binding TargetFilePath}"
+                               IsVisible="{Binding TargetFilePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                    <!-- Line Count -->
+                    <TextBlock Grid.Column="3"
+                               Text="{Binding FormattedLineCount}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMuted}"
+                               VerticalAlignment="Center"
+                               Margin="8,0" />
+
+                    <!-- Copy Button -->
+                    <Button Grid.Column="4"
+                            Classes="icon-button"
+                            Command="{Binding CopyToClipboardCommand}"
+                            ToolTip.Tip="Copy to clipboard">
+                        <PathIcon Data="{StaticResource CopyIcon}"
+                                  Width="14"
+                                  Height="14" />
+                    </Button>
+
+                    <!-- Apply Button (visible only for applicable blocks) -->
+                    <Button Grid.Column="5"
+                            Classes="apply-button"
+                            Command="{Binding ShowDiffCommand}"
+                            IsVisible="{Binding ShowApplyButton}"
+                            ToolTip.Tip="Review and apply changes"
+                            Margin="4,0,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <PathIcon Data="{StaticResource DiffIcon}"
+                                      Width="12"
+                                      Height="12" />
+                            <TextBlock Text="Apply" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ═════════════════════════════════════════════════════════ -->
+            <!-- Row 1: Code Content                                       -->
+            <!-- ═════════════════════════════════════════════════════════ -->
+            <Border Grid.Row="1" Classes="code-content">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              MaxHeight="400">
+                    <SelectableTextBlock Text="{Binding Content}"
+                                         Classes="code-text" />
+                </ScrollViewer>
+            </Border>
+
+            <!-- ═════════════════════════════════════════════════════════ -->
+            <!-- Row 2: Footer (Status Badge OR Streaming Indicator)       -->
+            <!-- ═════════════════════════════════════════════════════════ -->
+
+            <!-- Status Badge (when not streaming and has final status) -->
+            <Border Grid.Row="2"
+                    Padding="8,4"
+                    IsVisible="{Binding ShowStatusBadge}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Classes="status-badge"
+                            Classes.applied="{Binding Status, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Applied}"
+                            Classes.rejected="{Binding Status, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Rejected}"
+                            Classes.conflict="{Binding Status, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Conflict}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <!-- Status Icon -->
+                            <PathIcon Width="12" Height="12"
+                                      IsVisible="{Binding Status, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Applied}"
+                                      Data="{StaticResource CheckIcon}" />
+                            <PathIcon Width="12" Height="12"
+                                      IsVisible="{Binding Status, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Rejected}"
+                                      Data="{StaticResource CloseIcon}" />
+                            <PathIcon Width="12" Height="12"
+                                      IsVisible="{Binding Status, Converter={StaticResource EnumEqualsConverter}, ConverterParameter=Conflict}"
+                                      Data="{StaticResource WarningIcon}" />
+
+                            <!-- Status Text -->
+                            <TextBlock Text="{Binding StatusText}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Streaming Indicator (while receiving tokens) -->
+            <Border Grid.Row="2"
+                    Padding="8,4"
+                    IsVisible="{Binding IsStreaming}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ProgressBar IsIndeterminate="True"
+                                 Width="60"
+                                 Height="3" />
+                    <TextBlock Text="Receiving..."
+                               FontSize="11"
+                               FontStyle="Italic"
+                               Foreground="{DynamicResource TextMuted}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

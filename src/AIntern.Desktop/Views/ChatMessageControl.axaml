@@ -1,8 +1,19 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:controls="using:AIntern.Desktop.Controls"
+             xmlns:conv="using:AIntern.Desktop.Converters"
              x:Class="AIntern.Desktop.Views.ChatMessageControl"
              x:DataType="vm:ChatMessageViewModel">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         ChatMessageControl (v0.4.1h)
+         Updated to display code blocks extracted from assistant messages.
+    ═══════════════════════════════════════════════════════════════════ -->
+
+    <UserControl.Resources>
+        <conv:GreaterThanOneConverter x:Key="GreaterThanOneConverter" />
+    </UserControl.Resources>
 
     <UserControl.Styles>
         <Style Selector="Border.user-message">
@@ -33,6 +44,48 @@
             <SelectableTextBlock Text="{Binding Content}"
                                  TextWrapping="Wrap"
                                  Foreground="{DynamicResource TextPrimary}" />
+
+            <!-- ════════════════════════════════════════════════════ -->
+            <!-- Code Blocks Section (v0.4.1h)                        -->
+            <!-- ════════════════════════════════════════════════════ -->
+            <ItemsControl ItemsSource="{Binding CodeBlocks}"
+                          IsVisible="{Binding HasCodeBlocks}"
+                          Margin="0,8,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:CodeBlockViewModel}">
+                        <controls:CodeBlockControl />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Code Block Summary (when multiple applicable blocks) -->
+            <Border Classes="code-summary"
+                    IsVisible="{Binding ShowCodeActions}"
+                    Margin="0,8,0,0">
+                <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource CodeIcon}"
+                                  Width="16"
+                                  Height="16"
+                                  Foreground="{DynamicResource TextMuted}" />
+                        <TextBlock Foreground="{DynamicResource TextPrimary}">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} code block(s), {1} applicable">
+                                    <Binding Path="TotalBlockCount" />
+                                    <Binding Path="ApplicableBlockCount" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Content="Apply All"
+                            Theme="{StaticResource PrimaryButton}"
+                            Padding="12,4"
+                            IsVisible="{Binding ApplicableBlockCount, Converter={StaticResource GreaterThanOneConverter}}"
+                            Command="{Binding ApplyAllCodeCommand}" />
+                </Grid>
+            </Border>
 
             <!-- Loading Indicator -->
             <StackPanel Orientation="Horizontal"

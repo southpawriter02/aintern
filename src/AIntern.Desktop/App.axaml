@@ -98,6 +98,132 @@
         <Style Selector="Button.icon-button-small:pointerover">
             <Setter Property="Background" Value="{DynamicResource IconButtonHoverBrush}" />
         </Style>
+        
+        <!-- ================================================================ -->
+        <!-- Code Block Styles (v0.4.1h)                                      -->
+        <!-- ================================================================ -->
+        
+        <!-- Code Block Container -->
+        <Style Selector="Border.code-block">
+            <Setter Property="Background" Value="{DynamicResource CodeBlockBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CodeBlockBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Margin" Value="0,8" />
+        </Style>
+        <Style Selector="Border.code-block.applicable">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="3,1,1,1" />
+        </Style>
+        <Style Selector="Border.code-block.example">
+            <Setter Property="Opacity" Value="0.8" />
+        </Style>
+        <Style Selector="Border.code-block.command">
+            <Setter Property="Background" Value="{DynamicResource CommandBlockBackground}" />
+        </Style>
+        
+        <!-- Code Block Header -->
+        <Style Selector="Border.code-block-header">
+            <Setter Property="Background" Value="{DynamicResource CodeBlockHeaderBackground}" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="CornerRadius" Value="6,6,0,0" />
+        </Style>
+        
+        <!-- Language Badge -->
+        <Style Selector="Border.language-badge">
+            <Setter Property="Background" Value="{DynamicResource LanguageBadgeBackground}" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="6,2" />
+        </Style>
+        <Style Selector="Border.language-badge TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource LanguageBadgeForeground}" />
+        </Style>
+        
+        <!-- File Path -->
+        <Style Selector="TextBlock.file-path">
+            <Setter Property="FontFamily" Value="Cascadia Code, Consolas, monospace" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+        
+        <!-- Code Content -->
+        <Style Selector="Border.code-content">
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+        <Style Selector="SelectableTextBlock.code-text">
+            <Setter Property="FontFamily" Value="Cascadia Code, Consolas, monospace" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource CodeForeground}" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+        
+        <!-- Apply Button -->
+        <Style Selector="Button.apply-button">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="Button.apply-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+        </Style>
+        <Style Selector="Button.apply-button:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+        
+        <!-- Icon Button (for copy button) -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="MinWidth" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        </Style>
+        
+        <!-- Status Badge -->
+        <Style Selector="Border.status-badge">
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="6,2" />
+        </Style>
+        <Style Selector="Border.status-badge TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Border.status-badge.applied">
+            <Setter Property="Background" Value="{DynamicResource SuccessBackground}" />
+        </Style>
+        <Style Selector="Border.status-badge.applied TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessForeground}" />
+        </Style>
+        <Style Selector="Border.status-badge.rejected">
+            <Setter Property="Background" Value="{DynamicResource ErrorBackground}" />
+        </Style>
+        <Style Selector="Border.status-badge.rejected TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorForeground}" />
+        </Style>
+        <Style Selector="Border.status-badge.conflict">
+            <Setter Property="Background" Value="{DynamicResource WarningBackground}" />
+        </Style>
+        <Style Selector="Border.status-badge.conflict TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource WarningForeground}" />
+        </Style>
+        
+        <!-- Code Summary Panel -->
+        <Style Selector="Border.code-summary">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackground}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Margin" Value="0,8,0,0" />
+        </Style>
     </Application.Styles>
 
     <Application.Resources>
