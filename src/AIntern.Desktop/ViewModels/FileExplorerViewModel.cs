@@ -242,6 +242,32 @@ public partial class FileExplorerViewModel : ViewModelBase, IFileTreeItemParent,
         FileOpenRequested?.Invoke(this, new FileOpenRequestedEventArgs(item.Path));
     }
 
+    /// <summary>
+    /// Opens a folder as workspace by path (v0.3.5f).
+    /// Used for drag-drop folder opening.
+    /// </summary>
+    public void OpenFolderByPath(string folderPath)
+    {
+        if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+            return;
+
+        _logger.LogDebug("[DROP] Opening folder as workspace: {Path}", folderPath);
+        _ = _workspaceService.OpenWorkspaceAsync(folderPath);
+    }
+
+    /// <summary>
+    /// Requests a file to be opened in the editor (v0.3.5f).
+    /// Used for drag-drop file opening.
+    /// </summary>
+    public void RequestOpenFile(string filePath)
+    {
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            return;
+
+        _logger.LogDebug("[DROP] Opening file: {Path}", filePath);
+        FileOpenRequested?.Invoke(this, new FileOpenRequestedEventArgs(filePath));
+    }
+
     /// <summary>Expands a folder.</summary>
     [RelayCommand]
     private async Task ExpandFolderAsync(FileTreeItemViewModel? item)

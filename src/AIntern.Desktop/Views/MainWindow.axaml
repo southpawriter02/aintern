@@ -239,6 +239,39 @@
                              Height="4" />
             </Grid>
         </Border>
+
+        <!--
+            Drop Overlay (v0.3.5f)
+            Shows visual feedback during file/folder drag-drop operations.
+            Covers entire window with semi-transparent overlay and blue drop zone.
+        -->
+        <Border x:Name="DropOverlay"
+                Grid.RowSpan="2"
+                Background="#CC1E1E1E"
+                IsVisible="False"
+                IsHitTestVisible="False"
+                ZIndex="1000">
+            <Border Background="#402196F3"
+                    BorderBrush="#2196F3"
+                    BorderThickness="3"
+                    CornerRadius="12"
+                    Margin="24"
+                    Padding="32">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="16">
+                    <PathIcon Data="{StaticResource DropIcon}"
+                              Width="48" Height="48"
+                              Foreground="#2196F3" />
+                    <TextBlock x:Name="DropOverlayText"
+                               Text="Drop to open"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="#2196F3"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 
 </Window>

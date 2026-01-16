@@ -60,6 +60,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        InitializeDragDrop();
     }
 
     /// <summary>
@@ -75,6 +76,7 @@ public partial class MainWindow : Window
         _logger?.LogDebug("[INIT] MainWindow constructor called");
 
         InitializeComponent();
+        InitializeDragDrop();
 
         _logger?.LogDebug("[INIT] MainWindow InitializeComponent completed");
     }
@@ -284,6 +286,135 @@ public partial class MainWindow : Window
         }
 
         base.OnKeyDown(e);
+    }
+
+    #endregion
+
+    #region Drag-Drop Handler (v0.3.5f)
+
+    /// <summary>
+    /// Initializes drag-drop event handlers.
+    /// </summary>
+    private void InitializeDragDrop()
+    {
+        _logger?.LogDebug("[INIT] Setting up drag-drop handlers");
+        AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
+        AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
+        AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        AddHandler(DragDrop.DropEvent, OnDrop);
+    }
+
+    /// <summary>
+    /// Shows drop overlay when files are dragged into the window.
+    /// </summary>
+    private void OnDragEnter(object? sender, DragEventArgs e)
+    {
+        if (e.Data.Contains(DataFormats.FileNames))
+        {
+            _logger?.LogDebug("[INFO] DragEnter: File(s) detected");
+            ShowDropOverlay(true);
+        }
+    }
+
+    /// <summary>
+    /// Hides drop overlay when files are dragged out of the window.
+    /// </summary>
+    private void OnDragLeave(object? sender, DragEventArgs e)
+    {
+        _logger?.LogDebug("[INFO] DragLeave");
+        ShowDropOverlay(false);
+    }
+
+    /// <summary>
+    /// Updates overlay message based on dropped content type.
+    /// </summary>
+    private void OnDragOver(object? sender, DragEventArgs e)
+    {
+        if (!e.Data.Contains(DataFormats.FileNames))
+        {
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+
+        var files = e.Data.GetFileNames()?.ToList();
+        if (files == null || files.Count == 0)
+        {
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+
+        // Determine content type
+        var hasFolder = files.Any(Directory.Exists);
+        var hasFiles = files.Any(File.Exists);
+
+        if (hasFolder)
+        {
+            e.DragEffects = DragDropEffects.Link;
+            UpdateDropOverlay("Open as workspace");
+        }
+        else if (hasFiles)
+        {
+            var count = files.Count(File.Exists);
+            e.DragEffects = DragDropEffects.Copy;
+            UpdateDropOverlay(count == 1
+                ? $"Open {Path.GetFileName(files.First(File.Exists))}"
+                : $"Open {count} files");
+        }
+        else
+        {
+            e.DragEffects = DragDropEffects.None;
+        }
+    }
+
+    /// <summary>
+    /// Processes dropped files and folders.
+    /// </summary>
+    private void OnDrop(object? sender, DragEventArgs e)
+    {
+        ShowDropOverlay(false);
+
+        if (!e.Data.Contains(DataFormats.FileNames)) return;
+
+        var files = e.Data.GetFileNames()?.ToList();
+        if (files == null || files.Count == 0) return;
+
+        var viewModel = DataContext as MainWindowViewModel;
+        if (viewModel == null) return;
+
+        _logger?.LogDebug("[INFO] OnDrop: Processing {Count} items", files.Count);
+
+        // Process folders (open as workspace via FileExplorer's command)
+        var folders = files.Where(Directory.Exists).ToList();
+        if (folders.Count > 0)
+        {
+            _logger?.LogDebug("[INFO] OnDrop: Opening folder as workspace: {Path}", folders[0]);
+            // Use FileExplorer to open workspace (it has access to workspace service)
+            viewModel.FileExplorer.OpenFolderByPath(folders[0]);
+        }
+
+        // Process files (open in editor via FileOpenRequested event)
+        var fileList = files.Where(File.Exists).ToList();
+        foreach (var file in fileList)
+        {
+            _logger?.LogDebug("[INFO] OnDrop: Opening file: {Path}", file);
+            viewModel.FileExplorer.RequestOpenFile(file);
+        }
+    }
+
+    /// <summary>
+    /// Shows or hides the drop overlay.
+    /// </summary>
+    private void ShowDropOverlay(bool show)
+    {
+        DropOverlay.IsVisible = show;
+    }
+
+    /// <summary>
+    /// Updates the drop overlay message text.
+    /// </summary>
+    private void UpdateDropOverlay(string message)
+    {
+        DropOverlayText.Text = message;
     }
 
     #endregion
