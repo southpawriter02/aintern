@@ -3,6 +3,8 @@ namespace AIntern.Desktop.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using AIntern.Core.Interfaces;
+using AIntern.Core.Models;
 
 /// <summary>
 /// ViewModel for the application status bar.
@@ -10,10 +12,13 @@ using Microsoft.Extensions.Logging;
 /// <remarks>
 /// <para>Displays workspace, file, cursor, encoding, and model information.</para>
 /// <para>Added in v0.3.5d.</para>
+/// <para>v0.4.5i: Added pending changes indicator and IStatusBarService integration.</para>
 /// </remarks>
 public partial class StatusBarViewModel : ViewModelBase
 {
-    private readonly ILogger<StatusBarViewModel> _logger;
+    private readonly ILogger<StatusBarViewModel>? _logger;
+    private readonly IStatusBarService? _statusBarService;
+    private readonly IDispatcher? _dispatcher;
 
     #region Workspace Segment
 
@@ -174,6 +179,59 @@ public partial class StatusBarViewModel : ViewModelBase
 
     #endregion
 
+    #region Pending Changes (v0.4.5i)
+
+    /// <summary>
+    /// Count of pending undoable changes.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PendingChangesDisplay))]
+    [NotifyPropertyChangedFor(nameof(HasPendingChanges))]
+    [NotifyPropertyChangedFor(nameof(PendingChangesTooltip))]
+    private int _pendingChangesCount;
+
+    /// <summary>
+    /// Whether there are pending changes.
+    /// </summary>
+    public bool HasPendingChanges => PendingChangesCount > 0;
+
+    /// <summary>
+    /// Formatted pending changes display.
+    /// </summary>
+    public string PendingChangesDisplay => PendingChangesCount switch
+    {
+        0 => "",
+        1 => "1 change",
+        _ => $"{PendingChangesCount} changes"
+    };
+
+    /// <summary>
+    /// Tooltip for pending changes indicator.
+    /// </summary>
+    public string PendingChangesTooltip => HasPendingChanges
+        ? "Click to view change history"
+        : "No pending changes";
+
+    /// <summary>
+    /// Model temperature for display.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TemperatureDisplay))]
+    [NotifyPropertyChangedFor(nameof(TemperatureTooltip))]
+    private double _temperature = 0.7;
+
+    /// <summary>
+    /// Formatted temperature display.
+    /// </summary>
+    public string TemperatureDisplay => $"T: {Temperature:F1}";
+
+    /// <summary>
+    /// Temperature tooltip.
+    /// </summary>
+    public string TemperatureTooltip => $"Temperature: {Temperature:F2}\nClick to adjust";
+
+    #endregion
+
     #region File Watcher Status
 
     /// <summary>
@@ -254,16 +312,42 @@ public partial class StatusBarViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? ChangeLineEndingRequested;
 
+    /// <summary>
+    /// Raised when change history panel should be shown (v0.4.5i).
+    /// </summary>
+    public event EventHandler? ShowChangeHistoryRequested;
+
+    /// <summary>
+    /// Raised when temperature slider should be shown (v0.4.5i).
+    /// </summary>
+    public event EventHandler? ShowTemperatureSliderRequested;
+
     #endregion
 
     /// <summary>
     /// Creates a new StatusBarViewModel.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public StatusBarViewModel(ILogger<StatusBarViewModel> logger)
+    /// <param name="statusBarService">Optional status bar service (v0.4.5i).</param>
+    /// <param name="dispatcher">Optional dispatcher for UI thread (v0.4.5i).</param>
+    public StatusBarViewModel(
+        ILogger<StatusBarViewModel>? logger = null,
+        IStatusBarService? statusBarService = null,
+        IDispatcher? dispatcher = null)
     {
         _logger = logger;
-        _logger.LogDebug("[INIT] StatusBarViewModel created");
+        _statusBarService = statusBarService;
+        _dispatcher = dispatcher;
+
+        // v0.4.5i: Subscribe to status bar service events
+        if (_statusBarService != null)
+        {
+            _statusBarService.ItemChanged += OnStatusBarItemChanged;
+            _statusBarService.CommandRequested += OnStatusBarCommandRequested;
+            InitializeFromStatusBarService();
+        }
+
+        _logger?.LogDebug("[INIT] StatusBarViewModel created");
     }
 
     #region Commands
@@ -327,7 +411,7 @@ public partial class StatusBarViewModel : ViewModelBase
     [RelayCommand]
     private void ChangeLineEnding()
     {
-        _logger.LogDebug("[CMD] ChangeLineEnding");
+        _logger?.LogDebug("[CMD] ChangeLineEnding");
         ChangeLineEndingRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -432,6 +516,101 @@ public partial class StatusBarViewModel : ViewModelBase
     {
         IsFileWatcherActive = isActive;
         OnPropertyChanged(nameof(SyncTooltip));
+    }
+
+    #endregion
+
+    #region Pending Changes Methods (v0.4.5i)
+
+    /// <summary>
+    /// Updates pending changes count from undo manager.
+    /// </summary>
+    public void UpdatePendingChanges(int count)
+    {
+        PendingChangesCount = count;
+    }
+
+    /// <summary>
+    /// Updates temperature display.
+    /// </summary>
+    public void UpdateTemperature(double temperature)
+    {
+        Temperature = temperature;
+    }
+
+    /// <summary>
+    /// Initializes from status bar service.
+    /// </summary>
+    private void InitializeFromStatusBarService()
+    {
+        if (_statusBarService == null) return;
+
+        var pendingItem = _statusBarService.Items.FirstOrDefault(i => i.Id == "pending-changes");
+        if (pendingItem != null)
+        {
+            PendingChangesCount = pendingItem.BadgeCount;
+        }
+
+        var tempItem = _statusBarService.Items.FirstOrDefault(i => i.Id == "temperature");
+        if (tempItem != null && double.TryParse(tempItem.Text?.Replace("T: ", ""), out var temp))
+        {
+            Temperature = temp;
+        }
+    }
+
+    private void OnStatusBarItemChanged(object? sender, StatusBarItemChangedEventArgs e)
+    {
+        _dispatcher?.InvokeAsync(() =>
+        {
+            switch (e.ItemId)
+            {
+                case "pending-changes":
+                    PendingChangesCount = e.NewItem.BadgeCount;
+                    break;
+                case "temperature":
+                    if (double.TryParse(e.NewItem.Text?.Replace("T: ", ""), out var temp))
+                    {
+                        Temperature = temp;
+                    }
+                    break;
+            }
+        });
+    }
+
+    private void OnStatusBarCommandRequested(object? sender, string commandId)
+    {
+        _dispatcher?.InvokeAsync(() =>
+        {
+            switch (commandId)
+            {
+                case "ShowChangeHistory":
+                    ShowChangeHistoryRequested?.Invoke(this, EventArgs.Empty);
+                    break;
+                case "ShowTemperatureSlider":
+                    ShowTemperatureSliderRequested?.Invoke(this, EventArgs.Empty);
+                    break;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Shows the change history panel.
+    /// </summary>
+    [RelayCommand]
+    private void ShowChangeHistory()
+    {
+        _logger?.LogDebug("[CMD] ShowChangeHistory");
+        ShowChangeHistoryRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Shows the temperature slider.
+    /// </summary>
+    [RelayCommand]
+    private void ShowTemperatureSlider()
+    {
+        _logger?.LogDebug("[CMD] ShowTemperatureSlider");
+        ShowTemperatureSliderRequested?.Invoke(this, EventArgs.Empty);
     }
 
     #endregion

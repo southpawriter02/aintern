@@ -1,0 +1,92 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         STATUS BAR STYLES (v0.4.5i)
+         Styles for status bar items and indicators.
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Base Status Bar Item -->
+    <Style Selector="Button.status-bar-item">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+
+    <Style Selector="Button.status-bar-item:pointerover">
+        <Setter Property="Background" Value="#30FFFFFF"/>
+    </Style>
+
+    <Style Selector="Button.status-bar-item:pressed">
+        <Setter Property="Background" Value="#40FFFFFF"/>
+    </Style>
+
+    <!-- Status Indicator Circle -->
+    <Style Selector="Ellipse.status-indicator">
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="Margin" Value="4,0"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.success">
+        <Setter Property="Fill" Value="#4CAF50"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.warning">
+        <Setter Property="Fill" Value="#FFC107"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.error">
+        <Setter Property="Fill" Value="#F44336"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.info">
+        <Setter Property="Fill" Value="#2196F3"/>
+    </Style>
+
+    <Style Selector="Ellipse.status-indicator.muted">
+        <Setter Property="Fill" Value="#9E9E9E"/>
+    </Style>
+
+    <!-- Pending Changes Badge -->
+    <Style Selector="Border.pending-changes-badge">
+        <Setter Property="Background" Value="#E91E63"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="5,2"/>
+        <Setter Property="Margin" Value="4,0"/>
+        <Setter Property="MinWidth" Value="20"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+
+    <Style Selector="Border.pending-changes-badge TextBlock">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="TextAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Temperature Display -->
+    <Style Selector="Button.temperature-display">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="8,4"/>
+        <Setter Property="FontFamily" Value="Consolas, Monaco, monospace"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="#B0BEC5"/>
+    </Style>
+
+    <Style Selector="Button.temperature-display:pointerover">
+        <Setter Property="Background" Value="#30FFFFFF"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <!-- Separator -->
+    <Style Selector="Border.status-bar-separator">
+        <Setter Property="Width" Value="1"/>
+        <Setter Property="Background" Value="#40FFFFFF"/>
+        <Setter Property="Margin" Value="8,4"/>
+    </Style>
+
+</Styles>

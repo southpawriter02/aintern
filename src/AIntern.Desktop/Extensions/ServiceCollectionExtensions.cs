@@ -271,6 +271,10 @@ public static class ServiceCollectionExtensions
         // Added in v0.4.5h.
         services.AddSingleton<IChangeHistoryService, ChangeHistoryService>();
 
+        // Status Bar Service: manages status bar items and aggregates status from services.
+        // Added in v0.4.5i.
+        services.AddSingleton<IStatusBarService, StatusBarService>();
+
         // ┌─────────────────────────────────────────────────────────────────┐
         // │ UI INFRASTRUCTURE                                                │
         // └─────────────────────────────────────────────────────────────────┘

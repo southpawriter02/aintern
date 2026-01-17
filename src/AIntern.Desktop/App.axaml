@@ -18,6 +18,10 @@
         <!-- v0.4.5h: Change History Panel Styles -->
         <StyleInclude Source="avares://AIntern.Desktop/Styles/ChangeHistoryStyles.axaml" />
         
+        <!-- v0.4.5i: Status Bar Styles -->
+        <StyleInclude Source="avares://AIntern.Desktop/Styles/StatusBarStyles.axaml" />
+
+        
         <!-- Editor Tab Bar Styles (v0.3.3e) -->
         <Style Selector="Button.editor-tab">
             <Setter Property="Background" Value="Transparent" />
