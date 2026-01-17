@@ -1,0 +1,226 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CHANGE HISTORY STYLES (v0.4.5h)
+         Styles for the Change History Panel.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    
+    <!-- Panel Container -->
+    <Style Selector="UserControl.history-panel">
+        <Setter Property="Background" Value="{DynamicResource PanelBackground}"/>
+    </Style>
+    
+    <!-- Header -->
+    <Style Selector="Border.history-header">
+        <Setter Property="Background" Value="{DynamicResource HeaderBackground}"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+    </Style>
+    
+    <Style Selector="TextBlock.header-title">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    
+    <!-- Count Badge -->
+    <Style Selector="Border.count-badge">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="MinWidth" Value="20"/>
+    </Style>
+    
+    <Style Selector="Border.count-badge > TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+    
+    <!-- Filter Panel -->
+    <Style Selector="Border.filter-panel">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackground}"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+    </Style>
+    
+    <!-- Search Box -->
+    <Style Selector="TextBox.search-box">
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    
+    <!-- History List -->
+    <Style Selector="ListBox.history-list">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    
+    <Style Selector="ListBox.history-list > ListBoxItem">
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="0"/>
+    </Style>
+    
+    <!-- History Item -->
+    <Style Selector="Border.history-item">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+    </Style>
+    
+    <Style Selector="Border.history-item:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+    </Style>
+    
+    <Style Selector="Border.history-item.undoable">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="3,0,0,1"/>
+    </Style>
+    
+    <Style Selector="Border.history-item.undone">
+        <Setter Property="Opacity" Value="0.5"/>
+    </Style>
+    
+    <Style Selector="Border.history-item.expiring-soon">
+        <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}"/>
+        <Setter Property="BorderThickness" Value="3,0,0,1"/>
+    </Style>
+    
+    <!-- File Name -->
+    <Style Selector="TextBlock.filename">
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+    
+    <Style Selector="TextBlock.filepath">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="MaxWidth" Value="200"/>
+    </Style>
+    
+    <!-- Change Type -->
+    <Style Selector="TextBlock.change-type">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    
+    <!-- Line Stats -->
+    <Style Selector="TextBlock.line-stats">
+        <Setter Property="FontFamily" Value="Consolas, Menlo, monospace"/>
+        <Setter Property="FontSize" Value="11"/>
+    </Style>
+    
+    <!-- Time Remaining -->
+    <Style Selector="Border.time-remaining">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackground}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,2"/>
+    </Style>
+    
+    <Style Selector="ProgressBar.countdown-bar">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="CornerRadius" Value="2"/>
+    </Style>
+    
+    <!-- Icon Buttons -->
+    <Style Selector="Button.icon-button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Opacity" Value="0.7"/>
+    </Style>
+    
+    <Style Selector="Button.icon-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverBackground}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+    
+    <Style Selector="Button.icon-button:pressed">
+        <Setter Property="Background" Value="{DynamicResource PressedBackground}"/>
+    </Style>
+    
+    <Style Selector="Button.icon-button.active">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+    
+    <Style Selector="Button.undo-button">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Opacity" Value="1"/>
+    </Style>
+    
+    <Style Selector="Button.undo-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+    </Style>
+    
+    <!-- Text Buttons -->
+    <Style Selector="Button.text-button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Padding" Value="8,4"/>
+    </Style>
+    
+    <Style Selector="Button.text-button:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource AccentHoverBrush}"/>
+        <Setter Property="TextBlock.TextDecorations" Value="Underline"/>
+    </Style>
+    
+    <Style Selector="Button.text-button.small">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Padding" Value="4,2"/>
+    </Style>
+    
+    <!-- Action Buttons -->
+    <Style Selector="Button.action-button">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
+    
+    <Style Selector="Button.action-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}"/>
+    </Style>
+    
+    <Style Selector="Button.action-button.danger">
+        <Setter Property="Background" Value="{DynamicResource ErrorBrush}"/>
+    </Style>
+    
+    <Style Selector="Button.action-button.danger:pointerover">
+        <Setter Property="Background" Value="{DynamicResource ErrorHoverBrush}"/>
+    </Style>
+    
+    <!-- Group Header -->
+    <Style Selector="Border.history-group-header">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBackground}"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+    </Style>
+    
+    <!-- Tree View -->
+    <Style Selector="TreeView.history-tree">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    
+    <!-- Footer -->
+    <Style Selector="Border.history-footer">
+        <Setter Property="Background" Value="{DynamicResource HeaderBackground}"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+    </Style>
+    
+    <Style Selector="Border.history-footer TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+</Styles>

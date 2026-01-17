@@ -1,0 +1,253 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:AIntern.Desktop.ViewModels"
+             xmlns:conv="clr-namespace:AIntern.Desktop.Converters"
+             xmlns:models="clr-namespace:AIntern.Core.Models;assembly=AIntern.Core"
+             mc:Ignorable="d"
+             d:DesignWidth="400" d:DesignHeight="600"
+             x:Class="AIntern.Desktop.Views.ChangeHistoryPanel"
+             x:DataType="vm:ChangeHistoryViewModel"
+             Classes="history-panel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="/Styles/ChangeHistoryStyles.axaml"/>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Classes="history-header">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Change History" Classes="header-title"/>
+                    <Border Classes="count-badge" IsVisible="{Binding HasChanges}">
+                        <TextBlock Text="{Binding Stats.TotalChanges}"/>
+                    </Border>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <Button Command="{Binding RefreshCommand}"
+                            ToolTip.Tip="Refresh"
+                            Classes="icon-button">
+                        <PathIcon Data="{StaticResource RefreshIcon}" Width="16" Height="16"/>
+                    </Button>
+                    <Button Command="{Binding ToggleFiltersCommand}"
+                            ToolTip.Tip="Toggle Filters"
+                            Classes="icon-button"
+                            Classes.active="{Binding ShowFilters}">
+                        <PathIcon Data="{StaticResource FilterIcon}" Width="16" Height="16"/>
+                    </Button>
+                    <Button Command="{Binding ToggleGroupingCommand}"
+                            ToolTip.Tip="Toggle Grouping"
+                            Classes="icon-button"
+                            Classes.active="{Binding IsGrouped}">
+                        <PathIcon Data="{StaticResource GroupIcon}" Width="16" Height="16"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Search & Filter Panel -->
+        <Border Grid.Row="1" Classes="filter-panel" IsVisible="{Binding ShowFilters}">
+            <StackPanel Spacing="8">
+                <!-- Search Box -->
+                <TextBox Text="{Binding SearchText, Mode=TwoWay}"
+                         Watermark="Search files..."
+                         Classes="search-box">
+                    <TextBox.InnerLeftContent>
+                        <PathIcon Data="{StaticResource SearchIcon}" Width="14" Height="14" Margin="8,0"/>
+                    </TextBox.InnerLeftContent>
+                </TextBox>
+                
+                <!-- Filter Options -->
+                <WrapPanel>
+                    <CheckBox Content="Undoable only"
+                              IsChecked="{Binding OnlyShowUndoable}"
+                              Margin="0,0,16,0"/>
+                </WrapPanel>
+                
+                <!-- Sort Options -->
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Sort:" VerticalAlignment="Center"/>
+                    <ComboBox SelectedItem="{Binding SortOrder}" Width="150">
+                        <ComboBoxItem Content="Newest First" Tag="{x:Static models:ChangeHistorySortOrder.NewestFirst}"/>
+                        <ComboBoxItem Content="Oldest First" Tag="{x:Static models:ChangeHistorySortOrder.OldestFirst}"/>
+                        <ComboBoxItem Content="File Name" Tag="{x:Static models:ChangeHistorySortOrder.FileName}"/>
+                        <ComboBoxItem Content="Change Type" Tag="{x:Static models:ChangeHistorySortOrder.ChangeType}"/>
+                    </ComboBox>
+                </StackPanel>
+                
+                <!-- Group By -->
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Group:" VerticalAlignment="Center"/>
+                    <ComboBox SelectedItem="{Binding GroupBy}" Width="150">
+                        <ComboBoxItem Content="None" Tag="{x:Static models:HistoryGroupMode.None}"/>
+                        <ComboBoxItem Content="By File" Tag="{x:Static models:HistoryGroupMode.ByFile}"/>
+                        <ComboBoxItem Content="By Time" Tag="{x:Static models:HistoryGroupMode.ByTimePeriod}"/>
+                        <ComboBoxItem Content="By Type" Tag="{x:Static models:HistoryGroupMode.ByChangeType}"/>
+                        <ComboBoxItem Content="By Directory" Tag="{x:Static models:HistoryGroupMode.ByDirectory}"/>
+                    </ComboBox>
+                </StackPanel>
+                
+                <Button Content="Clear Filters" Command="{Binding ClearFilterCommand}" Classes="text-button"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Content -->
+        <Grid Grid.Row="2">
+            <!-- Empty State -->
+            <StackPanel VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        IsVisible="{Binding !HasChanges}"
+                        Spacing="16">
+                <PathIcon Data="{StaticResource HistoryIcon}" Width="48" Height="48" Opacity="0.3"/>
+                <TextBlock Text="No changes recorded" Opacity="0.5" TextAlignment="Center"/>
+            </StackPanel>
+            
+            <!-- Loading -->
+            <ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsLoading}"
+                         VerticalAlignment="Top"/>
+            
+            <!-- Flat List View -->
+            <ListBox ItemsSource="{Binding Items}"
+                     SelectedItem="{Binding SelectedItem}"
+                     SelectionMode="Multiple"
+                     IsVisible="{Binding !IsGrouped}"
+                     Classes="history-list">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ChangeHistoryItemViewModel">
+                        <Border Classes="history-item"
+                                Classes.undoable="{Binding CanUndo}"
+                                Classes.undone="{Binding WasUndone}"
+                                Classes.expiring-soon="{Binding IsExpiringSoon}">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <!-- Selection -->
+                                <CheckBox IsChecked="{Binding IsSelected}" Margin="0,0,8,0"/>
+                                
+                                <!-- File Info -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{Binding ChangeTypeLabel}" 
+                                                   Classes="change-type"
+                                                   Foreground="{Binding Record.ChangeType, Converter={x:Static conv:ChangeTypeColorConverter.Instance}}"/>
+                                        <TextBlock Text="{Binding FileName}" Classes="filename"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding RelativePath}" 
+                                               Classes="filepath" 
+                                               Opacity="0.6" 
+                                               FontSize="11"/>
+                                </StackPanel>
+                                
+                                <!-- Stats & Time -->
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0">
+                                    <TextBlock Text="{Binding LineStats}" Classes="line-stats" FontSize="11"/>
+                                    <TextBlock Text="{Binding RelativeTime}" 
+                                               Opacity="0.6" 
+                                               FontSize="10"
+                                               HorizontalAlignment="Right"/>
+                                </StackPanel>
+                                
+                                <!-- Actions -->
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4">
+                                    <!-- Undo Timer -->
+                                    <Border Classes="time-remaining" IsVisible="{Binding CanUndo}">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <ProgressBar Classes="countdown-bar"
+                                                         Value="{Binding TimeRemainingProgress}"
+                                                         Maximum="100"
+                                                         Width="40" Height="4"/>
+                                            <TextBlock Text="{Binding TimeRemaining}" FontSize="10"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <Button Command="{Binding UndoCommand}"
+                                            IsVisible="{Binding CanUndo}"
+                                            ToolTip.Tip="Undo"
+                                            Classes="icon-button undo-button">
+                                        <PathIcon Data="{StaticResource UndoIcon}" Width="14" Height="14"/>
+                                    </Button>
+                                    
+                                    <Button Command="{Binding ViewDiffCommand}"
+                                            ToolTip.Tip="View Diff"
+                                            Classes="icon-button">
+                                        <PathIcon Data="{StaticResource DiffIcon}" Width="14" Height="14"/>
+                                    </Button>
+                                    
+                                    <Button Command="{Binding OpenFileCommand}"
+                                            ToolTip.Tip="Open File"
+                                            Classes="icon-button">
+                                        <PathIcon Data="{StaticResource OpenFileIcon}" Width="14" Height="14"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            
+            <!-- Grouped View -->
+            <TreeView ItemsSource="{Binding GroupedItems}"
+                      IsVisible="{Binding IsGrouped}"
+                      Classes="history-tree">
+                <TreeView.ItemTemplate>
+                    <TreeDataTemplate x:DataType="vm:ChangeHistoryGroupViewModel" ItemsSource="{Binding Items}">
+                        <Border Classes="history-group-header">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <CheckBox IsChecked="{Binding IsAllSelected}" 
+                                          Command="{Binding SelectAllCommand}"
+                                          Margin="0,0,8,0"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
+                                    <Border Classes="count-badge">
+                                        <TextBlock Text="{Binding ItemCount}"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="{Binding LinesSummary}" 
+                                           Classes="line-stats" Opacity="0.7"/>
+                                <Button Grid.Column="3"
+                                        Command="{Binding UndoAllInGroupCommand}"
+                                        IsVisible="{Binding HasUndoable}"
+                                        Content="Undo All"
+                                        Classes="text-button small"/>
+                            </Grid>
+                        </Border>
+                    </TreeDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+        </Grid>
+        
+        <!-- Footer -->
+        <Border Grid.Row="3" Classes="history-footer">
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Stats Summary -->
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock>
+                        <Run Text="{Binding Stats.TotalChanges}"/> changes
+                    </TextBlock>
+                    <TextBlock IsVisible="{Binding HasUndoableChanges}">
+                        <Run Text="{Binding Stats.UndoableCount}"/> undoable
+                    </TextBlock>
+                    <TextBlock>
+                        <Run Text="+"/><Run Text="{Binding Stats.TotalLinesAdded}"/>
+                        <Run Text=" -"/><Run Text="{Binding Stats.TotalLinesRemoved}"/>
+                    </TextBlock>
+                </StackPanel>
+                
+                <!-- Batch Actions -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                    <Button Content="Undo All"
+                            Command="{Binding UndoAllCommand}"
+                            Classes="action-button"
+                            IsVisible="{Binding HasUndoableChanges}"/>
+                    <Button Content="Clear"
+                            Command="{Binding ClearHistoryCommand}"
+                            Classes="action-button danger"
+                            IsVisible="{Binding HasChanges}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

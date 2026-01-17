@@ -267,6 +267,10 @@ public static class ServiceCollectionExtensions
         // Added in v0.4.5g.
         services.AddSingleton<IQuickActionService, QuickActionService>();
 
+        // Change History Service: manages change history queries and exports.
+        // Added in v0.4.5h.
+        services.AddSingleton<IChangeHistoryService, ChangeHistoryService>();
+
         // ┌─────────────────────────────────────────────────────────────────┐
         // │ UI INFRASTRUCTURE                                                │
         // └─────────────────────────────────────────────────────────────────┘
@@ -328,6 +332,11 @@ public static class ServiceCollectionExtensions
         // Transient so each diff view gets its own independent state.
         // Added in v0.4.2d.
         services.AddTransient<DiffViewerViewModel>();
+
+        // Change History: ViewModel for the change history panel.
+        // Transient so each panel gets fresh state with current history.
+        // Added in v0.4.5h.
+        services.AddTransient<ChangeHistoryViewModel>();
 
         return services;
     }

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.5h] - 2026-01-16
+
+Change History Panel. Track, view, filter, and undo workspace file changes.
+
+### Added
+
+- `ChangeHistorySortOrder`, `HistoryGroupMode`, `ChangeHistoryExportFormat` enums
+- `ChangeHistoryFilter`, `ChangeHistoryStats`, `ChangeHistoryGroup` records
+- `IChangeHistoryService` interface for history query, grouping, and export
+- `ChangeHistoryService` with in-memory cache and UndoManager integration
+- `ChangeHistoryViewModel`, `ChangeHistoryItemViewModel`, `ChangeHistoryGroupViewModel`
+- `ChangeHistoryPanel.axaml` view with filtering, grouping, and undo controls
+- `ChangeHistoryStyles.axaml` for consistent panel styling
+- Export formats: JSON, CSV, Markdown, Unified Diff
+
 ## [0.4.5g] - 2026-01-16
 
 Quick Actions. Inline action buttons on code blocks for rapid one-click operations.
