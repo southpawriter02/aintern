@@ -246,8 +246,14 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IStreamingCodeBlockParser, StreamingCodeBlockParser>();
         services.AddSingleton<IStreamingParserFactory, StreamingParserFactory>();
 
-        // Keyboard Shortcuts: centralized shortcut management (v0.3.5g).
-        services.AddSingleton<IKeyboardShortcutService, KeyboardShortcutService>();
+        // Keyboard Shortcuts: centralized shortcut management (v0.4.5f).
+        // Enhanced with context-aware dispatch, customization, and persistence.
+        services.AddSingleton<IKeyboardShortcutService>(sp =>
+        {
+            return new KeyboardShortcutService(
+                sp.GetRequiredService<ISettingsService>(),
+                sp.GetRequiredService<ILogger<KeyboardShortcutService>>());
+        });
 
         // Clipboard Service: platform abstraction for clipboard operations.
         // Added in v0.4.1g.

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.4.5f] - 2026-01-16
+
+Keyboard Shortcuts. Enhanced keyboard shortcut system with context-aware dispatch.
+
+### Added
+
+- `KeyboardShortcut` struct with parsing, equality, and platform-aware display strings
+- `ShortcutContext` enum for 10 UI contexts (Global, ChatInput, CodeBlock, DiffViewer, etc.)
+- `ShortcutCategory` enum for settings UI grouping
+- `ShortcutHandler` class with customization support
+- `ShortcutActionRegistration` for action handler binding
+- `IKeyboardShortcutService` interface with context-aware dispatch, customization, and persistence
+- `KeyboardShortcutService` with 30+ default shortcuts for code generation workflow
+- `ShortcutManager` for UI-level keyboard event handling and context detection
+- Persistence of shortcut customizations via `AppSettings.CustomShortcuts`
+
+### Changed
+
+- `KeyboardShortcutService` constructor now requires `ISettingsService` for persistence
+- Updated existing tests to use new v0.4.5f API
+
 ## [0.4.5e] - 2026-01-16
 
 Snippet Options UI. See [detailed notes](docs/changelog/v0.4.5e.md).

@@ -1,37 +1,47 @@
 namespace AIntern.Desktop.Tests.Services;
 
 using Avalonia.Input;
+using AIntern.Core.Interfaces;
+using AIntern.Core.Models;
 using AIntern.Desktop.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
 /// <summary>
-/// Unit tests for <see cref="KeyboardShortcutService"/> (v0.3.5g).
+/// Unit tests for <see cref="KeyboardShortcutService"/> (v0.4.5f).
+/// Updated for enhanced keyboard shortcut service with context-aware dispatch.
 /// </summary>
 public class KeyboardShortcutServiceTests
 {
+    private readonly Mock<ISettingsService> _mockSettings = new();
     private readonly Mock<ILogger<KeyboardShortcutService>> _mockLogger = new();
+
+    public KeyboardShortcutServiceTests()
+    {
+        // Setup default settings behavior
+        _mockSettings.Setup(s => s.CurrentSettings).Returns(new AppSettings());
+    }
 
     private KeyboardShortcutService CreateService()
     {
-        return new KeyboardShortcutService(_mockLogger.Object);
+        return new KeyboardShortcutService(_mockSettings.Object, _mockLogger.Object);
     }
 
     #region Constructor Tests
 
     /// <summary>
-    /// Verifies that the constructor registers default shortcuts.
+    /// Verifies that the constructor registers default shortcuts (v0.4.5f).
     /// </summary>
     [Fact]
     public void Constructor_RegistersDefaultShortcuts()
     {
         // Act
         var service = CreateService();
-        var shortcuts = service.GetAllShortcuts();
+        var handlers = service.GetAllHandlers().ToList();
 
-        // Assert
-        Assert.True(shortcuts.Count >= 18, $"Expected at least 18 shortcuts, got {shortcuts.Count}");
+        // Assert - v0.4.5f registers 30+ handlers plus 12 legacy shortcuts
+        Assert.True(handlers.Count >= 25, $"Expected at least 25 action handlers, got {handlers.Count}");
     }
 
     #endregion
@@ -193,7 +203,7 @@ public class KeyboardShortcutServiceTests
     }
 
     /// <summary>
-    /// Verifies sidebar.toggle shortcut exists.
+    /// Verifies ToggleSidebar shortcut is registered in v0.4.5f.
     /// </summary>
     [Fact]
     public void DefaultShortcuts_ContainsSidebarToggle()
@@ -201,14 +211,13 @@ public class KeyboardShortcutServiceTests
         // Arrange
         var service = CreateService();
 
-        // Act
-        var shortcuts = service.GetAllShortcuts();
+        // Act - Check v0.4.5f action handlers
+        var handler = service.GetHandlerByActionId("ToggleSidebar");
 
         // Assert
-        var shortcut = shortcuts.FirstOrDefault(s => s.CommandId == "sidebar.toggle");
-        Assert.NotNull(shortcut);
-        Assert.Equal(Key.B, shortcut.Key);
-        Assert.Equal(KeyModifiers.Control, shortcut.Modifiers);
+        Assert.NotNull(handler);
+        Assert.Equal(Key.B, handler.Shortcut.Key);
+        Assert.True(handler.Shortcut.HasControl);
     }
 
     #endregion

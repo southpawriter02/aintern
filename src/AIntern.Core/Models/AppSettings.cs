@@ -427,4 +427,21 @@ public sealed class AppSettings
     public bool PersistHistoryAcrossSessions { get; set; } = true;
 
     #endregion
+
+    // ═══════════════════════════════════════════════════════════════
+    // Keyboard Shortcuts Settings (v0.4.5f)
+    // ═══════════════════════════════════════════════════════════════
+
+    #region Keyboard Shortcuts Settings (v0.4.5f)
+
+    /// <summary>
+    /// Gets or sets custom keyboard shortcut bindings as serialized strings.
+    /// Format: "ActionId|ShortcutString|IsEnabled" per item.
+    /// Only stores shortcuts that differ from defaults.
+    /// </summary>
+    /// <remarks>Added in v0.4.5f.</remarks>
+    public List<string>? CustomShortcuts { get; set; }
+
+    #endregion
 }
+
