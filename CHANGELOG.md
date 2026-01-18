@@ -64,6 +64,17 @@ Working Directory Synchronization. Bi-directional sync, OSC 7 parsing, workspace
 - `WorkingDirectorySyncService` with OSC 7 parsing, WSL path translation, and auto-sync
 - 16 unit tests (14 pass, 2 skipped)
 
+## [0.5.3f] - 2026-01-18
+
+File Explorer Integration. Shell selector dialog, terminal messages.
+
+### Added
+
+- `ShowTerminalPanelMessage` and `OpenTerminalMessage` for panel communication
+- `ShellSelectorViewModel` with profile list, selection, creation, management
+- `ShellSelectorView.axaml` with badges, context menu, new profile form
+- 14 unit tests
+
 ## [0.5.2f] - 2026-01-18
 
 Main Window Integration. Terminal panel integrated into main window with keyboard shortcuts.
