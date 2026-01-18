@@ -30,6 +30,18 @@ Shell Configuration System. Shell-specific commands, OSC sequences, and integrat
 - OSC 7/9 CWD reporting and shell integration script generation
 - 39 unit tests
 
+## [0.5.3c] - 2026-01-18
+
+Shell Profile Models. User-configurable profile model with appearance, behavior, and metadata.
+
+### Added
+
+- `TerminalCursorStyle`, `ProfileCloseOnExit`, `TerminalBellStyle`, `DirectorySyncMode` enums
+- `ShellProfileDefaults` class for application-wide defaults
+- `ShellProfile` model with Clone() method and IsValid property
+- 17 terminal settings properties added to `AppSettings`
+- 20 unit tests
+
 ## [0.5.2f] - 2026-01-18
 
 Main Window Integration. Terminal panel integrated into main window with keyboard shortcuts.

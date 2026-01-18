@@ -443,5 +443,115 @@ public sealed class AppSettings
     public List<string>? CustomShortcuts { get; set; }
 
     #endregion
+
+    // ═══════════════════════════════════════════════════════════════
+    // Terminal Settings (v0.5.3c)
+    // ═══════════════════════════════════════════════════════════════
+
+    #region Terminal Settings (v0.5.3c)
+
+    /// <summary>
+    /// Default terminal font family.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public string TerminalFontFamily { get; set; } = "Cascadia Mono, Consolas, monospace";
+
+    /// <summary>
+    /// Default terminal font size in points.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public double TerminalFontSize { get; set; } = 14;
+
+    /// <summary>
+    /// Number of scrollback lines to retain.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public int TerminalScrollbackLines { get; set; } = 10000;
+
+    /// <summary>
+    /// Terminal bell notification style.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public Terminal.TerminalBellStyle TerminalBellStyle { get; set; } = Terminal.TerminalBellStyle.Audible;
+
+    /// <summary>
+    /// Terminal cursor style.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public Terminal.TerminalCursorStyle TerminalCursorStyle { get; set; } = Terminal.TerminalCursorStyle.Block;
+
+    /// <summary>
+    /// Whether the terminal cursor blinks.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public bool TerminalCursorBlink { get; set; } = true;
+
+    /// <summary>
+    /// Terminal color theme name.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public string TerminalTheme { get; set; } = "Dark";
+
+    /// <summary>
+    /// Height of the terminal panel when docked (in pixels).
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public double TerminalPanelHeight { get; set; } = 300;
+
+    /// <summary>
+    /// Characters that separate words for double-click selection.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public string TerminalWordSeparators { get; set; } = " ()[]{}|;:'\",.<>/?!@#$%^&*-=+~`";
+
+    /// <summary>
+    /// Whether to copy selected text immediately on selection.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public bool TerminalCopyOnSelect { get; set; } = false;
+
+    /// <summary>
+    /// Keyboard shortcut to toggle the terminal panel.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public string TerminalToggleShortcut { get; set; } = "Ctrl+`";
+
+    /// <summary>
+    /// Keyboard shortcut to create a new terminal tab.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public string TerminalNewShortcut { get; set; } = "Ctrl+Shift+`";
+
+    /// <summary>
+    /// Whether to sync terminal working directory with the active workspace.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public bool SyncTerminalWithWorkspace { get; set; } = true;
+
+    /// <summary>
+    /// Mode for terminal/workspace directory synchronization.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public Terminal.DirectorySyncMode TerminalSyncMode { get; set; } = Terminal.DirectorySyncMode.ActiveTerminalOnly;
+
+    /// <summary>
+    /// ID of the default shell profile.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public Guid? DefaultShellProfileId { get; set; }
+
+    /// <summary>
+    /// Whether to show the terminal panel on application startup.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public bool ShowTerminalOnStartup { get; set; } = false;
+
+    /// <summary>
+    /// Whether to restore terminal sessions from the previous session.
+    /// </summary>
+    /// <remarks>Added in v0.5.3c.</remarks>
+    public bool RestoreTerminalSessions { get; set; } = false;
+
+    #endregion
 }
 
