@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.1d] - 2026-01-17
+
+Terminal Service. PTY-based terminal service for managing shell sessions.
+
+### Added
+
+- `IShellDetectionService` interface with `ShellInfo` record and `ShellType` enum
+- `ITerminalService` interface with session lifecycle, I/O, and event management
+- `TerminalSessionOptions` record and `TerminalSignal` enum
+- `TerminalService` implementation using Pty.Net for cross-platform PTY support
+- `DefaultShellDetectionService` for detecting available shells on Windows/macOS/Linux
+- Event args classes for output, session, state, title, and bell events
+- 28 unit tests for terminal service functionality
+
 ## [0.5.1c] - 2026-01-17
 
 ANSI Parser. VT100/ANSI escape sequence parser for terminal emulation.
