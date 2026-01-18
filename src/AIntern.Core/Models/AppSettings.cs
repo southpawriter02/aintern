@@ -442,6 +442,20 @@ public sealed class AppSettings
     /// <remarks>Added in v0.4.5f.</remarks>
     public List<string>? CustomShortcuts { get; set; }
 
+    /// <summary>
+    /// Custom terminal keyboard binding overrides.
+    /// Key: TerminalShortcutAction name (e.g., "ToggleTerminal")
+    /// Value: Serialized key combo (e.g., "Ctrl+Shift+T")
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only non-default bindings are stored here. When a binding matches
+    /// its default, it is removed from this dictionary.
+    /// </para>
+    /// <para>Added in v0.5.5d.</para>
+    /// </remarks>
+    public Dictionary<string, string>? CustomKeyBindings { get; set; }
+
     #endregion
 
     // ═══════════════════════════════════════════════════════════════

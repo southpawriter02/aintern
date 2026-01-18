@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.5d] - 2026-01-18
+
+Keyboard Shortcuts System. Comprehensive shortcut registry with customization, PTY pass-through, and conflict detection.
+
+### Added
+
+- `TerminalShortcutAction` enum with 35+ categorized terminal actions
+- `KeyBinding` model with platform-aware display formatting and serialization
+- `ITerminalShortcutService` interface for binding management
+- `TerminalShortcutService` with default bindings and persistence
+- `AppSettings.CustomKeyBindings` for custom shortcut storage
+- 58 unit tests (26 KeyBindingTests + 32 TerminalShortcutServiceTests)
+
 ## [0.5.5c] - 2026-01-18
 
 Terminal Search UI. Search bar control with debounced search and result highlighting.

@@ -202,6 +202,26 @@ public static class TerminalServiceExtensions
         //
         services.AddSingleton<ITerminalSearchService, TerminalSearchService>();
 
+        // ─────────────────────────────────────────────────────────────────────
+        // KEYBOARD SHORTCUT SERVICE (v0.5.5d)
+        // ─────────────────────────────────────────────────────────────────────
+        //
+        // Manages terminal keyboard shortcuts with registry and customization.
+        // Features:
+        //   • 35+ default bindings across 6 categories
+        //   • Custom binding management with persistence
+        //   • Conflict detection and resolution
+        //   • PTY pass-through for shell shortcuts (Ctrl+C, Ctrl+Z, etc.)
+        //   • Platform-aware key formatting (⌘ on macOS, Ctrl on others)
+        //   • Category-based organization for settings UI
+        //
+        // Registered as singleton because:
+        //   1. Bindings should be consistent across the application
+        //   2. Settings persistence requires single source of truth
+        //   3. BindingsChanged event requires stable instance
+        //
+        services.AddSingleton<ITerminalShortcutService, TerminalShortcutService>();
+
         return services;
     }
 }
