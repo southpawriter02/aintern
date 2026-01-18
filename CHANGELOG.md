@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.4g] - 2026-01-18
+
+Terminal Context Attachment. ViewModels for attaching terminal output to AI chat context.
+
+### Added
+
+- `TerminalContextViewModel` with Capture/IsExpanded observables, 17 computed properties, ToggleExpand/Refresh commands
+- `TerminalContextViewModelFactory` with Create, CreateFromFullBufferAsync, CreateFromLastLinesAsync, CreateFromSelectionAsync, CreateFromActiveSessionAsync
+- 34 unit tests for ViewModel and factory
+
+
 ## [0.5.4f] - 2026-01-18
 
 Command Block UI. Avalonia XAML control for command blocks with visual styles and interactions.

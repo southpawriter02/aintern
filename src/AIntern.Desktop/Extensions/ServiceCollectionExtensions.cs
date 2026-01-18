@@ -343,6 +343,12 @@ public static class ServiceCollectionExtensions
         // Added in v0.5.4e.
         services.AddSingleton<CommandBlockViewModelFactory>();
 
+        // Terminal Context ViewModel Factory: creates TerminalContextViewModels with DI.
+        // Singleton for shared factory instance with injected services.
+        // Used to create ViewModels for terminal output attached to chat context.
+        // Added in v0.5.4g.
+        services.AddSingleton<TerminalContextViewModelFactory>();
+
         // Search: spotlight-style search dialog ViewModel with debounced search.
         // Transient so each dialog gets its own instance with fresh state.
         // Uses ISearchService for FTS5 search operations.
