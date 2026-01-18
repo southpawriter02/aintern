@@ -47,6 +47,7 @@ public class MainWindowViewModelTests : IDisposable
     private readonly ChatViewModel _chatViewModel;
     private readonly ModelSelectorViewModel _modelSelectorViewModel;
     private readonly ConversationListViewModel _conversationListViewModel;
+    private readonly TerminalPanelViewModel _terminalPanelViewModel;
     private readonly InferenceSettingsViewModel _inferenceSettingsViewModel;
     private readonly FileExplorerViewModel _fileExplorerViewModel;
 
@@ -127,6 +128,14 @@ public class MainWindowViewModelTests : IDisposable
             null, // IStorageProvider not needed in tests
             _dispatcher,
             mockFileExplorerLogger.Object);
+
+        // TerminalPanelViewModel (v0.5.2f)
+        var mockTerminalService = new Mock<ITerminalService>();
+        var mockTerminalPanelLogger = new Mock<ILogger<TerminalPanelViewModel>>();
+        _terminalPanelViewModel = new TerminalPanelViewModel(
+            mockTerminalService.Object,
+            _mockWorkspaceService.Object,
+            mockTerminalPanelLogger.Object);
     }
 
     private MainWindowViewModel CreateViewModel()
@@ -144,6 +153,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockConversationService.Object,
             _mockWorkspaceService.Object,
             _fileExplorerViewModel,
+            _terminalPanelViewModel,
             _dispatcher,
             keyboardShortcutService: null,
             _mockLogger.Object);
@@ -156,6 +166,7 @@ public class MainWindowViewModelTests : IDisposable
         _chatViewModel.Dispose();
         _inferenceSettingsViewModel.Dispose();
         _conversationListViewModel.Dispose();
+        _terminalPanelViewModel.Dispose();
         _fileExplorerViewModel.Dispose();
     }
 
@@ -183,6 +194,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockConversationService.Object,
             _mockWorkspaceService.Object,
             _fileExplorerViewModel,
+            _terminalPanelViewModel,
             _dispatcher,
             keyboardShortcutService: null,
             logger: _mockLogger.Object));
@@ -208,6 +220,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockConversationService.Object,
             _mockWorkspaceService.Object,
             _fileExplorerViewModel,
+            _terminalPanelViewModel,
             _dispatcher,
             keyboardShortcutService: null,
             logger: _mockLogger.Object));

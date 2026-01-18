@@ -331,6 +331,12 @@ public static class ServiceCollectionExtensions
         // Added in v0.3.2g.
         services.AddSingleton<FileExplorerViewModel>();
 
+        // Terminal Panel: manages terminal tabs and panel state.
+        // Singleton to persist panel state across application lifecycle.
+        // Coordinates with ITerminalService for session lifecycle events.
+        // Added in v0.5.2f.
+        services.AddSingleton<TerminalPanelViewModel>();
+
         // Search: spotlight-style search dialog ViewModel with debounced search.
         // Transient so each dialog gets its own instance with fresh state.
         // Uses ISearchService for FTS5 search operations.

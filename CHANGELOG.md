@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.2f] - 2026-01-18
+
+Main Window Integration. Terminal panel integrated into main window with keyboard shortcuts.
+
+### Added
+
+- Terminal panel integrated into MainWindow with 4-row grid layout
+- Global keyboard shortcuts: Ctrl+` toggle, Ctrl+Shift+` new, Ctrl+Shift+W close
+- Status bar terminal toggle button
+- `MultiplyConverter` for dynamic 70% max height calculation
+- 11 unit tests for MultiplyConverter
+
 ## [0.5.2e] - 2026-01-18
 
 Terminal Panel. Complete terminal panel view with tab bar, session management, and content area.

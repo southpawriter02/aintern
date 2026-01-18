@@ -1,12 +1,13 @@
 <!--
     MainWindow.axaml - Main Application Window
 
-    Version: v0.2.5g
+    Version: v0.5.2f
 
     Layout:
     - SplitView with collapsible sidebar pane
     - Sidebar contains: ModelSelectorView + InferenceSettingsPanel + ConversationListView
     - Content area contains: ChatView
+    - Terminal panel with resize splitter (v0.5.2f)
     - Status bar at bottom with model info, preset indicator, and token statistics
 
     Keyboard Shortcuts:
@@ -19,6 +20,11 @@
     - Ctrl+,: Toggle inference settings panel (v0.2.5g)
     - Ctrl+P: Open system prompt editor (v0.2.5g)
     - Ctrl+Shift+S: Force save (v0.2.5g)
+    - Ctrl+`: Toggle terminal panel (v0.5.2f)
+    - Ctrl+Shift+`: New terminal session (v0.5.2f)
+    - Ctrl+Shift+W: Close active terminal (v0.5.2f)
+    - Ctrl+PageDown: Next terminal tab (v0.5.2f)
+    - Ctrl+PageUp: Previous terminal tab (v0.5.2f)
 -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -55,9 +61,20 @@
         <KeyBinding Gesture="Ctrl+P" Command="{Binding OpenSystemPromptEditorCommand}" />
         <!-- Ctrl+Shift+S: Force save (v0.2.5g) -->
         <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding ChatViewModel.SaveCommand}" />
+        <!-- v0.5.2f: Terminal Shortcuts -->
+        <KeyBinding Gesture="Ctrl+OemTilde" 
+                    Command="{Binding TerminalPanelViewModel.TogglePanelCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+OemTilde" 
+                    Command="{Binding TerminalPanelViewModel.NewSessionCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+W" 
+                    Command="{Binding TerminalPanelViewModel.CloseActiveSessionCommand}" />
+        <KeyBinding Gesture="Ctrl+PageDown" 
+                    Command="{Binding TerminalPanelViewModel.NextTabCommand}" />
+        <KeyBinding Gesture="Ctrl+PageUp" 
+                    Command="{Binding TerminalPanelViewModel.PreviousTabCommand}" />
     </Window.KeyBindings>
 
-    <Grid RowDefinitions="*, Auto">
+    <Grid RowDefinitions="*, Auto, Auto, Auto">
         <!--
             Main Content Area using SplitView
 
@@ -151,16 +168,44 @@
         </SplitView>
 
         <!--
-            Status Bar (v0.2.5g)
+            Terminal Resize Handle (v0.5.2f)
+            GridSplitter between main content and terminal panel.
+            Only visible when terminal panel is visible.
+        -->
+        <GridSplitter Grid.Row="1"
+                      Height="4"
+                      Background="Transparent"
+                      ResizeDirection="Rows"
+                      IsVisible="{Binding TerminalPanelViewModel.IsVisible}" />
+
+        <!--
+            Terminal Panel (v0.5.2f)
+            Integrated terminal with tabs, session management, and resizable height.
+            Height bound to TerminalPanelViewModel.PanelHeight with constraints.
+        -->
+        <views:TerminalPanel Grid.Row="2"
+                             x:Name="TerminalPanel"
+                             DataContext="{Binding TerminalPanelViewModel}"
+                             Height="{Binding PanelHeight, Mode=TwoWay}"
+                             MinHeight="100"
+                             MaxHeight="{Binding Bounds.Height, 
+                                         RelativeSource={RelativeSource AncestorType=Window}, 
+                                         Converter={x:Static converters:MultiplyConverter.Instance}, 
+                                         ConverterParameter=0.7}"
+                             IsVisible="{Binding IsVisible}" />
+
+        <!--
+            Status Bar (v0.5.2f)
             Shows model state, preset info, token statistics, save state, and generation progress.
             Clickable elements: Model name opens model selector, Temperature opens settings panel.
+            Terminal toggle button added in v0.5.2f.
         -->
-        <Border Grid.Row="1"
+        <Border Grid.Row="3"
                 Background="{DynamicResource StatusBarBackground}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0"
                 Padding="12,6">
-            <Grid ColumnDefinitions="Auto, Auto, Auto, Auto, Auto, *, Auto">
+            <Grid ColumnDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, *, Auto">
                 <!--
                     Model Name (v0.2.5g)
                     Clickable button that shows the model name with accent/muted coloring.
@@ -180,10 +225,33 @@
                 </Button>
 
                 <!--
+                    Terminal Toggle Button (v0.5.2f)
+                    Click toggles terminal panel visibility.
+                -->
+                <Button Grid.Column="1"
+                        Command="{Binding TerminalPanelViewModel.TogglePanelCommand}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="4,0"
+                        Margin="8,0,0,0"
+                        Cursor="Hand"
+                        ToolTip.Tip="Toggle terminal (Ctrl+`)">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource TerminalIcon}"
+                                  Width="14" Height="14"
+                                  Foreground="{DynamicResource TextSecondary}" />
+                        <TextBlock Text="Terminal"
+                                   FontSize="11"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondary}" />
+                    </StackPanel>
+                </Button>
+
+                <!--
                     Preset Indicator (v0.2.3e)
                     Shows "Preset: {name}" with the active preset name.
                 -->
-                <TextBlock Grid.Column="1"
+                <TextBlock Grid.Column="2"
                            Text="{Binding InferenceSettingsViewModel.SelectedPreset.Name, StringFormat='Preset: {0}', FallbackValue='Preset: None'}"
                            FontSize="11"
                            VerticalAlignment="Center"
@@ -195,7 +263,7 @@
                     Clickable button that shows "T:0.70" for quick reference.
                     Click expands the inference settings panel.
                 -->
-                <Button Grid.Column="2"
+                <Button Grid.Column="3"
                         Command="{Binding ToggleSettingsPanelCommand}"
                         Background="Transparent"
                         BorderThickness="0"
@@ -214,7 +282,7 @@
                     Color-coded display: Saved (green), Unsaved (yellow), Saving (accent).
                     Uses converters for text and color based on SaveStateChangedEventArgs.
                 -->
-                <TextBlock Grid.Column="3"
+                <TextBlock Grid.Column="4"
                            Text="{Binding SaveState, Converter={x:Static converters:SaveStatusTextConverter.Instance}}"
                            VerticalAlignment="Center"
                            Foreground="{Binding SaveState, Converter={x:Static converters:SaveStatusColorConverter.Instance}}"
@@ -224,7 +292,7 @@
                     Token Statistics
                     Shows "Tokens: X (Y.Y tok/s)" during generation.
                 -->
-                <TextBlock Grid.Column="4"
+                <TextBlock Grid.Column="5"
                            Text="{Binding TokenInfo}"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource TextMuted}"
@@ -238,7 +306,7 @@
                     Progress Indicator
                     Indeterminate progress bar shown during generation.
                 -->
-                <ProgressBar Grid.Column="6"
+                <ProgressBar Grid.Column="7"
                              IsVisible="{Binding ChatViewModel.IsGenerating}"
                              IsIndeterminate="True"
                              Width="80"

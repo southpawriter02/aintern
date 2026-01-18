@@ -24,6 +24,7 @@ namespace AIntern.Desktop.ViewModels;
 /// <item><see cref="ConversationListViewModel"/> - Sidebar conversation list</item>
 /// <item><see cref="InferenceSettingsViewModel"/> - Inference parameter sliders (v0.2.3e)</item>
 /// <item><see cref="FileExplorerViewModel"/> - File explorer sidebar (v0.3.2g)</item>
+/// <item><see cref="TerminalPanelViewModel"/> - Terminal panel tabs and sessions (v0.5.2f)</item>
 /// </list>
 /// </para>
 /// <para>
@@ -133,6 +134,15 @@ public partial class MainWindowViewModel : ViewModelBase
     /// Gets the keyboard shortcut service for centralized key handling (v0.3.5g).
     /// </summary>
     public IKeyboardShortcutService? KeyboardShortcutService { get; }
+
+    /// <summary>
+    /// Gets the ViewModel for the terminal panel.
+    /// Manages terminal tabs, session lifecycle, and panel visibility.
+    /// </summary>
+    /// <remarks>
+    /// Added in v0.5.2f. Singleton that persists across application lifecycle.
+    /// </remarks>
+    public TerminalPanelViewModel TerminalPanelViewModel { get; }
 
     #endregion
 
@@ -292,6 +302,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IConversationService conversationService,
         IWorkspaceService workspaceService,
         FileExplorerViewModel fileExplorer,
+        TerminalPanelViewModel terminalPanelViewModel,
         IDispatcher dispatcher,
         IKeyboardShortcutService? keyboardShortcutService = null,
         ILogger<MainWindowViewModel>? logger = null)
@@ -315,6 +326,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _conversationService = conversationService ?? throw new ArgumentNullException(nameof(conversationService));
         _workspaceService = workspaceService ?? throw new ArgumentNullException(nameof(workspaceService));
         FileExplorer = fileExplorer ?? throw new ArgumentNullException(nameof(fileExplorer));
+        TerminalPanelViewModel = terminalPanelViewModel ?? throw new ArgumentNullException(nameof(terminalPanelViewModel));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
         KeyboardShortcutService = keyboardShortcutService;
 

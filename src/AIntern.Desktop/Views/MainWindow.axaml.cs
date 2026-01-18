@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using AIntern.Core.Interfaces;
 using AIntern.Desktop.Dialogs;
 using AIntern.Desktop.Services;
 using AIntern.Desktop.ViewModels;
@@ -18,6 +20,7 @@ namespace AIntern.Desktop.Views;
 /// <list type="bullet">
 /// <item>SplitView with sidebar (left) containing ModelSelector and ConversationList</item>
 /// <item>Main content area (right) containing ChatView</item>
+/// <item>Terminal panel with resize splitter (v0.5.2f)</item>
 /// <item>Status bar at bottom with model info and token statistics</item>
 /// </list>
 /// </para>
@@ -135,6 +138,12 @@ public partial class MainWindow : Window
 
                 // Perform async initialization (loads settings and conversations)
                 await viewModel.InitializeAsync();
+
+                // v0.5.2f: Initialize terminal panel with terminal service
+                // This must happen after InitializeAsync to ensure services are ready
+                var terminalService = App.Services.GetRequiredService<ITerminalService>();
+                TerminalPanel.Initialize(terminalService);
+                _logger?.LogDebug("[INFO] Terminal panel initialized with service");
 
                 _logger?.LogInformation("[INFO] MainWindow initialized successfully");
             }
