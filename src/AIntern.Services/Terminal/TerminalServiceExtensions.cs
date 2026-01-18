@@ -115,6 +115,26 @@ public static class TerminalServiceExtensions
         //
         services.AddSingleton<ITerminalService, TerminalService>();
 
+        // ─────────────────────────────────────────────────────────────────────
+        // COMMAND EXTRACTOR SERVICE (v0.5.4b)
+        // ─────────────────────────────────────────────────────────────────────
+        //
+        // Extracts executable commands from AI-generated markdown.
+        // Features:
+        //   • Fenced code block parsing with language detection
+        //   • Shell type mapping (bash, powershell, cmd, etc.)
+        //   • Heuristic command detection for unlabeled blocks
+        //   • Dangerous command pattern detection (12 patterns)
+        //   • Inline command extraction after indicator phrases
+        //   • Confidence scoring (0.40-0.95)
+        //
+        // Registered as singleton because:
+        //   1. Stateless service with no per-request data
+        //   2. Static pattern dictionaries shared across all requests
+        //   3. Source-generated regex patterns compiled once
+        //
+        services.AddSingleton<ICommandExtractorService, CommandExtractorService>();
+
         return services;
     }
 }

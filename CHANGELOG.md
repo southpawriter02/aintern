@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.4b] - 2026-01-18
+
+Command Extractor Service. Parses executable commands from AI-generated markdown.
+
+### Added
+
+- `ICommandExtractorService` interface with ExtractCommands(), IsShellCommand(), GetShellTypeForLanguage(), CheckCommandSafety(), ExtractDescription()
+- `CommandExtractorService` with fenced block extraction, heuristic detection (70+ commands), 12 dangerous patterns, shell type inference
+- 61 unit tests covering extraction, detection, safety checking, and confidence scoring
+
 ## [0.5.4a] - 2026-01-18
 
 Command Block Models. Core models for command extraction, execution tracking, and output capture.
