@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.5a] - 2026-01-18
+
+Terminal Search Models. Data models for terminal search functionality.
+
+### Added
+
+- `TerminalSearchResult` model with position info, context extraction, preview generation
+- `TerminalSearchState` immutable record with navigation methods, computed properties, factory methods
+- `TerminalSearchOptions` with search configuration, presets (Default, LargeBuffer, QuickFind, RegexFocused)
+- `SearchHighlightStyle` with visual styling, theme presets (Dark, Light, HighContrast, Solarized)
+- `SearchDirection` enum with Forward/Backward values and extension methods
+- `TerminalSearchExtensions` with visibility filtering, line indexing, position calculations
+- 121 unit tests for terminal search models
+
+
 ## [0.5.4h] - 2026-01-18
 
 Chat Integration. Command block integration into chat messages with bulk operations.
