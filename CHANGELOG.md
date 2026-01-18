@@ -18,6 +18,18 @@ Shell Detection Service Enhancement. Extended public API with type detection, va
 - `ShellInfo.IconPath`, `ShellInfo.Description` properties
 - 54 new unit tests (78 total)
 
+## [0.5.3b] - 2026-01-18
+
+Shell Configuration System. Shell-specific commands, OSC sequences, and integration scripts.
+
+### Added
+
+- `ShellConfiguration` model with commands, OSC flags, syntax, profile paths
+- `IShellConfigurationService` interface and implementation
+- Pre-built configurations for 12 shell types (Bash, Zsh, Fish, PowerShell, Cmd, Nushell, etc.)
+- OSC 7/9 CWD reporting and shell integration script generation
+- 39 unit tests
+
 ## [0.5.2f] - 2026-01-18
 
 Main Window Integration. Terminal panel integrated into main window with keyboard shortcuts.
