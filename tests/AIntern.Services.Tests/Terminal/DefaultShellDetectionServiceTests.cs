@@ -196,4 +196,129 @@ public class DefaultShellDetectionServiceTests
         // Assert
         Assert.Contains(availableShells, s => s.Path == defaultShell.Path);
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // GetDefaultShellAsync Tests
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// <b>Unit Test:</b> GetDefaultShellAsync returns non-empty path.<br/>
+    /// <b>Arrange:</b> Shell detection service.<br/>
+    /// <b>Act:</b> Call GetDefaultShellAsync.<br/>
+    /// <b>Assert:</b> Returns non-empty string.
+    /// </summary>
+    [Fact]
+    public async Task GetDefaultShellAsync_ReturnsNonEmptyPath()
+    {
+        // Act
+        var path = await _service.GetDefaultShellAsync();
+
+        // Assert
+        Assert.False(string.IsNullOrEmpty(path));
+    }
+
+    /// <summary>
+    /// <b>Unit Test:</b> GetDefaultShellAsync returns path to existing file.<br/>
+    /// <b>Arrange:</b> Shell detection service.<br/>
+    /// <b>Act:</b> Call GetDefaultShellAsync.<br/>
+    /// <b>Assert:</b> Returned path exists on filesystem.
+    /// </summary>
+    [Fact]
+    public async Task GetDefaultShellAsync_ReturnsExistingFile()
+    {
+        // Act
+        var path = await _service.GetDefaultShellAsync();
+
+        // Assert
+        Assert.True(File.Exists(path), $"Expected file to exist: {path}");
+    }
+
+    /// <summary>
+    /// <b>Unit Test:</b> GetDefaultShellAsync matches DetectDefaultShellAsync path.<br/>
+    /// <b>Arrange:</b> Call both methods.<br/>
+    /// <b>Act:</b> Compare paths.<br/>
+    /// <b>Assert:</b> Paths are equal.
+    /// </summary>
+    [Fact]
+    public async Task GetDefaultShellAsync_MatchesDetectDefaultShellAsyncPath()
+    {
+        // Act
+        var shellInfo = await _service.DetectDefaultShellAsync();
+        var path = await _service.GetDefaultShellAsync();
+
+        // Assert
+        Assert.Equal(shellInfo.Path, path);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // IsShellAvailableAsync Tests
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// <b>Unit Test:</b> IsShellAvailableAsync returns true for default shell.<br/>
+    /// <b>Arrange:</b> Get default shell path.<br/>
+    /// <b>Act:</b> Call IsShellAvailableAsync with default shell.<br/>
+    /// <b>Assert:</b> Returns true.
+    /// </summary>
+    [Fact]
+    public async Task IsShellAvailableAsync_DefaultShell_ReturnsTrue()
+    {
+        // Arrange
+        var defaultShell = await _service.GetDefaultShellAsync();
+
+        // Act
+        var result = await _service.IsShellAvailableAsync(defaultShell);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    /// <summary>
+    /// <b>Unit Test:</b> IsShellAvailableAsync returns false for null path.<br/>
+    /// <b>Arrange:</b> Null path.<br/>
+    /// <b>Act:</b> Call IsShellAvailableAsync with null.<br/>
+    /// <b>Assert:</b> Returns false.
+    /// </summary>
+    [Fact]
+    public async Task IsShellAvailableAsync_NullPath_ReturnsFalse()
+    {
+        // Act
+        var result = await _service.IsShellAvailableAsync(null!);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    /// <summary>
+    /// <b>Unit Test:</b> IsShellAvailableAsync returns false for non-existent path.<br/>
+    /// <b>Arrange:</b> Non-existent path.<br/>
+    /// <b>Act:</b> Call IsShellAvailableAsync.<br/>
+    /// <b>Assert:</b> Returns false.
+    /// </summary>
+    [Fact]
+    public async Task IsShellAvailableAsync_NonExistentPath_ReturnsFalse()
+    {
+        // Act
+        var result = await _service.IsShellAvailableAsync("/nonexistent/path/shell");
+
+        // Assert
+        Assert.False(result);
+    }
+
+    /// <summary>
+    /// <b>Unit Test:</b> IsShellAvailableAsync returns false for empty path.<br/>
+    /// <b>Arrange:</b> Empty string path.<br/>
+    /// <b>Act:</b> Call IsShellAvailableAsync with empty string.<br/>
+    /// <b>Assert:</b> Returns false.
+    /// </summary>
+    [Fact]
+    public async Task IsShellAvailableAsync_EmptyPath_ReturnsFalse()
+    {
+        // Act
+        var result = await _service.IsShellAvailableAsync("");
+
+        // Assert
+        Assert.False(result);
+    }
 }
+

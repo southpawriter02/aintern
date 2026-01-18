@@ -5,18 +5,22 @@ using Microsoft.Extensions.Logging;
 namespace AIntern.Services.Terminal;
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
-// │ DEFAULT SHELL DETECTION SERVICE (v0.5.1d)                               │
-// │ Basic implementation of shell detection for terminal sessions.          │
+// │ DEFAULT SHELL DETECTION SERVICE (v0.5.1d, updated v0.5.1e)              │
+// │ Simple shell detection fallback without version detection or caching.  │
 // └─────────────────────────────────────────────────────────────────────────┘
 
 /// <summary>
-/// Default implementation of shell detection service.
+/// Simple shell detection service without caching or version detection.
 /// </summary>
 /// <remarks>
-/// <para>Added in v0.5.1d.</para>
+/// <para>Added in v0.5.1d. Updated in v0.5.1e.</para>
 /// <para>
-/// This provides a basic implementation that will be enhanced in v0.5.1e
-/// with more sophisticated shell detection and version checking.
+/// This provides a lightweight implementation for cases where the full
+/// <see cref="ShellDetectionService"/> is not needed. It is faster but
+/// does not provide caching, version detection, or shell validation.
+/// </para>
+/// <para>
+/// For production use, prefer <see cref="ShellDetectionService"/>.
 /// </para>
 /// </remarks>
 public sealed class DefaultShellDetectionService : IShellDetectionService
@@ -35,6 +39,9 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
     /// Creates a new default shell detection service.
     /// </summary>
     /// <param name="logger">Logger for diagnostic output.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="logger"/> is null.
+    /// </exception>
     public DefaultShellDetectionService(ILogger<DefaultShellDetectionService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -47,7 +54,8 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
     /// <inheritdoc />
     public Task<ShellInfo> DetectDefaultShellAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Detecting default shell for platform: {Platform}", RuntimeInformation.OSDescription);
+        _logger.LogDebug("Detecting default shell for platform: {Platform}",
+            RuntimeInformation.OSDescription);
 
         ShellInfo shell;
 
@@ -67,9 +75,17 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
     }
 
     /// <inheritdoc />
+    public async Task<string> GetDefaultShellAsync(CancellationToken cancellationToken = default)
+    {
+        var shellInfo = await DetectDefaultShellAsync(cancellationToken);
+        return shellInfo.Path;
+    }
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<ShellInfo>> GetAvailableShellsAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Getting available shells for platform: {Platform}", RuntimeInformation.OSDescription);
+        _logger.LogDebug("Getting available shells for platform: {Platform}",
+            RuntimeInformation.OSDescription);
 
         List<ShellInfo> shells;
 
@@ -84,6 +100,20 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
 
         _logger.LogDebug("Found {Count} available shells", shells.Count);
         return Task.FromResult<IReadOnlyList<ShellInfo>>(shells.AsReadOnly());
+    }
+
+    /// <inheritdoc />
+    public Task<bool> IsShellAvailableAsync(string path, CancellationToken cancellationToken = default)
+    {
+        // Simple file existence check without validation
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return Task.FromResult(false);
+        }
+
+        var exists = File.Exists(path);
+        _logger.LogDebug("Shell availability check for {Path}: {Exists}", path, exists);
+        return Task.FromResult(exists);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -101,9 +131,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         {
             return new ShellInfo
             {
+                Name = "PowerShell",
                 Path = pwshPath,
                 ShellType = ShellType.PowerShellCore,
-                DefaultArguments = ["-NoLogo"]
+                DefaultArguments = ["-NoLogo"],
+                IsDefault = true
             };
         }
 
@@ -116,9 +148,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         {
             return new ShellInfo
             {
+                Name = "Windows PowerShell",
                 Path = powershellPath,
                 ShellType = ShellType.PowerShell,
-                DefaultArguments = ["-NoLogo"]
+                DefaultArguments = ["-NoLogo"],
+                IsDefault = true
             };
         }
 
@@ -129,9 +163,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
 
         return new ShellInfo
         {
+            Name = "Command Prompt",
             Path = cmdPath,
             ShellType = ShellType.Cmd,
-            DefaultArguments = []
+            DefaultArguments = [],
+            IsDefault = true
         };
     }
 
@@ -141,6 +177,7 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
     private List<ShellInfo> GetWindowsShells()
     {
         var shells = new List<ShellInfo>();
+        var defaultShell = DetectWindowsDefaultShell();
 
         // cmd.exe
         var comspec = Environment.GetEnvironmentVariable("COMSPEC");
@@ -151,9 +188,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         {
             shells.Add(new ShellInfo
             {
+                Name = "Command Prompt",
                 Path = cmdPath,
                 ShellType = ShellType.Cmd,
-                DefaultArguments = []
+                DefaultArguments = [],
+                IsDefault = NormalizePath(cmdPath) == NormalizePath(defaultShell.Path)
             });
         }
 
@@ -166,9 +205,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         {
             shells.Add(new ShellInfo
             {
+                Name = "Windows PowerShell",
                 Path = powershellPath,
                 ShellType = ShellType.PowerShell,
-                DefaultArguments = ["-NoLogo"]
+                DefaultArguments = ["-NoLogo"],
+                IsDefault = NormalizePath(powershellPath) == NormalizePath(defaultShell.Path)
             });
         }
 
@@ -178,9 +219,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         {
             shells.Add(new ShellInfo
             {
+                Name = "PowerShell",
                 Path = pwshPath,
                 ShellType = ShellType.PowerShellCore,
-                DefaultArguments = ["-NoLogo"]
+                DefaultArguments = ["-NoLogo"],
+                IsDefault = NormalizePath(pwshPath) == NormalizePath(defaultShell.Path)
             });
         }
 
@@ -190,9 +233,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         {
             shells.Add(new ShellInfo
             {
+                Name = "Git Bash",
                 Path = gitBashPath,
                 ShellType = ShellType.Bash,
-                DefaultArguments = ["--login"]
+                DefaultArguments = ["--login"],
+                IsDefault = NormalizePath(gitBashPath) == NormalizePath(defaultShell.Path)
             });
         }
 
@@ -216,9 +261,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
             var shellType = DetermineShellType(shellEnv);
             return new ShellInfo
             {
+                Name = shellType.ToString(),
                 Path = shellEnv,
                 ShellType = shellType,
-                DefaultArguments = GetDefaultArguments(shellType)
+                DefaultArguments = GetDefaultArguments(shellType),
+                IsDefault = true
             };
         }
 
@@ -237,9 +284,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
                 var shellType = DetermineShellType(path);
                 return new ShellInfo
                 {
+                    Name = shellType.ToString(),
                     Path = path,
                     ShellType = shellType,
-                    DefaultArguments = GetDefaultArguments(shellType)
+                    DefaultArguments = GetDefaultArguments(shellType),
+                    IsDefault = true
                 };
             }
         }
@@ -247,9 +296,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         // Last resort
         return new ShellInfo
         {
+            Name = "Sh",
             Path = "/bin/sh",
             ShellType = ShellType.Sh,
-            DefaultArguments = []
+            DefaultArguments = [],
+            IsDefault = true
         };
     }
 
@@ -259,6 +310,7 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
     private List<ShellInfo> GetUnixShells()
     {
         var shells = new List<ShellInfo>();
+        var defaultShell = DetectUnixDefaultShell();
 
         // Common shell locations
         var shellPaths = new Dictionary<string, ShellType>
@@ -276,9 +328,11 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
             {
                 shells.Add(new ShellInfo
                 {
+                    Name = type.ToString(),
                     Path = path,
                     ShellType = type,
-                    DefaultArguments = GetDefaultArguments(type)
+                    DefaultArguments = GetDefaultArguments(type),
+                    IsDefault = NormalizePath(path) == NormalizePath(defaultShell.Path)
                 });
             }
         }
@@ -306,6 +360,7 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
             "cmd.exe" or "cmd" => ShellType.Cmd,
             "powershell.exe" or "powershell" => ShellType.PowerShell,
             "pwsh.exe" or "pwsh" => ShellType.PowerShellCore,
+            "nu" or "nu.exe" => ShellType.Nushell,
             _ => ShellType.Unknown
         };
     }
@@ -348,5 +403,26 @@ public sealed class DefaultShellDetectionService : IShellDetectionService
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Normalizes a path for comparison.
+    /// </summary>
+    private static string? NormalizePath(string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        try
+        {
+            var fullPath = Path.GetFullPath(path);
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? fullPath.ToLowerInvariant()
+                : fullPath;
+        }
+        catch
+        {
+            return path;
+        }
     }
 }

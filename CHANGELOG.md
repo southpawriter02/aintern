@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.1e] - 2026-01-17
+
+Shell Detection Service. Enhanced shell detection with caching, version detection, and validation.
+
+### Added
+
+- Enhanced `IShellDetectionService` with `GetDefaultShellAsync` and `IsShellAvailableAsync` methods
+- `ShellDetectionService` with full caching, version detection, and executable validation
+- `Name` and `IsDefault` properties on `ShellInfo` record
+- `Nushell` shell type for modern shell support
+- Platform-specific detection for Windows, macOS, and Linux
+- WSL and Git Bash detection on Windows
+- 31 new unit tests for shell detection
+
 ## [0.5.1d] - 2026-01-17
 
 Terminal Service. PTY-based terminal service for managing shell sessions.

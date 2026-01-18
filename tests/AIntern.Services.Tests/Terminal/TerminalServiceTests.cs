@@ -50,9 +50,11 @@ public class TerminalServiceTests : IAsyncDisposable
             .Setup(s => s.DetectDefaultShellAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ShellInfo
             {
+                Name = "Bash",
                 Path = "/bin/bash",
                 ShellType = ShellType.Bash,
-                DefaultArguments = ["--login"]
+                DefaultArguments = ["--login"],
+                IsDefault = true
             });
 
         _service = new TerminalService(_mockShellDetection.Object, _mockLogger.Object);
