@@ -379,6 +379,211 @@ public sealed class TerminalBuffer
         CurrentAttributes = SavedAttributes;
     }
 
+    /// <summary>
+    /// Moves the cursor up by the specified number of rows (CSI A - CUU).
+    /// </summary>
+    /// <param name="count">Number of rows to move (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void CursorUp(int count = 1)
+    {
+        CursorY = Math.Max(0, CursorY - Math.Max(1, count));
+    }
+
+    /// <summary>
+    /// Moves the cursor down by the specified number of rows (CSI B - CUD).
+    /// </summary>
+    /// <param name="count">Number of rows to move (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void CursorDown(int count = 1)
+    {
+        CursorY = Math.Min(Rows - 1, CursorY + Math.Max(1, count));
+    }
+
+    /// <summary>
+    /// Moves the cursor forward (right) by the specified number of columns (CSI C - CUF).
+    /// </summary>
+    /// <param name="count">Number of columns to move (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void CursorForward(int count = 1)
+    {
+        CursorX = Math.Min(Columns - 1, CursorX + Math.Max(1, count));
+    }
+
+    /// <summary>
+    /// Moves the cursor back (left) by the specified number of columns (CSI D - CUB).
+    /// </summary>
+    /// <param name="count">Number of columns to move (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void CursorBack(int count = 1)
+    {
+        CursorX = Math.Max(0, CursorX - Math.Max(1, count));
+    }
+
+    /// <summary>
+    /// Inserts blank lines at cursor position, pushing down existing lines (CSI L - IL).
+    /// </summary>
+    /// <param name="count">Number of lines to insert (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void InsertLines(int count = 1)
+    {
+        if (count <= 0) return;
+
+        lock (_lock)
+        {
+            // Insert at cursor row, push lines down
+            for (int i = 0; i < count; i++)
+            {
+                var lineIndex = GetAbsoluteLineIndex(CursorY);
+                if (lineIndex >= 0 && lineIndex < _lines.Count)
+                {
+                    _lines.Insert(lineIndex, new TerminalLine(Columns));
+                }
+
+                // Remove line pushed past scroll region bottom
+                var bottomIndex = GetAbsoluteLineIndex(ScrollRegionBottom);
+                if (bottomIndex >= 0 && bottomIndex < _lines.Count)
+                {
+                    _lines.RemoveAt(bottomIndex);
+                }
+            }
+            OnContentChanged();
+        }
+    }
+
+    /// <summary>
+    /// Deletes lines at cursor position, pulling up lines below (CSI M - DL).
+    /// </summary>
+    /// <param name="count">Number of lines to delete (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void DeleteLines(int count = 1)
+    {
+        if (count <= 0) return;
+
+        lock (_lock)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var lineIndex = GetAbsoluteLineIndex(CursorY);
+                if (lineIndex >= 0 && lineIndex < _lines.Count)
+                {
+                    _lines.RemoveAt(lineIndex);
+                }
+
+                // Add blank line at scroll region bottom
+                var bottomIndex = GetAbsoluteLineIndex(ScrollRegionBottom - 1);
+                if (bottomIndex >= 0)
+                {
+                    _lines.Insert(Math.Min(bottomIndex + 1, _lines.Count), new TerminalLine(Columns));
+                }
+            }
+            OnContentChanged();
+        }
+    }
+
+    /// <summary>
+    /// Inserts blank characters at cursor, pushing existing chars right (CSI @ - ICH).
+    /// </summary>
+    /// <param name="count">Number of characters to insert (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void InsertChars(int count = 1)
+    {
+        if (count <= 0) return;
+
+        lock (_lock)
+        {
+            var lineIndex = GetAbsoluteLineIndex(CursorY);
+            if (lineIndex < 0 || lineIndex >= _lines.Count) return;
+
+            var line = _lines[lineIndex];
+            var cells = line.Cells;
+
+            // Shift cells right
+            for (int x = Columns - 1; x >= CursorX + count; x--)
+            {
+                if (x - count >= 0 && x - count < Columns)
+                {
+                    cells[x] = cells[x - count];
+                }
+            }
+
+            // Insert blank cells
+            for (int x = CursorX; x < Math.Min(CursorX + count, Columns); x++)
+            {
+                cells[x] = TerminalCell.Empty;
+            }
+
+            OnContentChanged();
+        }
+    }
+
+    /// <summary>
+    /// Deletes characters at cursor, pulling remaining chars left (CSI P - DCH).
+    /// </summary>
+    /// <param name="count">Number of characters to delete (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void DeleteChars(int count = 1)
+    {
+        if (count <= 0) return;
+
+        lock (_lock)
+        {
+            var lineIndex = GetAbsoluteLineIndex(CursorY);
+            if (lineIndex < 0 || lineIndex >= _lines.Count) return;
+
+            var line = _lines[lineIndex];
+            var cells = line.Cells;
+
+            // Shift cells left
+            for (int x = CursorX; x < Columns - count; x++)
+            {
+                if (x + count < Columns)
+                {
+                    cells[x] = cells[x + count];
+                }
+            }
+
+            // Fill end with blanks
+            for (int x = Columns - count; x < Columns; x++)
+            {
+                if (x >= 0)
+                {
+                    cells[x] = TerminalCell.Empty;
+                }
+            }
+
+            OnContentChanged();
+        }
+    }
+
+    /// <summary>
+    /// Erases characters at cursor without shifting (CSI X - ECH).
+    /// </summary>
+    /// <param name="count">Number of characters to erase (default: 1).</param>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void EraseChars(int count = 1)
+    {
+        if (count <= 0) return;
+
+        lock (_lock)
+        {
+            var lineIndex = GetAbsoluteLineIndex(CursorY);
+            if (lineIndex < 0 || lineIndex >= _lines.Count) return;
+
+            var line = _lines[lineIndex];
+            line.Clear(CursorX, Math.Min(CursorX + count - 1, Columns - 1));
+            OnContentChanged();
+        }
+    }
+
+    /// <summary>
+    /// Clears screen and scrollback history (ED 3).
+    /// </summary>
+    /// <remarks>Added in v0.5.1c for ANSI parser support.</remarks>
+    public void ClearWithScrollback()
+    {
+        Reset();
+    }
+
     #endregion
 
     #region Scrolling

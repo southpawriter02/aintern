@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.1c] - 2026-01-17
+
+ANSI Parser. VT100/ANSI escape sequence parser for terminal emulation.
+
+### Added
+
+- `AnsiParserState` enum with 12 state machine states
+- `AnsiParser` class with full VT100 escape sequence support
+- C0 controls, CSI sequences, SGR colors (256-color, true color)
+- OSC commands (title, working directory, hyperlinks)
+- 10 new `TerminalBuffer` cursor/character operation methods
+- 48 unit tests for parser functionality
+
 ## [0.5.1b] - 2026-01-17
 
 Terminal Models. Core model classes for the integrated terminal subsystem.
