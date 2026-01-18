@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.2b] - 2026-01-17
+
+Terminal Renderer. SkiaSharp-based hardware-accelerated terminal rendering with full text attribute support.
+
+### Added
+
+- `TerminalFontMetrics` class for font loading, measurement, and coordinate conversion
+- `TerminalRenderer` Avalonia control using SkiaSharp for hardware-accelerated rendering
+- Text attribute support: bold, dim, underline, strikethrough, inverse, hidden
+- 256-color palette and true color (RGB) rendering via `TerminalTheme`
+- Cursor rendering with Block, Underline, and Bar styles
+- Focus-aware cursor display (solid when focused, outline when unfocused)
+- Text selection highlighting with configurable opacity
+- Wide character (CJK, emoji) support with proper cell spanning
+- Cross-platform font fallback chain (Cascadia Mono, Consolas, Monaco, Courier New)
+- 40 unit tests for font metrics functionality
+
+
 ## [0.5.2a] - 2026-01-17
 
 Theme & Styles. Terminal theme model with 256-color palette, icons, and control themes.
