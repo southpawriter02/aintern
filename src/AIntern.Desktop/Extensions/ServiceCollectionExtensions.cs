@@ -337,6 +337,12 @@ public static class ServiceCollectionExtensions
         // Added in v0.5.2f.
         services.AddSingleton<TerminalPanelViewModel>();
 
+        // Terminal Status Bar: displays terminal info in main window status bar.
+        // Singleton to share state with TerminalPanelViewModel.
+        // Shows shell name, directory, and terminal count.
+        // Added in v0.5.5h.
+        services.AddSingleton<TerminalStatusBarViewModel>();
+
         // Command Block ViewModel Factory: creates CommandBlockViewModels with DI.
         // Singleton for shared factory instance with injected services.
         // Used to create ViewModels for command blocks extracted from AI responses.

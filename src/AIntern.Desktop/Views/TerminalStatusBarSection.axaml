@@ -1,0 +1,118 @@
+<!--
+// ============================================================================
+// File: TerminalStatusBarSection.axaml
+// Path: src/AIntern.Desktop/Views/TerminalStatusBarSection.axaml
+// Description: UserControl for displaying terminal status in the main window
+//              status bar, showing shell name, directory, and terminal count.
+// Created: 2026-01-19
+// AI Intern v0.5.5h - Status Bar Integration
+// ============================================================================
+-->
+
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:AIntern.Desktop.ViewModels"
+             xmlns:converters="using:AIntern.Desktop.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="24" d:DesignWidth="300"
+             x:Class="AIntern.Desktop.Views.TerminalStatusBarSection"
+             x:DataType="vm:TerminalStatusBarViewModel"
+             IsVisible="{Binding IsVisible}">
+    <!--
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │ TerminalStatusBarSection (v0.5.5h)                                      │
+    │                                                                         │
+    │ Displays terminal information in the main window status bar:            │
+    │   • Terminal icon with toggle functionality                             │
+    │   • Active shell name (bash, zsh, etc.)                                │
+    │   • Current working directory with ~ abbreviation                       │
+    │   • Terminal count badge when multiple terminals open                   │
+    │                                                                         │
+    │ Layout (horizontal):                                                    │
+    │   [|] [🖥️ Bash] [~/Projects/app] [2]                                   │
+    │    │      │            │           └── Count badge (when > 1)          │
+    │    │      │            └── Directory (when active && not empty)        │
+    │    │      └── Shell name button (when active)                          │
+    │    └── Vertical separator                                              │
+    └─────────────────────────────────────────────────────────────────────────┘
+    -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MAIN LAYOUT
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <StackPanel Orientation="Horizontal" Spacing="8">
+
+        <!-- Vertical Separator -->
+        <Rectangle Width="1" Height="14"
+                   Fill="{DynamicResource TextMuted}"
+                   Opacity="0.3"
+                   VerticalAlignment="Center"
+                   Margin="4,0,0,0" />
+
+        <!--
+            Terminal Toggle Button
+            Shows terminal icon and shell name. Clicking toggles the terminal panel.
+        -->
+        <Button Command="{Binding ToggleTerminalPanelCommand}"
+                Background="Transparent"
+                BorderThickness="0"
+                Padding="4,0"
+                Cursor="Hand"
+                ToolTip.Tip="Toggle terminal (Ctrl+`)">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <!-- Terminal Icon -->
+                <PathIcon Data="{StaticResource TerminalIcon}"
+                          Width="14" Height="14"
+                          Foreground="{DynamicResource TextSecondary}" />
+
+                <!-- Shell Name (visible when active terminal) -->
+                <TextBlock Text="{Binding ActiveShellName}"
+                           FontSize="11"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextSecondary}"
+                           IsVisible="{Binding HasActiveTerminal}" />
+            </StackPanel>
+        </Button>
+
+        <!--
+            Current Directory
+            Shows abbreviated path. Only visible when:
+            - HasActiveTerminal is true
+            - CurrentDirectoryDisplay is not empty
+        -->
+        <TextBlock Text="{Binding CurrentDirectoryDisplay}"
+                   FontSize="11"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextMuted}"
+                   MaxWidth="200"
+                   TextTrimming="CharacterEllipsis"
+                   ToolTip.Tip="{Binding CurrentDirectory}">
+            <TextBlock.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="HasActiveTerminal" />
+                    <Binding Path="CurrentDirectoryDisplay" Converter="{x:Static StringConverters.IsNotNullOrEmpty}" />
+                </MultiBinding>
+            </TextBlock.IsVisible>
+        </TextBlock>
+
+        <!--
+            Terminal Count Badge
+            Shows number of open terminals. Only visible when count > 1.
+        -->
+        <Border Background="{DynamicResource AccentBrush}"
+                CornerRadius="8"
+                Padding="5,1"
+                VerticalAlignment="Center"
+                IsVisible="{Binding TerminalCount, Converter={x:Static converters:GreaterThanOneConverter.Instance}}">
+            <TextBlock Text="{Binding TerminalCount}"
+                       FontSize="10"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextOnAccent}"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center" />
+        </Border>
+
+    </StackPanel>
+</UserControl>

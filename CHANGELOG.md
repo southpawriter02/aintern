@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For detailed release notes, see the [docs/changelog/](docs/changelog/) directory.
 
+## [0.5.5h] - 2026-01-19
+
+Status Bar Integration. Terminal status section in main window status bar with session info.
+
+### Added
+
+- `TerminalStatusBarViewModel` with session state binding and path abbreviation
+- `TerminalStatusBarSection.axaml` UserControl for status bar display
+- Integration with `MainWindow` status bar replacing simple terminal button
+- 33 unit tests for TerminalStatusBarViewModel
+
 ## [0.5.5g] - 2026-01-19
 
 Shell Profile Editor. Modal dialog for creating/editing shell profiles with validation and auto-detection.

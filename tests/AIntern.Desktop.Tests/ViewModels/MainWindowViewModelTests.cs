@@ -48,6 +48,7 @@ public class MainWindowViewModelTests : IDisposable
     private readonly ModelSelectorViewModel _modelSelectorViewModel;
     private readonly ConversationListViewModel _conversationListViewModel;
     private readonly TerminalPanelViewModel _terminalPanelViewModel;
+    private readonly TerminalStatusBarViewModel _terminalStatusBarViewModel;
     private readonly InferenceSettingsViewModel _inferenceSettingsViewModel;
     private readonly FileExplorerViewModel _fileExplorerViewModel;
 
@@ -138,6 +139,11 @@ public class MainWindowViewModelTests : IDisposable
             mockTerminalSearchService.Object,
             _mockWorkspaceService.Object,
             mockTerminalPanelLogger.Object);
+
+        // TerminalStatusBarViewModel (v0.5.5h)
+        var mockTerminalStatusBarLogger = new Mock<ILogger<TerminalStatusBarViewModel>>();
+        _terminalStatusBarViewModel = new TerminalStatusBarViewModel(
+            mockTerminalStatusBarLogger.Object);
     }
 
     private MainWindowViewModel CreateViewModel()
@@ -156,6 +162,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockWorkspaceService.Object,
             _fileExplorerViewModel,
             _terminalPanelViewModel,
+            _terminalStatusBarViewModel,
             _dispatcher,
             keyboardShortcutService: null,
             _mockLogger.Object);
@@ -197,6 +204,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockWorkspaceService.Object,
             _fileExplorerViewModel,
             _terminalPanelViewModel,
+            _terminalStatusBarViewModel,
             _dispatcher,
             keyboardShortcutService: null,
             logger: _mockLogger.Object));
@@ -223,6 +231,7 @@ public class MainWindowViewModelTests : IDisposable
             _mockWorkspaceService.Object,
             _fileExplorerViewModel,
             _terminalPanelViewModel,
+            _terminalStatusBarViewModel,
             _dispatcher,
             keyboardShortcutService: null,
             logger: _mockLogger.Object));

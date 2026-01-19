@@ -1,7 +1,7 @@
 <!--
     MainWindow.axaml - Main Application Window
 
-    Version: v0.5.2f
+    Version: v0.5.5h
 
     Layout:
     - SplitView with collapsible sidebar pane
@@ -225,27 +225,13 @@
                 </Button>
 
                 <!--
-                    Terminal Toggle Button (v0.5.2f)
+                    Terminal Status Bar Section (v0.5.5h)
+                    Shows terminal icon, shell name, directory, and count badge.
                     Click toggles terminal panel visibility.
                 -->
-                <Button Grid.Column="1"
-                        Command="{Binding TerminalPanelViewModel.TogglePanelCommand}"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Padding="4,0"
-                        Margin="8,0,0,0"
-                        Cursor="Hand"
-                        ToolTip.Tip="Toggle terminal (Ctrl+`)">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <PathIcon Data="{StaticResource TerminalIcon}"
-                                  Width="14" Height="14"
-                                  Foreground="{DynamicResource TextSecondary}" />
-                        <TextBlock Text="Terminal"
-                                   FontSize="11"
-                                   VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondary}" />
-                    </StackPanel>
-                </Button>
+                <views:TerminalStatusBarSection Grid.Column="1"
+                                                DataContext="{Binding TerminalStatusBarViewModel}"
+                                                Margin="0,0,0,0" />
 
                 <!--
                     Preset Indicator (v0.2.3e)

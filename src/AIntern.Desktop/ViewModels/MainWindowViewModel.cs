@@ -25,6 +25,7 @@ namespace AIntern.Desktop.ViewModels;
 /// <item><see cref="InferenceSettingsViewModel"/> - Inference parameter sliders (v0.2.3e)</item>
 /// <item><see cref="FileExplorerViewModel"/> - File explorer sidebar (v0.3.2g)</item>
 /// <item><see cref="TerminalPanelViewModel"/> - Terminal panel tabs and sessions (v0.5.2f)</item>
+/// <item><see cref="TerminalStatusBarViewModel"/> - Terminal status bar section (v0.5.5h)</item>
 /// </list>
 /// </para>
 /// <para>
@@ -143,6 +144,19 @@ public partial class MainWindowViewModel : ViewModelBase
     /// Added in v0.5.2f. Singleton that persists across application lifecycle.
     /// </remarks>
     public TerminalPanelViewModel TerminalPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the ViewModel for the terminal status bar section.
+    /// Displays terminal session info in the main window status bar.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Shows active shell name, current directory, and terminal count.
+    /// Visibility is tied to terminal panel visibility.
+    /// </para>
+    /// <para>Added in v0.5.5h.</para>
+    /// </remarks>
+    public TerminalStatusBarViewModel TerminalStatusBarViewModel { get; }
 
     #endregion
 
@@ -303,6 +317,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IWorkspaceService workspaceService,
         FileExplorerViewModel fileExplorer,
         TerminalPanelViewModel terminalPanelViewModel,
+        TerminalStatusBarViewModel terminalStatusBarViewModel,
         IDispatcher dispatcher,
         IKeyboardShortcutService? keyboardShortcutService = null,
         ILogger<MainWindowViewModel>? logger = null)
@@ -327,6 +342,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _workspaceService = workspaceService ?? throw new ArgumentNullException(nameof(workspaceService));
         FileExplorer = fileExplorer ?? throw new ArgumentNullException(nameof(fileExplorer));
         TerminalPanelViewModel = terminalPanelViewModel ?? throw new ArgumentNullException(nameof(terminalPanelViewModel));
+        TerminalStatusBarViewModel = terminalStatusBarViewModel ?? throw new ArgumentNullException(nameof(terminalStatusBarViewModel));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
         KeyboardShortcutService = keyboardShortcutService;
 
@@ -349,6 +365,9 @@ public partial class MainWindowViewModel : ViewModelBase
         FileExplorer.FileAttachRequested += OnFileAttachRequested;
         _workspaceService.WorkspaceChanged += OnWorkspaceChanged;
         HasOpenWorkspace = _workspaceService.CurrentWorkspace != null;
+
+        // v0.5.5h: Initialize terminal status bar with terminal panel
+        TerminalStatusBarViewModel.Initialize(TerminalPanelViewModel);
 
         _logger?.LogDebug("[INFO] Subscribed to ILlmService and IConversationService events");
         _logger?.LogDebug("[INIT] MainWindowViewModel construction completed - {ElapsedMs}ms", sw.ElapsedMilliseconds);
